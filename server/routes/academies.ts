@@ -246,10 +246,13 @@ academiesRoutes.patch("/academies/:id/members/:userId", async (c) => {
     await db.update(s.profiles).set({ homeAcademyId: a.id }).where(and(eq(s.profiles.userId, target.userId), isNull(s.profiles.homeAcademyId)));
     await notify(db, "membership_approved", userId, [target.userId], a.id);
   }
+  if (input.role && input.role !== target.role && (input.role === "coach" || target.role === "coach")) {
+    await notify(db, input.role === "coach" ? "coach_granted" : "coach_revoked", userId, [target.userId], a.id);
+  }
   return c.body(null, 204);
 });
 
-/** Members leave; staff remove students (and rejected requests); nobody removes the owner. */
+/** Members leave; staff remove students (and reject requests), who are told; nobody removes the owner. */
 academiesRoutes.delete("/academies/:id/members/:userId", async (c) => {
   const userId = viewer(c);
   const db = c.get("db");
@@ -264,6 +267,9 @@ academiesRoutes.delete("/academies/:id/members/:userId", async (c) => {
   }
   await db.delete(s.academyMembers).where(and(eq(s.academyMembers.academyId, a.id), eq(s.academyMembers.userId, targetId)));
   await db.update(s.profiles).set({ homeAcademyId: null }).where(and(eq(s.profiles.userId, targetId), eq(s.profiles.homeAcademyId, a.id)));
+  if (targetId !== userId) {
+    await notify(db, target.status === "pending" ? "membership_rejected" : "membership_removed", userId, [targetId], a.id);
+  }
   return c.body(null, 204);
 });
 

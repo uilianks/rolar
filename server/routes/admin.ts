@@ -142,7 +142,7 @@ adminRoutes.patch("/academies/:id", async (c) => {
   return c.json(updated);
 });
 
-/** Hands the academy to another account; the previous owner stays on as a coach. */
+/** Hands the academy to another account; the previous owner stays on as a coach. Both are told. */
 adminRoutes.post("/academies/:id/owner", async (c) => {
   const db = c.get("db");
   const { username } = await body(c, z.object({ username: usernameSchema }));
@@ -150,6 +150,10 @@ adminRoutes.post("/academies/:id/owner", async (c) => {
   if (!a) fail(404, "academyNotFound");
   const [next] = await db.select({ id: s.profiles.userId }).from(s.profiles).where(eq(s.profiles.username, username));
   if (!next) fail(404, "userNotFound", username);
+  const previous = await db
+    .select({ id: s.academyMembers.userId })
+    .from(s.academyMembers)
+    .where(and(eq(s.academyMembers.academyId, a.id), eq(s.academyMembers.role, "owner"), ne(s.academyMembers.userId, next.id)));
   await db.transaction(async (tx) => {
     await tx
       .update(s.academyMembers)
@@ -160,6 +164,9 @@ adminRoutes.post("/academies/:id/owner", async (c) => {
       .values({ academyId: a.id, userId: next.id, role: "owner", status: "active" })
       .onConflictDoUpdate({ target: [s.academyMembers.academyId, s.academyMembers.userId], set: { role: "owner", status: "active" } });
   });
+  const adminId = admin(c);
+  await notify(db, "ownership_received", adminId, [next.id], a.id);
+  await notify(db, "ownership_transferred", adminId, previous.map((r) => r.id), a.id);
   return c.body(null, 204);
 });
 

@@ -93,8 +93,11 @@ Exigida pelo RGPD e pelas lojas. Apagar a conta remove em cascata:
 - **Técnicas**: por enquanto são uma lista de texto livre no treino (`sessions.techniques text[]`).
   A tabela `techniques` e os `rolls` ficaram para a fase 2.
 - **Tabelas extras**:
-  - `notifications`: Oss, comentário, seguidor, pedido ou aprovação na academia, pedido ou
-    confirmação de graduação;
+  - `notifications`: social (Oss, comentário, seguidor), entrada na academia (pedido, aprovação,
+    recusa, remoção, virar ou deixar de ser professor, transferência de dono), graduação, e o que
+    o staff muda na academia (grade de horários, aula cancelada ou de volta, evento publicado,
+    alterado ou cancelado, resultado em competição, aviso no mural, mensalidade). Os tipos ficam em
+    `server/notify.ts`; avisos repetidos de grade e de evento alterado se juntam enquanto não lidos;
   - `rate_limit`: contadores do Better Auth.
 - **Verificação de academias** (`academies.status`: `pending` → `approved` | `rejected`):
   - o cadastro exige morada, cidade, país, telefone, site ou Instagram, o papel de quem pede e como confirmar;

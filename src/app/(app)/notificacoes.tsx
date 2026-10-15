@@ -21,15 +21,21 @@ function open(n: Notification) {
     const [classId, date] = n.targetId.split("/");
     return router.push({ pathname: "/registrar", params: { classId, date } });
   }
-  if (n.type === "class_cancelled" && n.targetId) {
+  if ((n.type === "class_cancelled" || n.type === "class_restored") && n.targetId) {
     const [academyId, date] = n.targetId.split("/");
     return router.push({ pathname: "/academia/[id]/calendario", params: { id: academyId, date } });
   }
-  if (n.type === "event_published" && n.targetId) {
+  if (n.type === "event_cancelled") return router.push(`/academia/${n.targetId}/calendario`);
+  if ((n.type === "event_published" || n.type === "event_changed" || n.type === "event_result") && n.targetId) {
     const [academyId, eventId] = n.targetId.split("/");
     return router.push(`/academia/${academyId}/evento/${eventId}`);
   }
-  if ((n.type === "announcement" || n.type === "payment_reminder") && n.targetId) return router.push(`/academia/${n.targetId}`);
+  if (
+    (n.type === "announcement" || n.type === "payment_reminder" || n.type === "schedule_changed" || n.type.startsWith("coach_") || n.type.startsWith("ownership_")) &&
+    n.targetId
+  ) {
+    return router.push(`/academia/${n.targetId}`);
+  }
   if (n.type === "academy_submitted") return router.push(`/admin/${n.targetId}`);
   if (n.type.startsWith("academy_")) return router.push(`/academia/${n.targetId}`);
   if (n.type === "promotion_request") return router.push("/academia");

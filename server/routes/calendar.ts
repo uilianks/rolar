@@ -138,30 +138,52 @@ calendarRoutes.post("/academies/:id/events", async (c) => {
   return c.json(e, 201);
 });
 
+/** Members are told when the date, time or place of an event changes; typo fixes stay silent. */
 calendarRoutes.put("/academies/:id/events/:eventId", async (c) => {
+  const staffId = viewer(c);
   const { a } = await requireStaff(c, c.req.param("id"));
   const input = await body(c, eventInput);
-  const [e] = await c
-    .get("db")
+  const db = c.get("db");
+  const [before] = await db
+    .select({ startsAt: s.academyEvents.startsAt, endsAt: s.academyEvents.endsAt, location: s.academyEvents.location })
+    .from(s.academyEvents)
+    .where(and(eq(s.academyEvents.id, c.req.param("eventId")), eq(s.academyEvents.academyId, a.id)));
+  if (!before) fail(404, "eventNotFound");
+  const startsAt = new Date(input.startsAt);
+  const endsAt = input.endsAt ? new Date(input.endsAt) : null;
+  const location = input.location ?? null;
+  const [e] = await db
     .update(s.academyEvents)
     .set({
       ...input,
       description: input.description ?? null,
-      location: input.location ?? null,
+      location,
       url: input.url ?? null,
       signupUntil: input.signupUntil ?? null,
-      startsAt: new Date(input.startsAt),
-      endsAt: input.endsAt ? new Date(input.endsAt) : null,
+      startsAt,
+      endsAt,
     })
     .where(and(eq(s.academyEvents.id, c.req.param("eventId")), eq(s.academyEvents.academyId, a.id)))
     .returning({ id: s.academyEvents.id });
   if (!e) fail(404, "eventNotFound");
+  const moved =
+    before.startsAt.getTime() !== startsAt.getTime() || (before.endsAt?.getTime() ?? null) !== (endsAt?.getTime() ?? null) || before.location !== location;
+  if (moved) await notify(db, "event_changed", staffId, await activeMemberIds(db, a.id), `${a.id}/${e.id}`, { collapse: true });
   return c.json(e);
 });
 
+/** Deleting an upcoming event tells the members (it was announced to all of them); clearing old ones stays silent. */
 calendarRoutes.delete("/academies/:id/events/:eventId", async (c) => {
+  const staffId = viewer(c);
   const { a } = await requireStaff(c, c.req.param("id"));
-  await c.get("db").delete(s.academyEvents).where(and(eq(s.academyEvents.id, c.req.param("eventId")), eq(s.academyEvents.academyId, a.id)));
+  const db = c.get("db");
+  const [e] = await db
+    .delete(s.academyEvents)
+    .where(and(eq(s.academyEvents.id, c.req.param("eventId")), eq(s.academyEvents.academyId, a.id)))
+    .returning({ startsAt: s.academyEvents.startsAt, endsAt: s.academyEvents.endsAt });
+  if (e && (e.endsAt ?? e.startsAt).getTime() > Date.now()) {
+    await notify(db, "event_cancelled", staffId, await activeMemberIds(db, a.id), a.id);
+  }
   return c.body(null, 204);
 });
 
@@ -169,7 +191,7 @@ async function memberEvent(c: Parameters<typeof viewer>[0]) {
   const { a, m } = await requireMember(c, c.req.param("id")!);
   const [e] = await c
     .get("db")
-    .select({ id: s.academyEvents.id, startsAt: s.academyEvents.startsAt, signupUntil: s.academyEvents.signupUntil, kind: s.academyEvents.kind })
+    .select({ id: s.academyEvents.id, academyId: s.academyEvents.academyId, startsAt: s.academyEvents.startsAt, signupUntil: s.academyEvents.signupUntil, kind: s.academyEvents.kind })
     .from(s.academyEvents)
     .where(and(eq(s.academyEvents.id, c.req.param("eventId")!), eq(s.academyEvents.academyId, a.id)));
   if (!e) fail(404, "eventNotFound");
@@ -198,7 +220,7 @@ calendarRoutes.delete("/academies/:id/events/:eventId/rsvp", async (c) => {
   return c.body(null, 204);
 });
 
-/** After a competition starts: the athlete records their own result, or staff record it for them. */
+/** After a competition starts: the athlete records their own result, or staff record it for them (and the athlete is told). */
 calendarRoutes.put("/academies/:id/events/:eventId/results/:userId", async (c) => {
   const userId = viewer(c);
   const { m, e } = await memberEvent(c);
@@ -214,6 +236,7 @@ calendarRoutes.put("/academies/:id/events/:eventId/results/:userId", async (c) =
     .where(and(eq(s.eventAttendees.eventId, e.id), eq(s.eventAttendees.userId, target)))
     .returning({ userId: s.eventAttendees.userId });
   if (!row) fail(404, "notSignedUp");
+  if (result) await notify(c.get("db"), "event_result", userId, [target], `${e.academyId}/${e.id}`);
   return c.body(null, 204);
 });
 

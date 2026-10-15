@@ -134,6 +134,9 @@ describe("academy edits", () => {
     expect(role("dono_novo")).toBe("owner");
     expect(role("dono_antigo")).toBe("coach");
     expect((await asAdmin("GET", `/admin/academies/${a.id}`)).data.owner.username).toBe("dono_novo");
+    const latest = async (cookie: string) => (await api.call("GET", "/me/notifications", { cookie })).data[0];
+    expect(await latest(next.cookie)).toMatchObject({ type: "ownership_received", targetId: a.id });
+    expect(await latest(owner.cookie)).toMatchObject({ type: "ownership_transferred", targetId: a.id });
   });
 });
 

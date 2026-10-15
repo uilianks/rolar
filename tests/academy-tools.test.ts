@@ -139,6 +139,78 @@ describe("calendar and competitions", () => {
   });
 });
 
+describe("telling members what staff changed", () => {
+  it("covers timetable, class dates, events, results, requests and roles", async () => {
+    const boss = await api.user("dona_avisos");
+    const pupil = await api.user("aluno_avisos");
+    const asker = await api.user("pedido_avisos");
+    const a = await api.approvedAcademy(boss.cookie, { name: "Academia Avisos", instagram: "academiaavisos" });
+    const base = `/academies/${a.id}`;
+    await api.call("POST", `${base}/join`, { cookie: pupil.cookie });
+    await api.call("PATCH", `${base}/members/${pupil.id}`, { cookie: boss.cookie, json: { status: "active" } });
+    const count = async (type: string) => (await notes(pupil.cookie)).filter((n) => n.type === type).length;
+
+    // Timetable: a burst of edits is one unread notice; an unchanged save says nothing.
+    const gi = { weekday: 1, startTime: "19:00", durationMin: 90, title: "Gi", kind: "gi" };
+    const k = await api.call("POST", `${base}/classes`, { cookie: boss.cookie, json: gi });
+    await api.call("POST", `${base}/classes`, { cookie: boss.cookie, json: { ...gi, weekday: 3 } });
+    expect(await count("schedule_changed")).toBe(1);
+    await api.call("POST", "/me/notifications/read", { cookie: pupil.cookie });
+    await api.call("PUT", `${base}/classes/${k.data.id}`, { cookie: boss.cookie, json: gi });
+    expect(await count("schedule_changed")).toBe(1);
+    await api.call("PUT", `${base}/classes/${k.data.id}`, { cookie: boss.cookie, json: { ...gi, startTime: "20:00" } });
+    expect(await count("schedule_changed")).toBe(2);
+    await api.call("POST", "/me/notifications/read", { cookie: pupil.cookie });
+    await api.call("DELETE", `${base}/classes/${k.data.id}`, { cookie: boss.cookie });
+    expect(await count("schedule_changed")).toBe(3);
+
+    // A cancelled date that is put back on.
+    const k2 = await api.call("POST", `${base}/classes`, { cookie: boss.cookie, json: gi });
+    const occ = `${base}/classes/${k2.data.id}/occurrences/${lastMonday()}`;
+    await api.call("PUT", occ, { cookie: boss.cookie, json: { cancelled: true } });
+    await api.call("PUT", occ, { cookie: boss.cookie, json: { cancelled: false } });
+    expect((await notes(pupil.cookie))[0]).toMatchObject({ type: "class_restored", targetId: `${a.id}/${lastMonday()}` });
+
+    // Events: moving one tells members, fixing a typo does not; deleting an upcoming one does.
+    const soon = new Date(Date.now() + 10 * 86_400_000).toISOString();
+    const ev = { kind: "seminar", title: "Seminário", startsAt: soon, location: "Tatame" };
+    const e = await api.call("POST", `${base}/events`, { cookie: boss.cookie, json: ev });
+    await api.call("PUT", `${base}/events/${e.data.id}`, { cookie: boss.cookie, json: { ...ev, title: "Seminário de guarda" } });
+    expect(await count("event_changed")).toBe(0);
+    await api.call("PUT", `${base}/events/${e.data.id}`, { cookie: boss.cookie, json: { ...ev, location: "Ginásio" } });
+    expect((await notes(pupil.cookie))[0]).toMatchObject({ type: "event_changed", targetId: `${a.id}/${e.data.id}` });
+    await api.call("DELETE", `${base}/events/${e.data.id}`, { cookie: boss.cookie });
+    expect((await notes(pupil.cookie))[0]).toMatchObject({ type: "event_cancelled", targetId: a.id });
+    const old = await api.call("POST", `${base}/events`, { cookie: boss.cookie, json: { ...ev, kind: "competition", startsAt: new Date(Date.now() - 86_400_000).toISOString() } });
+    await api.call("DELETE", `${base}/events/${old.data.id}`, { cookie: boss.cookie });
+    expect(await count("event_cancelled")).toBe(1);
+
+    // A result recorded by staff reaches the athlete; their own does not.
+    const comp = await api.call("POST", `${base}/events`, { cookie: boss.cookie, json: { ...ev, kind: "competition", startsAt: new Date(Date.now() - 86_400_000).toISOString() } });
+    await api.db.insert(s.eventAttendees).values({ eventId: comp.data.id, userId: pupil.id });
+    await api.call("PUT", `${base}/events/${comp.data.id}/results/${pupil.id}`, { cookie: pupil.cookie, json: { result: "bronze" } });
+    expect(await count("event_result")).toBe(0);
+    await api.call("PUT", `${base}/events/${comp.data.id}/results/${pupil.id}`, { cookie: boss.cookie, json: { result: "gold" } });
+    expect((await notes(pupil.cookie))[0]).toMatchObject({ type: "event_result", targetId: `${a.id}/${comp.data.id}` });
+
+    // Roles.
+    await api.call("PATCH", `${base}/members/${pupil.id}`, { cookie: boss.cookie, json: { role: "coach" } });
+    expect((await notes(pupil.cookie))[0]).toMatchObject({ type: "coach_granted", targetId: a.id });
+    await api.call("PATCH", `${base}/members/${pupil.id}`, { cookie: boss.cookie, json: { role: "student" } });
+    expect((await notes(pupil.cookie))[0]).toMatchObject({ type: "coach_revoked", targetId: a.id });
+
+    // A declined request and a removed student are told; leaving on one's own is silent.
+    await api.call("POST", `${base}/join`, { cookie: asker.cookie });
+    expect((await api.call("DELETE", `${base}/members/${asker.id}`, { cookie: boss.cookie })).status).toBe(204);
+    expect((await notes(asker.cookie))[0]).toMatchObject({ type: "membership_rejected", targetId: a.id });
+    await api.call("POST", `${base}/join`, { cookie: asker.cookie });
+    await api.call("DELETE", `${base}/members/${asker.id}`, { cookie: asker.cookie });
+    expect((await notes(asker.cookie)).length).toBe(1);
+    await api.call("DELETE", `${base}/members/${pupil.id}`, { cookie: boss.cookie });
+    expect((await notes(pupil.cookie))[0]).toMatchObject({ type: "membership_removed", targetId: a.id });
+  });
+});
+
 describe("check-in by the academy QR and lesson topic", () => {
   it("checks members into the class on now; the printed QR can be rotated", async () => {
     // Its own academy, so only this class is on the timetable.

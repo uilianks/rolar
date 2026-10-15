@@ -101,10 +101,17 @@ classesRoutes.get("/academies/:id/classes", async (c) => {
   return c.json(rows);
 });
 
+/** Members hear about timetable changes; one unread notice per academy covers a burst of edits. */
+async function scheduleChanged(c: Parameters<typeof viewer>[0], academyId: string) {
+  const db = c.get("db");
+  await notify(db, "schedule_changed", viewer(c), await activeMemberIds(db, academyId), academyId, { collapse: true });
+}
+
 classesRoutes.post("/academies/:id/classes", async (c) => {
   const a = await staffAcademy(c, c.req.param("id"));
   const input = await body(c, classInput);
   const [k] = await c.get("db").insert(s.academyClasses).values({ ...input, academyId: a.id }).returning(classColumns);
+  await scheduleChanged(c, a.id);
   return c.json(k, 201);
 });
 
@@ -113,6 +120,7 @@ classesRoutes.put("/academies/:id/classes/:classId", async (c) => {
   const k = await findClass(c, a.id, c.req.param("classId"));
   const input = await body(c, classInput);
   const [updated] = await c.get("db").update(s.academyClasses).set(input).where(eq(s.academyClasses.id, k.id)).returning(classColumns);
+  if ((Object.keys(input) as (keyof typeof input)[]).some((key) => input[key] !== k[key])) await scheduleChanged(c, a.id);
   return c.json(updated);
 });
 
@@ -121,6 +129,7 @@ classesRoutes.delete("/academies/:id/classes/:classId", async (c) => {
   const a = await staffAcademy(c, c.req.param("id"));
   const k = await findClass(c, a.id, c.req.param("classId"));
   await c.get("db").update(s.academyClasses).set({ archivedAt: new Date() }).where(eq(s.academyClasses.id, k.id));
+  await scheduleChanged(c, a.id);
   return c.body(null, 204);
 });
 
@@ -146,7 +155,7 @@ classesRoutes.get("/classes/:classId", async (c) => {
   return c.json({ ...k, ...(await occurrence(c, k.id, attendanceInput.shape.date.parse(date))) });
 });
 
-/** Staff cancel one date of a class (holiday) or leave a note; members are told about cancellations. */
+/** Staff cancel one date of a class (holiday) or leave a note; members are told when a date is cancelled or restored. */
 classesRoutes.put("/academies/:id/classes/:classId/occurrences/:date", async (c) => {
   const staffId = viewer(c);
   const a = await staffAcademy(c, c.req.param("id"));
@@ -163,8 +172,8 @@ classesRoutes.put("/academies/:id/classes/:classId/occurrences/:date", async (c)
       target: [s.classOccurrences.classId, s.classOccurrences.date],
       set: { cancelled: input.cancelled, note: input.note ?? null, updatedBy: staffId, updatedAt: new Date() },
     });
-  if (input.cancelled && !before.cancelled) {
-    await notify(db, "class_cancelled", staffId, await activeMemberIds(db, a.id), `${a.id}/${date}`);
+  if (input.cancelled !== before.cancelled) {
+    await notify(db, input.cancelled ? "class_cancelled" : "class_restored", staffId, await activeMemberIds(db, a.id), `${a.id}/${date}`);
   }
   return c.json({ ...input, note: input.note ?? null });
 });
