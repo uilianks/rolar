@@ -50,6 +50,7 @@
     "@types/react-dom": "~19.2.0",
     "@types/ws": "^8.18.2",
     "drizzle-kit": "^0.31.11",
+    "esbuild": "^0.28.2",
     "eslint": "^9.0.0",
     "eslint-config-expo": "~57.0.2",
     "tsx": "^4.23.15",
@@ -72,7 +73,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
     "build:web": "expo export -p web",
-    "vercel-build": "npm run db:migrate && npm run build:web"
+    "vercel-build": "npm run db:migrate && npm run build:web && node scripts/vercel-output.mjs"
   },
   "private": true,
   "engines": {

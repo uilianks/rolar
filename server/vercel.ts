@@ -1,5 +1,6 @@
-// Vercel Function: every /api/* request is rewritten here (vercel.json) and handled by the Hono app.
-import { buildApp } from "../server/main";
+// Vercel Function entry. scripts/vercel-output.mjs bundles it (ESM) into .vercel/output; every /api/*
+// request is routed here and handled by the Hono app.
+import { buildApp } from "./main";
 
 const ready = buildApp();
 const handler = async (request: Request) => (await ready).app.fetch(request);
