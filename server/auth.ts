@@ -49,15 +49,16 @@ export function createAuth(db: Db, env: Env, sendLoginCode: LoginCodeSender = de
       },
     }),
     // Kept in the database: in-memory counters would be per serverless instance. Login codes are
-    // the expensive path (each one is an e-mail), so they get a much tighter budget.
+    // the expensive path (each one is an e-mail), so they get a tighter budget, counted per IP. A whole
+    // class on the gym's Wi-Fi shares one IP, so the budget fits a full class signing in at once.
     rateLimit: {
       enabled: env.NODE_ENV === "production",
       storage: "database",
       window: 60,
       max: 100,
       customRules: {
-        "/email-otp/send-verification-otp": { window: 600, max: 5 },
-        "/sign-in/email-otp": { window: 600, max: 10 },
+        "/email-otp/send-verification-otp": { window: 600, max: 30 },
+        "/sign-in/email-otp": { window: 600, max: 60 },
       },
     },
     trustedOrigins: env.TRUSTED_ORIGINS,
