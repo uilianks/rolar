@@ -49,6 +49,15 @@ export const profileInput = z.object({
 });
 export type ProfileInput = z.infer<typeof profileInput>;
 
+/** Profile photo as a data URL; the app sends a 256×256 JPEG, the API accepts up to ~150 KB. */
+export const AVATAR_MAX_BYTES = 150_000;
+export const avatarInput = z.object({
+  image: z
+    .string()
+    .max(Math.ceil((AVATAR_MAX_BYTES * 4) / 3) + 64, "Imagem grande demais")
+    .regex(/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/, "Envie uma imagem JPEG, PNG ou WebP"),
+});
+
 export const profilePatch = profileInput.omit({ birthYear: true }).partial();
 
 export const sessionInput = z.object({

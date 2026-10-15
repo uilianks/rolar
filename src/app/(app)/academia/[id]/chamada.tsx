@@ -177,7 +177,7 @@ function Sheet({ academyId, classId, sheet }: { academyId: string; classId: stri
               >
                 {on ? <Check size={16} color={c.primaryFg} strokeWidth={2.5} /> : null}
               </View>
-              <Avatar name={m.name} size={32} />
+              <Avatar uri={m.avatarUrl} name={m.name} size={32} />
               <View style={{ flex: 1, gap: 2 }}>
                 <Txt bold>{m.name}</Txt>
                 {ROLE_LABEL[m.role] || m.logged || m.checkedIn ? (

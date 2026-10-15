@@ -13,6 +13,7 @@ import { confirm } from "@/lib/confirm";
 import { useMe } from "@/lib/queries";
 import type { Profile } from "@/lib/types";
 import { BELT_LABEL, BELTS, VISIBILITY_LABEL, VISIBILITIES, type Visibility } from "@/shared/domain";
+import { AvatarEditor } from "@/ui/avatar-editor";
 import { Button, Card, CardHead, Col, ErrorText, Input, ListRow, Row, Segmented, SwitchRow, Tabs, Txt } from "@/ui/kit";
 import { Header, Screen, useWide } from "@/ui/shell";
 import { space, useTheme, type ThemePref } from "@/ui/theme";
@@ -100,6 +101,7 @@ export default function Settings() {
           <Card pad={false}>
             <CardHead title="Perfil" right={saved ? <Txt v="small" color={c.success}>Salvo</Txt> : null} />
             <Col style={{ padding: space.lg }}>
+              <AvatarEditor />
               <Input label="Nome" value={form.name} onChangeText={(t) => set("name", t)} />
               <Input label="Nome de usuário" value={form.username} autoCapitalize="none" onChangeText={(t) => set("username", t.toLowerCase())} />
               <Segmented label="Faixa" value={form.belt} onChange={(v) => set("belt", v)} options={BELTS.map((b) => ({ value: b, label: BELT_LABEL[b] }))} />

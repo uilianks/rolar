@@ -56,7 +56,7 @@ promotionsRoutes.get("/promotions/pending", async (c) => {
       stripes: s.promotions.stripes,
       promotedOn: s.promotions.promotedOn,
       academyId: s.promotions.academyId,
-      user: { id: s.profiles.userId, name: s.profiles.name, username: s.profiles.username },
+      user: { id: s.profiles.userId, name: s.profiles.name, username: s.profiles.username, avatarUrl: s.profiles.avatarUrl },
     })
     .from(s.promotions)
     .innerJoin(s.profiles, eq(s.profiles.userId, s.promotions.userId))

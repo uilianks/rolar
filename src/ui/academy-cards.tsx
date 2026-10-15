@@ -59,7 +59,7 @@ export function NoticeBoard({ academyId, staff }: { academyId: string; staff: bo
       ) : null}
       {(list.data ?? []).map((n) => (
         <ListRow key={n.id}>
-          <Avatar name={n.author?.name ?? "?"} size={28} />
+          <Avatar uri={n.author?.avatarUrl} name={n.author?.name ?? "?"} size={28} />
           <View style={{ flex: 1, gap: 2 }}>
             <Txt>{n.body}</Txt>
             <Txt v="tiny" muted>
@@ -135,7 +135,7 @@ export function MedalTable({ academyId }: { academyId: string }) {
       <CardHead title={`Medalhas ${m.year}`} right={<Txt bold>🥇 {m.total.gold}  🥈 {m.total.silver}  🥉 {m.total.bronze}</Txt>} />
       {m.athletes.slice(0, 8).map((x) => (
         <ListRow key={x.id} onPress={() => router.push(`/u/${x.username}`)}>
-          <Avatar name={x.name} size={28} />
+          <Avatar uri={x.avatarUrl} name={x.name} size={28} />
           <Txt bold style={{ flex: 1 }}>{x.name}</Txt>
           <Txt>
             {x.gold ? `🥇${x.gold} ` : ""}
@@ -158,7 +158,7 @@ export function MissingStudents({ academyId }: { academyId: string }) {
       <CardHead title="Alunos sumidos" right={<Badge tone="accent">{`${list.length} · +${inactive.data!.days} dias`}</Badge>} />
       {list.slice(0, 8).map((m) => (
         <ListRow key={m.id} onPress={() => router.push(`/u/${m.username}`)}>
-          <Avatar name={m.name} size={28} />
+          <Avatar uri={m.avatarUrl} name={m.name} size={28} />
           <View style={{ flex: 1 }}>
             <Txt bold>{m.name}</Txt>
             <Txt v="tiny" muted>{m.lastSeen ? `visto pela última vez ${ago(`${m.lastSeen}T12:00:00`)}` : "nunca registrou presença"}</Txt>

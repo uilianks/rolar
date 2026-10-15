@@ -1,6 +1,7 @@
 // UI primitives mirroring design/styles.css. Screens compose these instead of styling from scratch.
 import type { LucideIcon } from "lucide-react-native";
-import { useRef, type ReactNode } from "react";
+import { Image } from "expo-image";
+import { useRef, useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -18,6 +19,7 @@ import {
   type ViewStyle,
 } from "react-native";
 
+import { API_URL } from "@/lib/auth-client";
 import { initials } from "@/lib/format";
 import type { Belt as BeltName } from "@/shared/domain";
 
@@ -171,22 +173,37 @@ export function Badge({ children, tone = "default" }: { children: ReactNode; ton
   );
 }
 
-export function Avatar({ name, size = 40, square }: { name: string; size?: number; square?: boolean }) {
+/** Photo when there is one (`uri`: the API's /api/avatars path), initials underneath while it loads or if it fails. */
+export function Avatar({ name, size = 40, square, uri }: { name: string; size?: number; square?: boolean; uri?: string | null }) {
   const { c } = useTheme();
+  // Remember which URL failed, so a new photo (new URL) is tried again.
+  const [failedUri, setFailedUri] = useState<string | null>(null);
+  const radiusValue = square ? size * 0.25 : size / 2;
   return (
     <View
       style={{
         width: size,
         height: size,
-        borderRadius: square ? size * 0.25 : size / 2,
+        borderRadius: radiusValue,
         backgroundColor: c.muted,
         borderWidth: 1,
         borderColor: c.border,
         alignItems: "center",
         justifyContent: "center",
+        overflow: "hidden",
       }}
     >
       <Text style={{ color: c.mutedFg, fontWeight: "600", fontSize: size * 0.33 }}>{initials(name) || "?"}</Text>
+      {uri && uri !== failedUri ? (
+        <Image
+          source={uri.startsWith("/") ? `${API_URL}${uri}` : uri}
+          accessibilityLabel={`Foto de ${name}`}
+          style={{ position: "absolute", width: "100%", height: "100%" }}
+          contentFit="cover"
+          transition={120}
+          onError={() => setFailedUri(uri)}
+        />
+      ) : null}
     </View>
   );
 }

@@ -93,7 +93,7 @@ export default function SessionScreen() {
             <Col>
               <Row>
                 <Pressable onPress={() => router.push(`/u/${s.author.username}`)}>
-                  <Avatar name={s.author.name} />
+                  <Avatar uri={s.author.avatarUrl} name={s.author.name} />
                 </Pressable>
                 <View style={{ flex: 1 }}>
                   <Row>
@@ -139,7 +139,7 @@ export default function SessionScreen() {
               ) : null}
               {s.comments.map((cm) => (
                 <ListRow key={cm.id}>
-                  <Avatar name={cm.author.name} size={28} />
+                  <Avatar uri={cm.author.avatarUrl} name={cm.author.name} size={28} />
                   <View style={{ flex: 1 }}>
                     <Txt>
                       <Txt bold>{cm.author.name}</Txt> <Txt v="tiny" muted>{ago(cm.createdAt)}</Txt>

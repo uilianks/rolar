@@ -106,7 +106,7 @@ export function ProfileView({ username }: { username: string }) {
         <Col style={{ padding: space.lg, marginTop: -52 }}>
           <Row style={{ justifyContent: "space-between", alignItems: "flex-end" }}>
             <View style={{ borderWidth: 4, borderColor: c.card, borderRadius: 40 }}>
-              <Avatar name={p.name} size={72} />
+              <Avatar uri={p.avatarUrl} name={p.name} size={72} />
             </View>
             {own ? (
               <Button size="sm" title="Editar perfil" onPress={() => router.push("/config")} />

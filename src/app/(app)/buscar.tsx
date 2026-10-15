@@ -28,7 +28,7 @@ export default function SearchPeople() {
           <Card pad={false}>
             {results.data.map((u) => (
               <ListRow key={u.id} onPress={() => router.push(`/u/${u.username}`)}>
-                <Avatar name={u.name} size={32} />
+                <Avatar uri={u.avatarUrl} name={u.name} size={32} />
                 <View style={{ flex: 1 }}>
                   <Txt bold>{u.name}</Txt>
                   <Txt v="tiny" muted>@{u.username} · {BELT_LABEL[u.belt]}</Txt>

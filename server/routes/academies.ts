@@ -203,6 +203,7 @@ academiesRoutes.get("/academies/:id/members", async (c) => {
       id: s.profiles.userId,
       name: s.profiles.name,
       username: s.profiles.username,
+      avatarUrl: s.profiles.avatarUrl,
       belt: s.profiles.belt,
       stripes: s.profiles.stripes,
       role: s.academyMembers.role,
@@ -280,6 +281,7 @@ academiesRoutes.get("/academies/:id/ranking", async (c) => {
       id: s.profiles.userId,
       name: s.profiles.name,
       username: s.profiles.username,
+      avatarUrl: s.profiles.avatarUrl,
       belt: s.profiles.belt,
       sessions: sql<number>`count(${s.sessions.id})::int`,
     })

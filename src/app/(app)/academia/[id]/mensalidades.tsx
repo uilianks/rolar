@@ -105,7 +105,7 @@ export default function Fees() {
               {shown.map((m) => (
                 <View key={m.id}>
                   <ListRow onPress={() => setOpen(open === m.id ? null : m.id)} highlight={open === m.id}>
-                    <Avatar name={m.name} size={32} />
+                    <Avatar uri={m.avatarUrl} name={m.name} size={32} />
                     <View style={{ flex: 1, gap: 2 }}>
                       <Txt bold>{m.name}</Txt>
                       <Txt v="tiny" muted>

@@ -76,14 +76,14 @@ sessionsRoutes.get("/sessions/:id", async (c) => {
       id: s.comments.id,
       body: s.comments.body,
       createdAt: s.comments.createdAt,
-      author: { id: s.profiles.userId, name: s.profiles.name, username: s.profiles.username, belt: s.profiles.belt },
+      author: { id: s.profiles.userId, name: s.profiles.name, username: s.profiles.username, avatarUrl: s.profiles.avatarUrl, belt: s.profiles.belt },
     })
     .from(s.comments)
     .innerJoin(s.profiles, eq(s.profiles.userId, s.comments.userId))
     .where(and(eq(s.comments.sessionId, card.id), sql`not ${blockedBetween(userId, s.comments.userId)}`))
     .orderBy(asc(s.comments.createdAt));
   const ossBy = await db
-    .select({ id: s.profiles.userId, name: s.profiles.name, username: s.profiles.username })
+    .select({ id: s.profiles.userId, name: s.profiles.name, username: s.profiles.username, avatarUrl: s.profiles.avatarUrl })
     .from(s.reactions)
     .innerJoin(s.profiles, eq(s.profiles.userId, s.reactions.userId))
     .where(eq(s.reactions.sessionId, card.id))

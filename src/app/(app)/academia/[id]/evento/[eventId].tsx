@@ -124,7 +124,7 @@ export default function EventScreen() {
               const canResult = competition && started && (x.id === me?.user.id || staff);
               return (
                 <ListRow key={x.id} onPress={() => router.push(`/u/${x.username}`)}>
-                  <Avatar name={x.name} size={32} />
+                  <Avatar uri={x.avatarUrl} name={x.name} size={32} />
                   <View style={{ flex: 1, gap: 2 }}>
                     <Txt bold>
                       {x.name} {x.result ? MEDAL[x.result] : ""}

@@ -43,6 +43,13 @@
       "when": 1792058973968,
       "tag": "0005_academy_checkin_qr",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792065560313,
+      "tag": "0006_avatars",
+      "breakpoints": true
     }
   ]
 }

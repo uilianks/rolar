@@ -60,7 +60,7 @@ export function SessionCardView({ s }: { s: SessionCard }) {
     <Card pad={false}>
       <Row gap={10} style={{ paddingHorizontal: space.lg, paddingTop: 14 }}>
         <Pressable onPress={() => router.push(`/u/${s.author.username}`)}>
-          <Avatar name={s.author.name} />
+          <Avatar uri={s.author.avatarUrl} name={s.author.name} />
         </Pressable>
         <View style={{ flex: 1 }}>
           <Row>

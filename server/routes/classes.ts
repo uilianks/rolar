@@ -188,6 +188,7 @@ classesRoutes.get("/academies/:id/classes/:classId/attendance", async (c) => {
       id: s.profiles.userId,
       name: s.profiles.name,
       username: s.profiles.username,
+      avatarUrl: s.profiles.avatarUrl,
       belt: s.profiles.belt,
       stripes: s.profiles.stripes,
       role: s.academyMembers.role,

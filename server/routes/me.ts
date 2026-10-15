@@ -3,11 +3,11 @@ import { Hono } from "hono";
 
 import { z } from "zod";
 
-import { profileInput, profilePatch, VISIBILITIES } from "../../src/shared/domain";
+import { AVATAR_MAX_BYTES, avatarInput, profileInput, profilePatch, VISIBILITIES } from "../../src/shared/domain";
 import type { Db } from "../db/client";
 import * as s from "../db/schema";
 import { type AppEnv, body, fail, isUniqueViolation, viewer } from "../http";
-import { effectiveVisibility } from "../policies";
+import { canHaveAvatar, effectiveVisibility } from "../policies";
 import { computeStats, isValidTimeZone } from "../stats";
 
 export const me = new Hono<AppEnv>();
@@ -78,6 +78,43 @@ me.patch("/profile", async (c) => {
   }
 });
 
+// The first bytes of each accepted format: the declared type alone is not trusted.
+const SIGNATURES: Record<string, (b: Buffer) => boolean> = {
+  "image/jpeg": (b) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff,
+  "image/png": (b) => b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])),
+  "image/webp": (b) => b.subarray(0, 4).toString("latin1") === "RIFF" && b.subarray(8, 12).toString("latin1") === "WEBP",
+};
+
+/** Sets the profile photo (the app sends it already cropped and resized). */
+me.put("/avatar", async (c) => {
+  const userId = viewer(c);
+  const db = c.get("db");
+  const { image } = await body(c, avatarInput);
+  const [p] = await db.select({ birthYear: s.profiles.birthYear }).from(s.profiles).where(eq(s.profiles.userId, userId));
+  if (!p) fail(404, "Complete o cadastro primeiro");
+  if (!canHaveAvatar(p.birthYear)) fail(403, "Menores de idade não podem usar foto de perfil");
+  const [, mime, data] = image.match(/^data:(image\/[a-z]+);base64,(.*)$/)!;
+  const bytes = Buffer.from(data, "base64");
+  if (bytes.length > AVATAR_MAX_BYTES) fail(400, "Imagem grande demais");
+  if (!SIGNATURES[mime]?.(bytes)) fail(400, "O arquivo não é uma imagem válida");
+  await db
+    .insert(s.avatars)
+    .values({ userId, mime, data })
+    .onConflictDoUpdate({ target: s.avatars.userId, set: { mime, data, updatedAt: new Date() } });
+  // A new URL on every change, so the photo can be cached forever.
+  const avatarUrl = `/api/avatars/${userId}?v=${Date.now().toString(36)}`;
+  await db.update(s.profiles).set({ avatarUrl }).where(eq(s.profiles.userId, userId));
+  return c.json({ avatarUrl });
+});
+
+me.delete("/avatar", async (c) => {
+  const userId = viewer(c);
+  const db = c.get("db");
+  await db.delete(s.avatars).where(eq(s.avatars.userId, userId));
+  await db.update(s.profiles).set({ avatarUrl: null }).where(eq(s.profiles.userId, userId));
+  return c.body(null, 204);
+});
+
 /** Applies one visibility to every past session (the "edit past privacy" setting). */
 me.post("/sessions/visibility", async (c) => {
   const userId = viewer(c);
@@ -124,7 +161,7 @@ me.get("/notifications", async (c) => {
       targetId: s.notifications.targetId,
       readAt: s.notifications.readAt,
       createdAt: s.notifications.createdAt,
-      actor: { id: s.profiles.userId, name: s.profiles.name, username: s.profiles.username },
+      actor: { id: s.profiles.userId, name: s.profiles.name, username: s.profiles.username, avatarUrl: s.profiles.avatarUrl },
     })
     .from(s.notifications)
     .leftJoin(s.profiles, eq(s.profiles.userId, s.notifications.actorId))
@@ -165,6 +202,7 @@ me.get("/export", async (c) => {
     checkins: await db.select().from(s.checkins).where(eq(s.checkins.userId, userId)),
     events: await db.select().from(s.eventAttendees).where(eq(s.eventAttendees.userId, userId)),
     payments: await db.select().from(s.payments).where(eq(s.payments.userId, userId)),
+    avatar: (await db.select({ mime: s.avatars.mime, data: s.avatars.data }).from(s.avatars).where(eq(s.avatars.userId, userId)))[0] ?? null,
   };
   c.header("Content-Disposition", 'attachment; filename="tatame-dados.json"');
   return c.json(data);

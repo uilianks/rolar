@@ -20,7 +20,7 @@ boardRoutes.get("/academies/:id/announcements", async (c) => {
       body: s.announcements.body,
       pinned: s.announcements.pinned,
       createdAt: s.announcements.createdAt,
-      author: { id: s.profiles.userId, name: s.profiles.name, username: s.profiles.username },
+      author: { id: s.profiles.userId, name: s.profiles.name, username: s.profiles.username, avatarUrl: s.profiles.avatarUrl },
     })
     .from(s.announcements)
     .leftJoin(s.profiles, eq(s.profiles.userId, s.announcements.authorId))
@@ -78,6 +78,7 @@ boardRoutes.get("/academies/:id/inactive", async (c) => {
       id: s.profiles.userId,
       name: s.profiles.name,
       username: s.profiles.username,
+      avatarUrl: s.profiles.avatarUrl,
       belt: s.profiles.belt,
       stripes: s.profiles.stripes,
       joinedAt: s.academyMembers.createdAt,

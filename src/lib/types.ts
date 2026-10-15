@@ -25,6 +25,7 @@ export type Profile = {
   defaultVisibility: Visibility;
   searchable: boolean;
   showInRanking: boolean;
+  avatarUrl: string | null;
 };
 
 export type AcademyRef = { id: string; name: string; slug: string };
@@ -39,7 +40,10 @@ export type Me = {
   admin: { pendingAcademies: number } | null;
 };
 
-export type Author = { id: string; name: string; username: string; belt: Belt; stripes: number };
+/** Anyone shown by name: `avatarUrl` is their photo (API path) or null for initials. */
+export type Person = { id: string; name: string; username: string; avatarUrl?: string | null };
+
+export type Author = Person & { belt: Belt; stripes: number };
 
 export type SessionCard = {
   id: string;
@@ -64,7 +68,7 @@ export type Comment = { id: string; body: string; createdAt: string; author: Omi
 
 export type SessionDetail = SessionCard & {
   comments: Comment[];
-  ossBy: { id: string; name: string; username: string }[];
+  ossBy: Person[];
 };
 
 export type Page<T> = { items: T[]; nextCursor: string | null };
@@ -196,7 +200,7 @@ export type Calendar = {
 export type Medals = {
   year: number;
   total: { gold: number; silver: number; bronze: number };
-  athletes: { id: string; name: string; username: string; belt: Belt; gold: number; silver: number; bronze: number }[];
+  athletes: (Person & { belt: Belt; gold: number; silver: number; bronze: number })[];
 };
 
 export type Announcement = {
@@ -204,7 +208,7 @@ export type Announcement = {
   body: string;
   pinned: boolean;
   createdAt: string;
-  author: { id: string; name: string; username: string } | null;
+  author: Person | null;
 };
 
 export type InactiveMembers = { days: number; members: (Author & { joinedAt: string; lastSeen: string | null })[] };
@@ -237,7 +241,7 @@ export type MyBilling = BillingState & { plan: Plan | null; billingDueDay: numbe
 /** A recent class with no roll call although members logged it. */
 export type PendingRollCall = { class: AcademyClass; date: string; logged: number };
 
-export type RankingRow = { id: string; name: string; username: string; belt: Belt; sessions: number; rank: number };
+export type RankingRow = Person & { belt: Belt; sessions: number; rank: number };
 
 export type Notification = {
   id: string;
@@ -245,7 +249,7 @@ export type Notification = {
   targetId: string | null;
   readAt: string | null;
   createdAt: string;
-  actor: { id: string; name: string; username: string } | null;
+  actor: Person | null;
 };
 
 export type PendingPromotion = {
@@ -254,5 +258,5 @@ export type PendingPromotion = {
   stripes: number;
   promotedOn: string;
   academyId: string;
-  user: { id: string; name: string; username: string };
+  user: Person;
 };

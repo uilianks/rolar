@@ -20,7 +20,7 @@ social.get("/users", async (c) => {
   const pattern = `%${q.replace(/[%_\\]/g, "\\$&")}%`;
   const rows = await c
     .get("db")
-    .select({ id: s.profiles.userId, name: s.profiles.name, username: s.profiles.username, belt: s.profiles.belt, stripes: s.profiles.stripes })
+    .select({ id: s.profiles.userId, name: s.profiles.name, username: s.profiles.username, avatarUrl: s.profiles.avatarUrl, belt: s.profiles.belt, stripes: s.profiles.stripes })
     .from(s.profiles)
     .where(
       and(
@@ -35,6 +35,20 @@ social.get("/users", async (c) => {
   return c.json(rows);
 });
 
+/**
+ * Profile photos are public like the name (as in any social app), so <img> tags and caches need no
+ * cookies. Minors never have one (canHaveAvatar), and the URL is versioned, so it is cached forever.
+ */
+social.get("/avatars/:userId", async (c) => {
+  const [a] = await c.get("db").select({ mime: s.avatars.mime, data: s.avatars.data }).from(s.avatars).where(eq(s.avatars.userId, c.req.param("userId")));
+  if (!a) fail(404, "Sem foto");
+  return c.body(Buffer.from(a.data, "base64"), 200, {
+    "Content-Type": a.mime,
+    "Cache-Control": "public, max-age=31536000, immutable",
+    "X-Content-Type-Options": "nosniff",
+  });
+});
+
 social.get("/users/:username", async (c) => {
   const userId = viewer(c);
   const db = c.get("db");
@@ -43,6 +57,7 @@ social.get("/users/:username", async (c) => {
       id: s.profiles.userId,
       name: s.profiles.name,
       username: s.profiles.username,
+      avatarUrl: s.profiles.avatarUrl,
       belt: s.profiles.belt,
       stripes: s.profiles.stripes,
       startedAt: s.profiles.startedAt,
@@ -122,7 +137,7 @@ social.get("/blocks", async (c) => {
   const userId = viewer(c);
   const rows = await c
     .get("db")
-    .select({ id: s.profiles.userId, name: s.profiles.name, username: s.profiles.username })
+    .select({ id: s.profiles.userId, name: s.profiles.name, username: s.profiles.username, avatarUrl: s.profiles.avatarUrl })
     .from(s.blocks)
     .innerJoin(s.profiles, eq(s.profiles.userId, s.blocks.blockedId))
     .where(eq(s.blocks.blockerId, userId));

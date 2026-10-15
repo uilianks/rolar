@@ -138,4 +138,10 @@ Exigida pelo RGPD e pelas lojas. Apagar a conta remove em cascata:
     (`canManageBilling`), não os professores. Cada aluno vê só a própria situação. Lembrete no app: no
     máximo um por dia. CSV do mês com `;` e vírgula decimal para o Excel em Portugal;
   - pagamentos, presenças, check-ins e inscrições em eventos entram na exportação de dados (RGPD).
+- **Foto de perfil**: o app recorta em quadrado e reduz para 256×256 JPEG (~5–20 KB) antes de enviar;
+  a API confere o tipo pelos primeiros bytes (JPEG/PNG/WebP, até 150 KB) e guarda em `avatars` (base64
+  no Postgres, sem serviço de arquivos por enquanto). `profiles.avatar_url` é um caminho versionado
+  (`/api/avatars/:id?v=…`), servido como público e com cache "imutável". **Menores não podem ter foto**
+  (`canHaveAvatar`). Fotos de treino continuam na fase 2, já em armazenamento de objetos (R2), e as
+  fotos de perfil migram junto.
 - **Peso**: não é coletado. Não havia uso para ele no MVP, e o RGPD manda minimizar os dados.

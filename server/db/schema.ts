@@ -123,10 +123,23 @@ export const profiles = pgTable(
     defaultVisibility: visibilityEnum("default_visibility").notNull().default("followers"),
     searchable: boolean("searchable").notNull().default(true),
     showInRanking: boolean("show_in_ranking").notNull().default(true),
+    /** Versioned path of the profile photo (`/api/avatars/:userId?v=…`), or null for initials. */
+    avatarUrl: text("avatar_url"),
     createdAt: createdAt(),
   },
   (t) => [uniqueIndex("profiles_username_idx").on(t.username)],
 );
+
+/**
+ * Profile photos, small enough to live in Postgres for now (256×256 JPEG, ~20 KB): no storage service
+ * to run or pay for. Move to object storage together with session photos (phase 2).
+ */
+export const avatars = pgTable("avatars", {
+  userId: text("user_id").primaryKey().references(() => user.id, { onDelete: "cascade" }),
+  mime: text("mime").notNull(),
+  data: text("data").notNull(), // base64
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
 
 export const academies = pgTable(
   "academies",

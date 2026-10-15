@@ -61,6 +61,11 @@ export async function membership(db: Db, academyId: string, userId: string) {
   return m ?? null;
 }
 
+/** Minors keep initials: a photo would make them identifiable to strangers (their profile is not private by URL). */
+export function canHaveAvatar(birthYear: number) {
+  return !isMinor(birthYear);
+}
+
 export function isActiveStaff(m: { role: string; status: string } | null) {
   return !!m && m.status === "active" && (m.role === "owner" || m.role === "coach");
 }

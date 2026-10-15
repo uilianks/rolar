@@ -26,6 +26,7 @@ export function sessionCards(db: Db, viewerId: string) {
         id: profiles.userId,
         name: profiles.name,
         username: profiles.username,
+        avatarUrl: profiles.avatarUrl,
         belt: profiles.belt,
         stripes: profiles.stripes,
       },

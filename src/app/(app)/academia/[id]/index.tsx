@@ -180,7 +180,7 @@ export default function AcademyScreen() {
                   {(ranking.data ?? []).slice(0, 10).map((r) => (
                     <ListRow key={r.id} highlight={r.id === me?.user.id} onPress={() => router.push(`/u/${r.username}`)}>
                       <Txt bold style={{ width: 20 }}>{r.rank}</Txt>
-                      <Avatar name={r.name} size={28} />
+                      <Avatar uri={r.avatarUrl} name={r.name} size={28} />
                       <View style={{ flex: 1 }}>
                         <Txt bold>{r.id === me?.user.id ? "Você" : r.name}</Txt>
                         <Txt v="tiny" muted>{BELT_LABEL[r.belt]}</Txt>
@@ -199,7 +199,7 @@ export default function AcademyScreen() {
                     <CardHead title="Pedidos pendentes" right={<Badge tone="accent">professores</Badge>} />
                     {pending.map((m) => (
                       <ListRow key={m.id}>
-                        <Avatar name={m.name} size={28} />
+                        <Avatar uri={m.avatarUrl} name={m.name} size={28} />
                         <View style={{ flex: 1 }}>
                           <Txt bold>{m.name}</Txt>
                           <Txt v="tiny" muted>quer entrar na academia · {BELT_LABEL[m.belt]}</Txt>
@@ -210,7 +210,7 @@ export default function AcademyScreen() {
                     ))}
                     {academyPromotions.map((p) => (
                       <ListRow key={p.id}>
-                        <Avatar name={p.user.name} size={28} />
+                        <Avatar uri={p.user.avatarUrl} name={p.user.name} size={28} />
                         <View style={{ flex: 1, gap: 4 }}>
                           <Txt bold>{p.user.name}</Txt>
                           <Row>
@@ -229,7 +229,7 @@ export default function AcademyScreen() {
               <Card pad={false}>
                 {active.map((m) => (
                   <ListRow key={m.id} onPress={() => router.push(`/u/${m.username}`)}>
-                    <Avatar name={m.name} size={28} />
+                    <Avatar uri={m.avatarUrl} name={m.name} size={28} />
                     <View style={{ flex: 1 }}>
                       <Txt bold>{m.name}</Txt>
                       <Txt v="tiny" muted>

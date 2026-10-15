@@ -75,7 +75,7 @@ export default function Notifications() {
           <Card pad={false}>
             {list.data.map((n) => (
               <ListRow key={n.id} onPress={() => open(n)} highlight={!n.readAt}>
-                <Avatar name={n.actor?.name ?? "?"} size={32} />
+                <Avatar uri={n.actor?.avatarUrl} name={n.actor?.name ?? "?"} size={32} />
                 <View style={{ flex: 1 }}>
                   <Txt>
                     <Txt bold>{n.actor?.name ?? "Alguém"}</Txt> {TEXT[n.type] ?? n.type}
