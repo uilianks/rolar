@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
 
@@ -29,7 +29,25 @@ export default function SignIn() {
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"email" | "code">("email");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Google sends people back here with ?error=… when the sign-in did not go through.
+  const { error: googleError } = useLocalSearchParams<{ error?: string }>();
+  const [error, setError] = useState<string | null>(googleError ? "Não foi possível entrar com o Google. Tente de novo ou use o código por e-mail." : null);
+
+  /**
+   * Web: come back to this site (in development the API is on another port, and a relative path would
+   * land there). Android: a path, which the Better Auth Expo plugin turns into the app's deep link and
+   * uses to bring the session cookie back.
+   */
+  const returnTo = (path: string) => (Platform.OS === "web" ? `${window.location.origin}${path}` : path);
+
+  async function google() {
+    setBusy(true);
+    setError(null);
+    const { error } = await authClient.signIn.social({ provider: "google", callbackURL: returnTo("/"), errorCallbackURL: returnTo("/entrar") });
+    setBusy(false);
+    if (error) return setError(authMessage(error, "Não foi possível entrar com o Google"));
+    await qc.invalidateQueries();
+  }
 
   async function sendCode() {
     setBusy(true);
@@ -63,14 +81,15 @@ export default function SignIn() {
               <>
                 <Col gap={4} style={{ alignItems: "center" }}>
                   <Txt v="h1" style={{ textAlign: "center" }}>Entrar ou criar conta</Txt>
-                  <Txt muted style={{ textAlign: "center" }}>Sem senha: enviamos um código para o seu e-mail.</Txt>
+                  <Txt muted style={{ textAlign: "center" }}>Sem senha: {GOOGLE_ENABLED ? "use o Google ou receba" : "enviamos"} um código no seu e-mail.</Txt>
                 </Col>
                 {GOOGLE_ENABLED ? (
                   <>
                     <Button
                       size="lg"
                       title="Continuar com Google"
-                      onPress={() => authClient.signIn.social({ provider: "google", callbackURL: "/" })}
+                      loading={busy}
+                      onPress={google}
                     />
                     <Txt v="small" muted style={{ textAlign: "center" }}>ou</Txt>
                   </>
