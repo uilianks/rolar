@@ -21,7 +21,8 @@ await build({
   target: "node22",
   sourcemap: "linked",
   // Production uses Neon; the PGlite driver is development-only. ws's native speed-ups are optional.
-  external: ["@electric-sql/pglite", "@electric-sql/pglite/*", "bufferutil", "utf-8-validate"],
+  // drizzle-orm/pglite stays external too: bundled, its static import of PGlite would load at start-up.
+  external: ["@electric-sql/pglite", "@electric-sql/pglite/*", "drizzle-orm/pglite", "drizzle-orm/pglite/*", "bufferutil", "utf-8-validate"],
   // Some bundled CommonJS dependencies call require() for Node built-ins.
   banner: { js: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);" },
   logLevel: "warning",

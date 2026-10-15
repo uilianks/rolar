@@ -23,4 +23,4 @@ jobs:
       - name: Web build
         run: npx expo export -p web
       - name: Vercel bundle loads (ESM) and answers
-        run: node scripts/vercel-output.mjs && DATABASE_URL= node scripts/smoke-api.mjs
+        run: node scripts/vercel-output.mjs && node scripts/smoke-api.mjs
