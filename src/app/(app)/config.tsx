@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import ArrowLeft from "lucide-react-native/icons/arrow-left";
 import Download from "lucide-react-native/icons/download";
+import Heart from "lucide-react-native/icons/heart";
 import LogOut from "lucide-react-native/icons/log-out";
 import Trash2 from "lucide-react-native/icons/trash";
 import { useState } from "react";
@@ -148,6 +149,18 @@ export default function Settings() {
             </View>
           </ListRow>
         </Card>
+
+        {/* Wide screens show this in the sidebar; phones have no sidebar, so it lives here. */}
+        {wide ? null : (
+          <Card style={{ gap: 8 }}>
+            <Row>
+              <Heart size={16} color={c.fg} />
+              <Txt bold>Apoie o projeto</Txt>
+            </Row>
+            <Txt v="small" muted>Sem anúncios e sem paywall. Mantido por doações.</Txt>
+            <Button size="sm" title="Apoiar" onPress={() => router.push("/apoie")} />
+          </Card>
+        )}
 
         <Card pad={false}>
           <CardHead title="Seus dados" />
