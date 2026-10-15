@@ -38,5 +38,9 @@ export function loadEnv(source: Record<string, string | undefined> = process.env
   if (env.NODE_ENV === "production" && env.BETTER_AUTH_SECRET.startsWith("dev-secret")) {
     throw new Error("BETTER_AUTH_SECRET must be set in production");
   }
+  // Without it the API would quietly fall back to a local PGlite folder (lost on every deploy).
+  if (source.VERCEL_ENV && !env.DATABASE_URL.startsWith("postgres")) {
+    throw new Error("DATABASE_URL must point to Postgres (Neon) on Vercel");
+  }
   return env;
 }
