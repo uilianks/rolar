@@ -120,6 +120,13 @@ design/             wireframes HTML aprovados
   sozinho. O código de 6 dígitos usa o mesmo fluxo na web e no Android, sem deep link.
 - **Web como SPA** (`web.output: "single"`) e rewrite para `index.html` na Vercel. Pré-renderizar
   páginas públicas (SEO) fica para quando houver páginas públicas de verdade.
+- **Instalável (PWA)**: `public/manifest.json` (`display: standalone`, ícones em `public/icons/`,
+  gerados de `assets/images/icon.png`) ligado em `public/index.html`. Abre em janela própria, sem a
+  barra do navegador. Sem service worker de propósito: um cache agressivo prende o app numa versão
+  antiga, e o app precisa de rede para salvar de qualquer forma. Se vier o modo offline, entra aqui.
+  No celular (web), a tela de login mostra como instalar (`src/ui/install-hint.tsx`): botão nativo no
+  Chrome Android quando vem o `beforeinstallprompt`, passos do menu ⋮ nos outros e passos do Safari no
+  iPhone. Some quando o app já abre da tela inicial ou depois de "Agora não".
 - **Técnicas como lista de texto livre** no treino (`techniques text[]`). O catálogo estruturado e
   os rolas detalhados continuam na fase 2.
 - **Menores só podem ser seguidos por membros ativos de uma academia em comum.** Isso soma à regra de

@@ -5,6 +5,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
 
 import { authClient } from "@/lib/auth-client";
 import { Button, Card, Col, ErrorText, Input, Row, Txt } from "@/ui/kit";
+import { InstallHint } from "@/ui/install-hint";
 import { BrandMark } from "@/ui/shell";
 import { space, useTheme } from "@/ui/theme";
 
@@ -185,6 +186,7 @@ export default function SignIn() {
               </>
             )}
           </Card>
+          {step === "email" ? <InstallHint /> : null}
           <View />
         </Col>
       </ScrollView>
