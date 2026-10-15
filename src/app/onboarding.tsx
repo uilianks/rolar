@@ -10,6 +10,7 @@ import { useMe } from "@/lib/queries";
 import type { Academy } from "@/lib/types";
 import { beltOptions, profileInput, VISIBILITIES, type Belt as BeltName, type Visibility } from "@/shared/domain";
 import { validationMessage } from "@/shared/i18n";
+import { GoalPicker } from "@/ui/goal-picker";
 import { Avatar, Belt, Button, Card, Col, ErrorText, Input, ListRow, Row, Segmented, SwitchRow, Txt } from "@/ui/kit";
 import { radius, space, useTheme } from "@/ui/theme";
 
@@ -199,12 +200,7 @@ export default function Onboarding() {
             <Card pad={false}>
               <SwitchRow title={t.onboarding.searchable} hint={t.onboarding.searchableHint} value={searchable} onChange={setSearchable} />
             </Card>
-            <Segmented
-              label={t.onboarding.weeklyGoal}
-              value={weeklyGoal}
-              onChange={setWeeklyGoal}
-              options={[2, 3, 4, 5, 0].map((n) => ({ value: n, label: n ? String(n) : t.onboarding.noGoal }))}
-            />
+            <GoalPicker value={weeklyGoal} onChange={setWeeklyGoal} />
           </Col>
         )}
 

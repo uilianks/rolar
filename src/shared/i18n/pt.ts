@@ -262,6 +262,8 @@ export const pt = {
     searchableHint: "Outras pessoas podem te encontrar",
     weeklyGoal: "Meta de treinos por semana",
     noGoal: "Sem meta",
+    customGoal: "Outra",
+    customGoalHint: (max: number) => `Digite quantos treinos por semana, de 1 a ${max}`,
     start: "Começar a treinar",
     next: "Continuar",
   },

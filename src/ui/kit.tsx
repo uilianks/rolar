@@ -288,7 +288,8 @@ export function Segmented<T extends string | number>({
   onChange,
   label,
 }: {
-  options: { value: T; label: string; icon?: LucideIcon }[];
+  /** `round`: a circle for a short label, such as a number. */
+  options: { value: T; label: string; icon?: LucideIcon; round?: boolean }[];
   value: T;
   onChange: (v: T) => void;
   label?: string;
@@ -308,8 +309,10 @@ export function Segmented<T extends string | number>({
               accessibilityState={{ selected: on }}
               onPress={() => onChange(o.value)}
               style={{
-                height: 34,
-                paddingHorizontal: 12,
+                height: o.round ? 40 : 34,
+                width: o.round ? 40 : undefined,
+                justifyContent: "center",
+                paddingHorizontal: o.round ? 0 : 12,
                 borderRadius: radius.full,
                 borderWidth: 1,
                 borderColor: on ? c.primary : c.border,
@@ -320,7 +323,7 @@ export function Segmented<T extends string | number>({
               }}
             >
               {Icon ? <Icon size={15} color={on ? c.primaryFg : c.fg} /> : null}
-              <Text style={{ color: on ? c.primaryFg : c.fg, fontWeight: "500", fontSize: 13 }}>{o.label}</Text>
+              <Text style={{ color: on ? c.primaryFg : c.fg, fontWeight: "500", fontSize: o.round ? 15 : 13 }}>{o.label}</Text>
             </Pressable>
           );
         })}

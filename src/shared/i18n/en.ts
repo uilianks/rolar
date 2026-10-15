@@ -264,6 +264,8 @@ export const en: Messages = {
     searchableHint: "Other people can find you",
     weeklyGoal: "Weekly session goal",
     noGoal: "No goal",
+    customGoal: "Other",
+    customGoalHint: (max: number) => `Type how many sessions per week, from 1 to ${max}`,
     start: "Start training",
     next: "Continue",
   },

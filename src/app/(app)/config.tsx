@@ -17,6 +17,7 @@ import type { Profile } from "@/lib/types";
 import { beltOptions, VISIBILITIES, type Visibility } from "@/shared/domain";
 import { LOCALES } from "@/shared/i18n";
 import { AvatarEditor } from "@/ui/avatar-editor";
+import { GoalPicker } from "@/ui/goal-picker";
 import { Button, Card, CardHead, Col, ErrorText, Input, ListRow, Row, Segmented, SwitchRow, Tabs, Txt } from "@/ui/kit";
 import { Header, Screen, useWide } from "@/ui/shell";
 import { space, useTheme, type ThemePref } from "@/ui/theme";
@@ -111,7 +112,7 @@ export default function Settings() {
               <Segmented label={t.profile.belt} value={form.belt} onChange={(v) => set("belt", v)} options={beltOptions(me?.profile?.birthYear, form.belt).map((b) => ({ value: b, label: t.belt[b] }))} />
               <Segmented label={t.profile.stripes} value={form.stripes} onChange={(v) => set("stripes", v)} options={[0, 1, 2, 3, 4].map((n) => ({ value: n, label: String(n) }))} />
               <Input label={t.onboarding.startedAt} value={form.startedAt ?? ""} onChangeText={(v) => set("startedAt", v)} />
-              <Segmented label={t.onboarding.weeklyGoal} value={form.weeklyGoal} onChange={(v) => set("weeklyGoal", v)} options={[0, 2, 3, 4, 5, 6].map((n) => ({ value: n, label: n ? String(n) : t.onboarding.noGoal }))} />
+              <GoalPicker value={form.weeklyGoal} onChange={(v) => set("weeklyGoal", v)} />
               <ErrorText error={error} />
               <Button kind="primary" title={t.settings.saveProfile} onPress={() => save()} />
             </Col>

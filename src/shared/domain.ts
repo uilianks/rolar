@@ -52,6 +52,9 @@ export const usernameSchema = z
   .toLowerCase()
   .regex(/^[a-z0-9_.]{3,30}$/, v("username"));
 
+/** Sessions per week a goal can ask for; 0 means no goal. */
+export const WEEKLY_GOAL_MAX = 14;
+
 export const profileInput = z.object({
   username: usernameSchema,
   name: z.string().trim().min(1).max(80),
@@ -62,7 +65,7 @@ export const profileInput = z.object({
   belt: z.enum(BELTS),
   stripes: z.number().int().min(0).max(6),
   startedAt: z.string().regex(/^\d{4}-\d{2}$/).nullable().optional(),
-  weeklyGoal: z.number().int().min(0).max(14).default(3),
+  weeklyGoal: z.number().int().min(0).max(WEEKLY_GOAL_MAX).default(3),
   defaultVisibility: z.enum(VISIBILITIES).default("followers"),
   searchable: z.boolean().default(true),
   showInRanking: z.boolean().default(true),
