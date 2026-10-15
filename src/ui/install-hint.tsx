@@ -8,6 +8,8 @@ import type { LucideIcon } from "lucide-react-native";
 import { useState, useSyncExternalStore } from "react";
 import { Platform, Pressable, View } from "react-native";
 
+import { useT } from "@/lib/i18n";
+
 import { Button, Card, Col, Row, Txt } from "./kit";
 import { radius, space, useTheme } from "./theme";
 
@@ -65,6 +67,7 @@ function wasDismissed() {
 
 export function InstallHint() {
   const { c } = useTheme();
+  const t = useT();
   const [device] = useState(detectDevice);
   const [hidden, setHidden] = useState(wasDismissed);
   const prompt = useSyncExternalStore(subscribe, () => installPrompt, () => null);
@@ -97,34 +100,34 @@ export function InstallHint() {
           <Smartphone size={20} color={c.fg} />
         </View>
         <Col gap={2} style={{ flex: 1 }}>
-          <Txt v="h3">Instale o rolar no celular</Txt>
-          <Txt v="small" muted>Abre em tela cheia, como um app, direto do ícone na tela inicial.</Txt>
+          <Txt v="h3">{t.install.title}</Txt>
+          <Txt v="small" muted>{t.install.text}</Txt>
         </Col>
-        <Pressable onPress={dismiss} accessibilityRole="button" accessibilityLabel="Agora não" hitSlop={10}>
+        <Pressable onPress={dismiss} accessibilityRole="button" accessibilityLabel={t.install.notNow} hitSlop={10}>
           <X size={18} color={c.mutedFg} />
         </Pressable>
       </Row>
 
       {device === "android" ? (
         prompt ? (
-          <Button kind="primary" icon={Download} title="Instalar app" onPress={install} />
+          <Button kind="primary" icon={Download} title={t.install.install} onPress={install} />
         ) : (
           <Steps
             label="Android"
             steps={[
-              { icon: EllipsisVertical, text: "No Chrome, toque no menu ⋮ (canto de cima)" },
-              { icon: Download, text: "Toque em “Instalar app” ou “Adicionar à tela inicial”" },
+              { icon: EllipsisVertical, text: t.install.android1 },
+              { icon: Download, text: t.install.android2 },
             ]}
           />
         )
       ) : (
         <Steps
-          label="iPhone e iPad"
+          label={t.install.ios}
           steps={[
-            { icon: Share, text: "No Safari, toque em Compartilhar (o quadrado com a seta)" },
-            { icon: SquarePlus, text: "Role e toque em “Adicionar à Tela de Início”" },
+            { icon: Share, text: t.install.ios1 },
+            { icon: SquarePlus, text: t.install.ios2 },
           ]}
-          note="Não aparece? Abra rolar.app no Safari."
+          note={t.install.iosNote}
         />
       )}
     </Card>

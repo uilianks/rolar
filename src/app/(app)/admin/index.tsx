@@ -12,6 +12,7 @@ import type { LucideIcon } from "lucide-react-native";
 import { View } from "react-native";
 
 import { api } from "@/lib/api";
+import { useT } from "@/lib/i18n";
 import { useMe } from "@/lib/queries";
 import type { AdminStats } from "@/lib/types";
 import { Badge, Bars, Button, Card, CardHead, Col, ErrorText, Kpi, ListRow, Loading, Row, Txt } from "@/ui/kit";
@@ -37,19 +38,20 @@ const shortDate = (ymd: string) => `${ymd.slice(8, 10)}/${ymd.slice(5, 7)}`;
 
 /** Admin home: what waits for a decision, and how the app is doing. */
 export default function AdminHome() {
+  const t = useT();
   const queue = useMe().data?.admin;
   const stats = useQuery({ queryKey: ["admin", "stats"], queryFn: () => api<AdminStats>("/admin/stats") });
   const st = stats.data;
 
   return (
     <>
-      <Header title="Admin" right={<Button kind="ghost" size="sm" title="Atualizar" onPress={() => stats.refetch()} />} />
+      <Header title={t.nav.admin} right={<Button kind="ghost" size="sm" title={t.notifications.refresh} onPress={() => stats.refetch()} />} />
       <Screen onRefresh={() => stats.refetch()} refreshing={stats.isRefetching}>
         <Card pad={false}>
-          <Section href="/admin/academias" icon={Building} title="Academias" text="Verificar cadastros, corrigir dados, transferir" count={queue?.pendingAcademies} />
-          <Section href="/admin/denuncias" icon={Flag} title="Denúncias" text="Perfis, treinos e comentários denunciados" count={queue?.openReports} />
-          <Section href="/admin/usuarios" icon={Users} title="Contas" text="Buscar, suspender, remover foto" />
-          <Section href="/admin/flags" icon={ToggleRight} title="Feature flags" text="Ligar funções para todos ou para testadores" />
+          <Section href="/admin/academias" icon={Building} title={t.admin.academies} text={t.admin.academiesText} count={queue?.pendingAcademies} />
+          <Section href="/admin/denuncias" icon={Flag} title={t.admin.reportsTitle} text={t.admin.reportsText} count={queue?.openReports} />
+          <Section href="/admin/usuarios" icon={Users} title={t.admin.accounts} text={t.admin.accountsText} />
+          <Section href="/admin/flags" icon={ToggleRight} title={t.admin.flags} text={t.admin.flagsText} />
         </Card>
 
         {stats.isPending ? <Loading /> : null}
@@ -57,21 +59,21 @@ export default function AdminHome() {
         {st ? (
           <>
             <Row wrap gap={space.md}>
-              <Kpi icon={Users} label="Contas" value={String(st.users)} sub={`+${st.users30d} em 30 dias`} />
-              <Kpi icon={UserPlus} label="Novas na semana" value={String(st.users7d)} />
-              <Kpi icon={Activity} label="Ativos (7 / 30 dias)" value={`${st.active7d} / ${st.active30d}`} sub="registraram treino" />
-              <Kpi icon={CalendarCheck} label="Treinos na semana" value={String(st.sessions7d)} sub={`${st.sessions30d} em 30 dias`} />
-              <Kpi icon={Building} label="Academias aprovadas" value={String(st.academies)} sub={st.suspended ? `${st.suspended} conta(s) suspensa(s)` : undefined} />
+              <Kpi icon={Users} label={t.admin.accounts} value={String(st.users)} sub={t.admin.in30d(`+${st.users30d}`)} />
+              <Kpi icon={UserPlus} label={t.admin.newThisWeek} value={String(st.users7d)} />
+              <Kpi icon={Activity} label={t.admin.active} value={`${st.active7d} / ${st.active30d}`} sub={t.admin.activeSub} />
+              <Kpi icon={CalendarCheck} label={t.admin.sessionsWeek} value={String(st.sessions7d)} sub={t.admin.in30d(String(st.sessions30d))} />
+              <Kpi icon={Building} label={t.admin.approvedAcademies} value={String(st.academies)} sub={st.suspended ? t.admin.suspendedAccounts(st.suspended) : undefined} />
             </Row>
             <Row wrap gap={space.md} style={{ alignItems: "stretch" }}>
               <Card pad={false} style={{ flexGrow: 1, flexBasis: 320 }}>
-                <CardHead title="Contas novas por semana" />
+                <CardHead title={t.admin.newPerWeek} />
                 <Col style={{ padding: space.lg }}>
                   <Bars data={st.weeks.map((w) => ({ label: shortDate(w.week), value: w.signups }))} highlightLast />
                 </Col>
               </Card>
               <Card pad={false} style={{ flexGrow: 1, flexBasis: 320 }}>
-                <CardHead title="Treinos registrados por semana" />
+                <CardHead title={t.admin.sessionsPerWeek} />
                 <Col style={{ padding: space.lg }}>
                   <Bars data={st.weeks.map((w) => ({ label: shortDate(w.week), value: w.sessions }))} highlightLast />
                 </Col>

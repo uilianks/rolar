@@ -43,7 +43,7 @@ social.get("/users", async (c) => {
  */
 social.get("/avatars/:userId", async (c) => {
   const a = await readAvatar(c.get("db"), c.req.param("userId"));
-  if (!a) fail(404, "Sem foto");
+  if (!a) fail(404, "noPhoto");
   return c.body(a.bytes, 200, {
     "Content-Type": a.mime,
     "Cache-Control": "public, max-age=31536000, immutable",
@@ -74,7 +74,7 @@ social.get("/users/:username", async (c) => {
     .leftJoin(s.academies, eq(s.academies.id, s.profiles.homeAcademyId))
     .where(eq(s.profiles.username, c.req.param("username").toLowerCase()));
   // Admins still open a suspended profile, to review it.
-  if (!p || p.blocked || (p.suspended && !c.get("isAdmin"))) fail(404, "Perfil não encontrado");
+  if (!p || p.blocked || (p.suspended && !c.get("isAdmin"))) fail(404, "profileNotFound");
   const promotions = await db
     .select()
     .from(s.promotions)
@@ -93,7 +93,7 @@ social.get("/users/:username/sessions", async (c) => {
   const userId = viewer(c);
   const db = c.get("db");
   const [p] = await db.select({ id: s.profiles.userId }).from(s.profiles).where(eq(s.profiles.username, c.req.param("username").toLowerCase()));
-  if (!p) fail(404, "Perfil não encontrado");
+  if (!p) fail(404, "profileNotFound");
   return c.json(await pageOfCards(db, userId, eq(s.sessions.userId, p.id), c.req.query("cursor")));
 });
 
@@ -101,7 +101,7 @@ social.post("/users/:id/follow", async (c) => {
   const userId = viewer(c);
   const db = c.get("db");
   const target = c.req.param("id");
-  if (!(await canFollow(db, userId, target))) fail(403, "Não é possível seguir este perfil");
+  if (!(await canFollow(db, userId, target))) fail(403, "cannotFollow");
   const inserted = await db.insert(s.follows).values({ followerId: userId, followeeId: target }).onConflictDoNothing().returning();
   if (inserted.length) await notify(db, "follow", userId, [target], userId);
   return c.body(null, 204);
@@ -117,7 +117,7 @@ social.delete("/users/:id/follow", async (c) => {
 social.post("/users/:id/block", async (c) => {
   const userId = viewer(c);
   const target = c.req.param("id");
-  if (target === userId) fail(400, "Não é possível bloquear a si mesmo");
+  if (target === userId) fail(400, "cannotBlockSelf");
   const db = c.get("db");
   await db.insert(s.blocks).values({ blockerId: userId, blockedId: target }).onConflictDoNothing();
   await db

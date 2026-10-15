@@ -4,6 +4,8 @@ import { useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
 
 import { authClient } from "@/lib/auth-client";
+import { msg, useLocale } from "@/lib/i18n";
+import { LOCALES } from "@/shared/i18n";
 import { Button, Card, Col, ErrorText, Input, Row, Txt } from "@/ui/kit";
 import { InstallHint } from "@/ui/install-hint";
 import { BrandMark } from "@/ui/shell";
@@ -43,22 +45,17 @@ function savePending(email: string | null) {
 
 const GOOGLE_ENABLED = process.env.EXPO_PUBLIC_GOOGLE_LOGIN === "1";
 
-const AUTH_ERRORS: Record<string, string> = {
-  INVALID_OTP: "Código inválido. Confira os 6 dígitos.",
-  OTP_EXPIRED: "O código expirou. Peça um novo.",
-  TOO_MANY_ATTEMPTS: "Muitas tentativas. Peça um novo código.",
-  INVALID_EMAIL: "E-mail inválido.",
-};
-
 function authMessage(error: { code?: string; message?: string; status?: number }, fallback: string) {
-  if (error.status === 429) return "Muitas tentativas. Aguarde um pouco e tente de novo.";
-  // The server's message carries the moderator's reason (server/auth.ts).
-  if (error.code === "ACCOUNT_SUSPENDED" && error.message) return `${error.message}. Se discordar, escreva para o contacto nos termos de uso.`;
-  return (error.code && AUTH_ERRORS[error.code]) || fallback;
+  const t = msg().signIn;
+  if (error.status === 429) return t.rateLimited;
+  // The server's message is the moderator's reason (server/auth.ts).
+  if (error.code === "ACCOUNT_SUSPENDED") return t.suspended(error.message ?? "");
+  return (error.code && (t.errors as Record<string, string>)[error.code]) || fallback;
 }
 
 export default function SignIn() {
   const { c } = useTheme();
+  const { t, locale, setPref } = useLocale();
   const qc = useQueryClient();
   const [pending] = useState(loadPending);
   const [email, setEmail] = useState(pending ?? "");
@@ -67,7 +64,7 @@ export default function SignIn() {
   const [busy, setBusy] = useState(false);
   // Google sends people back here with ?error=… when the sign-in did not go through.
   const { error: googleError } = useLocalSearchParams<{ error?: string }>();
-  const [error, setError] = useState<string | null>(googleError ? "Não foi possível entrar com o Google. Tente de novo ou use o código por e-mail." : null);
+  const [error, setError] = useState<string | null>(googleError ? t.signIn.googleFailedRetry : null);
 
   /**
    * Web: come back to this site (in development the API is on another port, and a relative path would
@@ -81,7 +78,7 @@ export default function SignIn() {
     setError(null);
     const { error } = await authClient.signIn.social({ provider: "google", callbackURL: returnTo("/"), errorCallbackURL: returnTo("/entrar") });
     setBusy(false);
-    if (error) return setError(authMessage(error, "Não foi possível entrar com o Google"));
+    if (error) return setError(authMessage(error, t.signIn.googleFailed));
     await qc.invalidateQueries();
   }
 
@@ -90,7 +87,7 @@ export default function SignIn() {
     setError(null);
     const { error } = await authClient.emailOtp.sendVerificationOtp({ email: email.trim(), type: "sign-in" });
     setBusy(false);
-    if (error) return setError(authMessage(error, "Não foi possível enviar o código"));
+    if (error) return setError(authMessage(error, t.signIn.sendFailed));
     savePending(email.trim());
     setStep("code");
   }
@@ -100,7 +97,7 @@ export default function SignIn() {
     setError(null);
     const { error } = await authClient.signIn.emailOtp({ email: email.trim(), otp: code.trim() });
     setBusy(false);
-    if (error) return setError(authMessage(error, "Não foi possível entrar"));
+    if (error) return setError(authMessage(error, t.signIn.failed));
     savePending(null);
     await qc.invalidateQueries();
   }
@@ -118,25 +115,25 @@ export default function SignIn() {
             {step === "email" ? (
               <>
                 <Col gap={4} style={{ alignItems: "center" }}>
-                  <Txt v="h1" style={{ textAlign: "center" }}>Entrar ou criar conta</Txt>
-                  <Txt muted style={{ textAlign: "center" }}>Sem senha: {GOOGLE_ENABLED ? "use o Google ou receba" : "enviamos"} um código no seu e-mail.</Txt>
+                  <Txt v="h1" style={{ textAlign: "center" }}>{t.signIn.title}</Txt>
+                  <Txt muted style={{ textAlign: "center" }}>{GOOGLE_ENABLED ? t.signIn.subtitleGoogle : t.signIn.subtitle}</Txt>
                 </Col>
                 {GOOGLE_ENABLED ? (
                   <>
                     <Button
                       size="lg"
-                      title="Continuar com Google"
+                      title={t.signIn.google}
                       loading={busy}
                       onPress={google}
                     />
-                    <Txt v="small" muted style={{ textAlign: "center" }}>ou</Txt>
+                    <Txt v="small" muted style={{ textAlign: "center" }}>{t.signIn.or}</Txt>
                   </>
                 ) : null}
                 <Input
-                  label="E-mail"
+                  label={t.signIn.email}
                   value={email}
                   onChangeText={setEmail}
-                  placeholder="voce@email.com"
+                  placeholder={t.signIn.emailPlaceholder}
                   autoCapitalize="none"
                   autoComplete="email"
                   keyboardType="email-address"
@@ -144,31 +141,31 @@ export default function SignIn() {
                   onSubmitEditing={sendCode}
                 />
                 <ErrorText error={error} />
-                <Button kind="primary" size="lg" title="Enviar código" loading={busy} disabled={!email.includes("@")} onPress={sendCode} />
+                <Button kind="primary" size="lg" title={t.signIn.sendCode} loading={busy} disabled={!email.includes("@")} onPress={sendCode} />
                 <Txt v="tiny" muted style={{ textAlign: "center" }}>
-                  Ao continuar você aceita os{" "}
+                  {t.signIn.consentBefore}
                     <Txt v="tiny" style={{ textDecorationLine: "underline" }} onPress={() => router.push("/termos")}>
-                      Termos de uso
-                    </Txt>{" "}
-                    e a{" "}
-                    <Txt v="tiny" style={{ textDecorationLine: "underline" }} onPress={() => router.push("/privacidade")}>
-                      Política de privacidade
+                      {t.legal.termsTitle}
                     </Txt>
-                    . É preciso ter 13 anos ou mais.
+                    {t.signIn.consentAnd}
+                    <Txt v="tiny" style={{ textDecorationLine: "underline" }} onPress={() => router.push("/privacidade")}>
+                      {t.legal.privacyTitle}
+                    </Txt>
+                    {t.signIn.consentAfter}
                 </Txt>
               </>
             ) : (
               <>
                 <Col gap={4} style={{ alignItems: "center" }}>
-                  <Txt v="h1" style={{ textAlign: "center" }}>Confira seu e-mail</Txt>
+                  <Txt v="h1" style={{ textAlign: "center" }}>{t.signIn.checkEmail}</Txt>
                   <Txt muted style={{ textAlign: "center" }}>
-                    Enviamos um código de 6 dígitos para <Txt bold>{email.trim()}</Txt>. Ele vale 10 minutos.
+                    {t.signIn.codeSentBefore}<Txt bold>{email.trim()}</Txt>{t.signIn.codeSentAfter}
                   </Txt>
                 </Col>
                 <Input
-                  label="Código"
+                  label={t.signIn.code}
                   value={code}
-                  onChangeText={(t) => setCode(t.replace(/\D/g, "").slice(0, 6))}
+                  onChangeText={(v) => setCode(v.replace(/\D/g, "").slice(0, 6))}
                   placeholder="000000"
                   keyboardType="number-pad"
                   inputMode="numeric"
@@ -180,15 +177,20 @@ export default function SignIn() {
                   onSubmitEditing={verify}
                 />
                 <ErrorText error={error} />
-                <Button kind="primary" size="lg" title="Entrar" loading={busy} disabled={code.length !== 6} onPress={verify} />
+                <Button kind="primary" size="lg" title={t.signIn.enter} loading={busy} disabled={code.length !== 6} onPress={verify} />
                 <Row style={{ justifyContent: "center" }}>
-                  <Button kind="ghost" size="sm" title="Reenviar código" onPress={sendCode} disabled={busy} />
-                  <Button kind="ghost" size="sm" title="Usar outro e-mail" onPress={() => { savePending(null); setStep("email"); }} />
+                  <Button kind="ghost" size="sm" title={t.signIn.resend} onPress={sendCode} disabled={busy} />
+                  <Button kind="ghost" size="sm" title={t.signIn.otherEmail} onPress={() => { savePending(null); setStep("email"); }} />
                 </Row>
               </>
             )}
           </Card>
           {step === "email" ? <InstallHint /> : null}
+          <Row style={{ justifyContent: "center" }}>
+            {LOCALES.map((l) => (
+              <Button key={l} kind="ghost" size="sm" title={t.languageName[l]} disabled={l === locale} onPress={() => setPref(l)} />
+            ))}
+          </Row>
           <View />
         </Col>
       </ScrollView>

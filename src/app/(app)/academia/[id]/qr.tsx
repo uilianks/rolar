@@ -8,6 +8,7 @@ import { Platform } from "react-native";
 
 import { api } from "@/lib/api";
 import { confirm } from "@/lib/confirm";
+import { useT } from "@/lib/i18n";
 import { useAcademy } from "@/lib/queries";
 import { Poster, PrintPoster } from "@/ui/qr-poster";
 import { Button, Card, ErrorText, Loading, Txt } from "@/ui/kit";
@@ -19,6 +20,7 @@ import { space } from "@/ui/theme";
  * for every class: the app checks the student into whichever class is on when they scan.
  */
 export default function AcademyQrScreen() {
+  const t = useT();
   const { id } = useLocalSearchParams<{ id: string }>();
   const qc = useQueryClient();
   const academy = useAcademy(id);
@@ -27,7 +29,7 @@ export default function AcademyQrScreen() {
   const [error, setError] = useState<unknown>(null);
 
   async function rotate() {
-    if (!a || !(await confirm("Gerar um QR novo?", "O QR impresso atual deixa de funcionar. Use se ele vazou (por exemplo, foi partilhado fora da academia).", "Gerar novo"))) return;
+    if (!a || !(await confirm(t.qr.rotateTitle, t.qr.rotateText, t.qr.rotateAction))) return;
     setError(null);
     try {
       await api(`/academies/${a.id}/checkin-qr/rotate`, { method: "POST" });
@@ -43,20 +45,19 @@ export default function AcademyQrScreen() {
   return (
     <>
       <Header
-        title="QR de check-in"
-        left={<Button kind="ghost" icon={ArrowLeft} accessibilityLabel="Voltar" onPress={() => (router.canGoBack() ? router.back() : router.replace(`/academia/${a.id}`))} />}
-        right={Platform.OS === "web" ? <Button size="sm" icon={Printer} title="Imprimir" onPress={() => window.print()} /> : undefined}
+        title={t.academy.checkinQr}
+        left={<Button kind="ghost" icon={ArrowLeft} accessibilityLabel={t.common.back} onPress={() => (router.canGoBack() ? router.back() : router.replace(`/academia/${a.id}`))} />}
+        right={Platform.OS === "web" ? <Button size="sm" icon={Printer} title={t.qr.print} onPress={() => window.print()} /> : undefined}
       />
       <Screen>
         <Poster academyId={a.id} name={a.name} />
         <PrintPoster academyId={a.id} name={a.name} />
         <Card style={{ gap: space.sm }}>
-          <Txt bold>Como usar</Txt>
+          <Txt bold>{t.qr.howTo}</Txt>
           <Txt v="small" muted>
-            Imprima e cole na entrada, ou deixe num tablet na receção. O mesmo QR serve para todas as aulas: o app marca o aluno na aula
-            que está a acontecer (a partir de 45 minutos antes do início). Os check-ins aparecem na chamada para você confirmar.
+            {t.qr.howToText}
           </Txt>
-          {owner ? <Button size="sm" icon={RefreshCw} title="Gerar um QR novo" onPress={rotate} style={{ alignSelf: "flex-start" }} /> : null}
+          {owner ? <Button size="sm" icon={RefreshCw} title={t.qr.rotate} onPress={rotate} style={{ alignSelf: "flex-start" }} /> : null}
           <ErrorText error={error} />
         </Card>
       </Screen>

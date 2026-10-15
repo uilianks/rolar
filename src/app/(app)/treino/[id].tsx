@@ -11,14 +11,15 @@ import { Platform, Pressable, Share, View } from "react-native";
 import { api } from "@/lib/api";
 import { confirm } from "@/lib/confirm";
 import { ago, duration, whenLong } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 import { useDeleteSession, useMe, useSession } from "@/lib/queries";
-import { KIND_LABEL, VISIBILITY_LABEL } from "@/shared/domain";
 import { Avatar, Badge, Belt, Button, Card, CardHead, Col, ErrorText, Input, Kpi, ListRow, Loading, Row, Txt } from "@/ui/kit";
 import { Chips, OssButton } from "@/ui/session-card";
 import { Header, Screen } from "@/ui/shell";
 import { space, useTheme } from "@/ui/theme";
 
 export default function SessionScreen() {
+  const t = useT();
   const { c } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const qc = useQueryClient();
@@ -45,24 +46,24 @@ export default function SessionScreen() {
   }
 
   async function deleteComment(commentId: string) {
-    if (!(await confirm("Apagar comentário?", "Essa ação não pode ser desfeita.", "Apagar"))) return;
+    if (!(await confirm(t.sessionDetail.deleteCommentTitle, t.sessionDetail.cannotUndo, t.academyCards.deleteAction))) return;
     await api(`/comments/${commentId}`, { method: "DELETE" });
     await qc.invalidateQueries({ queryKey: ["session", id] });
   }
 
   async function deleteSession() {
-    if (!(await confirm("Apagar treino?", "O treino, os Oss e os comentários serão apagados.", "Apagar"))) return;
+    if (!(await confirm(t.sessionDetail.deleteTitle, t.sessionDetail.deleteText, t.academyCards.deleteAction))) return;
     await remove.mutateAsync(id);
     router.replace("/");
   }
 
   async function report() {
-    if (!(await confirm("Denunciar treino?", "A equipe do projeto vai analisar o conteúdo.", "Denunciar"))) return;
-    await api("/reports", { method: "POST", json: { targetType: "session", targetId: id, reason: "Denúncia pelo app" } });
+    if (!(await confirm(t.sessionDetail.reportTitle, t.sessionDetail.reportText, t.profile.report))) return;
+    await api("/reports", { method: "POST", json: { targetType: "session", targetId: id, reason: t.profile.reportReason } });
   }
 
   function share() {
-    const text = `${s?.title || "Treino"} no tatame`;
+    const text = t.sessionDetail.shareText(s?.title || t.reportTarget.session);
     if (Platform.OS === "web") void navigator.clipboard?.writeText(window.location.href);
     else void Share.share({ message: text });
   }
@@ -70,16 +71,16 @@ export default function SessionScreen() {
   return (
     <>
       <Header
-        title="Treino"
-        left={<Button kind="ghost" icon={ArrowLeft} accessibilityLabel="Voltar" onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))} />}
+        title={t.reportTarget.session}
+        left={<Button kind="ghost" icon={ArrowLeft} accessibilityLabel={t.common.back} onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))} />}
         right={
           s ? (
             <Row gap={4}>
-              <Button kind="ghost" icon={Share2} accessibilityLabel="Compartilhar" onPress={share} />
+              <Button kind="ghost" icon={Share2} accessibilityLabel={t.sessionDetail.share} onPress={share} />
               {mine ? (
-                <Button kind="ghost" icon={Trash2} accessibilityLabel="Apagar treino" onPress={deleteSession} />
+                <Button kind="ghost" icon={Trash2} accessibilityLabel={t.sessionDetail.delete} onPress={deleteSession} />
               ) : (
-                <Button kind="ghost" icon={Flag} accessibilityLabel="Denunciar" onPress={report} />
+                <Button kind="ghost" icon={Flag} accessibilityLabel={t.profile.report} onPress={report} />
               )}
             </Row>
           ) : null
@@ -105,22 +106,22 @@ export default function SessionScreen() {
                     {s.academy ? ` · ${s.academy.name}` : ""}
                   </Txt>
                 </View>
-                <Badge>{VISIBILITY_LABEL[s.visibility]}</Badge>
+                <Badge>{t.visibility[s.visibility]}</Badge>
               </Row>
-              <Txt v="h1">{s.title || `Treino de ${KIND_LABEL[s.kind].toLowerCase()}`}</Txt>
+              <Txt v="h1">{s.title || t.sessionTitle(t.sessionKind[s.kind])}</Txt>
               {s.notes ? <Txt>{s.notes}</Txt> : null}
             </Col>
 
             <Row wrap gap={space.md}>
-              <Kpi label="Modalidade" value={KIND_LABEL[s.kind]} />
-              <Kpi label="Duração" value={duration(s.durationMin)} />
-              <Kpi label="Rolas" value={String(s.rounds)} />
-              <Kpi label="Intensidade" value={`${s.rpe}/10`} sub={`Carga ${s.durationMin * s.rpe}`} />
+              <Kpi label={t.session.kind} value={t.sessionKind[s.kind]} />
+              <Kpi label={t.session.duration} value={duration(s.durationMin)} />
+              <Kpi label={t.session.rounds} value={String(s.rounds)} />
+              <Kpi label={t.session.intensity} value={`${s.rpe}/10`} sub={t.sessionDetail.load(s.durationMin * s.rpe)} />
             </Row>
 
             {s.techniques.length ? (
               <Card pad={false}>
-                <CardHead title="Técnicas da aula" />
+                <CardHead title={t.log.techniques} />
                 <View style={{ padding: space.lg }}>
                   <Chips items={s.techniques} />
                 </View>
@@ -129,12 +130,12 @@ export default function SessionScreen() {
 
             <Card pad={false}>
               <CardHead
-                title={`${s.ossCount} Oss · ${s.commentCount} comentários`}
+                title={t.sessionDetail.counts(s.ossCount, s.commentCount)}
                 right={<OssButton session={s} />}
               />
               {s.ossBy.length ? (
                 <ListRow>
-                  <Txt v="small" muted>Oss de {s.ossBy.map((o) => o.name).join(", ")}</Txt>
+                  <Txt v="small" muted>{t.sessionDetail.ossBy(s.ossBy.map((o) => o.name).join(", "))}</Txt>
                 </ListRow>
               ) : null}
               {s.comments.map((cm) => (
@@ -147,21 +148,21 @@ export default function SessionScreen() {
                     <Txt>{cm.body}</Txt>
                   </View>
                   {mine || cm.author.id === me?.user.id ? (
-                    <Button kind="ghost" size="sm" icon={Trash2} accessibilityLabel="Apagar comentário" onPress={() => deleteComment(cm.id)} />
+                    <Button kind="ghost" size="sm" icon={Trash2} accessibilityLabel={t.sessionDetail.deleteComment} onPress={() => deleteComment(cm.id)} />
                   ) : null}
                 </ListRow>
               ))}
               <View style={{ padding: space.md, flexDirection: "row", gap: 8, alignItems: "flex-end" }}>
                 <View style={{ flex: 1 }}>
-                  <Input value={comment} onChangeText={setComment} placeholder="Escreva um comentário…" maxLength={2000} onSubmitEditing={send} />
+                  <Input value={comment} onChangeText={setComment} placeholder={t.sessionDetail.commentPlaceholder} maxLength={2000} onSubmitEditing={send} />
                 </View>
-                <Button kind="primary" icon={Send} accessibilityLabel="Enviar comentário" loading={busy} onPress={send} disabled={!comment.trim()} />
+                <Button kind="primary" icon={Send} accessibilityLabel={t.sessionDetail.sendComment} loading={busy} onPress={send} disabled={!comment.trim()} />
               </View>
               <View style={{ paddingHorizontal: space.md, paddingBottom: space.md }}>
                 <ErrorText error={error} />
               </View>
             </Card>
-            {s.source === "timer" ? <Txt v="tiny" muted style={{ color: c.mutedFg }}>Registrado pelo timer de rounds.</Txt> : null}
+            {s.source === "timer" ? <Txt v="tiny" muted style={{ color: c.mutedFg }}>{t.sessionDetail.fromTimer}</Txt> : null}
           </>
         ) : null}
       </Screen>

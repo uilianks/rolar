@@ -5,9 +5,11 @@ import ShieldCheck from "lucide-react-native/icons/shield-check";
 import { useState } from "react";
 
 import { api } from "@/lib/api";
+import { useT } from "@/lib/i18n";
 import { useAcademy } from "@/lib/queries";
 import type { Academy } from "@/lib/types";
-import { academyInput, REQUESTER_ROLE_LABEL, REQUESTER_ROLES, type RequesterRole } from "@/shared/domain";
+import { academyInput, REQUESTER_ROLES, type RequesterRole } from "@/shared/domain";
+import { validationMessage } from "@/shared/i18n";
 import { Button, Card, CardHead, Col, ErrorText, Input, Loading, Row, Segmented, Txt } from "@/ui/kit";
 import { Header, Screen } from "@/ui/shell";
 import { space, useTheme } from "@/ui/theme";
@@ -54,6 +56,7 @@ export default function NewAcademy() {
 }
 
 function AcademyForm({ id, existing }: { id?: string; existing?: Academy }) {
+  const t = useT();
   const { c } = useTheme();
   const qc = useQueryClient();
   const [f, setF] = useState<Fields>(() => fieldsFrom(existing));
@@ -66,7 +69,7 @@ function AcademyForm({ id, existing }: { id?: string; existing?: Academy }) {
   async function submit() {
     setError(null);
     const check = academyInput.safeParse({ ...f, requesterRole: role });
-    if (!check.success) return setError(check.error.issues[0].message);
+    if (!check.success) return setError(validationMessage(t, check.error.issues[0].message));
     setBusy(true);
     try {
       const a = await api<Academy>(id ? `/academies/${id}` : "/academies", { method: id ? "PUT" : "POST", json: { ...f, requesterRole: role } });
@@ -83,75 +86,73 @@ function AcademyForm({ id, existing }: { id?: string; existing?: Academy }) {
   return (
     <>
       <Header
-        title={id ? "Corrigir cadastro" : "Cadastrar academia"}
-        left={<Button kind="ghost" icon={ArrowLeft} accessibilityLabel="Voltar" onPress={() => (router.canGoBack() ? router.back() : router.replace("/academia"))} />}
+        title={id ? t.newAcademy.fixTitle : t.findAcademy.register}
+        left={<Button kind="ghost" icon={ArrowLeft} accessibilityLabel={t.common.back} onPress={() => (router.canGoBack() ? router.back() : router.replace("/academia"))} />}
       />
       <Screen>
         <Card style={{ gap: space.sm }}>
           <Row>
             <ShieldCheck size={18} color={c.fg} />
-            <Txt bold>Toda academia passa por verificação</Txt>
+            <Txt bold>{t.newAcademy.verifiedTitle}</Txt>
           </Row>
           <Txt v="small" muted>
-            Para ninguém se passar pela sua academia, a nossa equipe confere os dados antes de ela aparecer na busca e
-            aceitar alunos. Normalmente contactamos a academia pelos canais oficiais (Instagram, site ou telefone) para
-            confirmar que você é o responsável. Você recebe uma notificação com a decisão.
+            {t.newAcademy.verifiedText}
           </Txt>
         </Card>
         {existing?.registration?.reviewNote ? (
           <Card style={{ gap: 4 }}>
-            <Txt bold color={c.accent}>Motivo da recusa</Txt>
+            <Txt bold color={c.accent}>{t.newAcademy.rejectReason}</Txt>
             <Txt v="small">{existing.registration.reviewNote}</Txt>
           </Card>
         ) : null}
 
         <Card pad={false}>
-          <CardHead title="A academia" />
+          <CardHead title={t.newAcademy.theAcademy} />
           <Col style={{ padding: space.lg }}>
-            <Input label="Nome *" value={f.name} onChangeText={set("name")} placeholder="Equipe Tatame Centro" />
-            <Input label="Equipe / filiação" value={f.affiliation} onChangeText={set("affiliation")} placeholder="Ex.: Gracie Barra, Alliance, independente" />
-            <Input label="Morada *" value={f.address} onChangeText={set("address")} placeholder="Rua, número" />
+            <Input label={t.newAcademy.name} value={f.name} onChangeText={set("name")} placeholder={t.newAcademy.namePlaceholder} />
+            <Input label={t.newAcademy.affiliation} value={f.affiliation} onChangeText={set("affiliation")} placeholder={t.newAcademy.affiliationPlaceholder} />
+            <Input label={t.newAcademy.address} value={f.address} onChangeText={set("address")} placeholder={t.newAcademy.addressPlaceholder} />
             <Row gap={space.md} wrap>
               <Col style={{ flex: 1, minWidth: 120 }}>
-                <Input label="Código postal" value={f.postalCode} onChangeText={set("postalCode")} placeholder="1000-001" />
+                <Input label={t.newAcademy.postalCode} value={f.postalCode} onChangeText={set("postalCode")} placeholder="1000-001" />
               </Col>
               <Col style={{ flex: 2, minWidth: 160 }}>
-                <Input label="Cidade *" value={f.city} onChangeText={set("city")} placeholder="Lisboa" />
+                <Input label={t.newAcademy.city} value={f.city} onChangeText={set("city")} placeholder="Lisboa" />
               </Col>
               <Col style={{ width: 90 }}>
-                <Input label="País *" value={f.country} onChangeText={(v) => set("country")(v.toUpperCase())} maxLength={2} autoCapitalize="characters" placeholder="PT" />
+                <Input label={t.newAcademy.country} value={f.country} onChangeText={(v) => set("country")(v.toUpperCase())} maxLength={2} autoCapitalize="characters" placeholder="PT" />
               </Col>
             </Row>
           </Col>
         </Card>
 
         <Card pad={false}>
-          <CardHead title="Canais oficiais" />
+          <CardHead title={t.newAcademy.channels} />
           <Col style={{ padding: space.lg }}>
-            <Txt v="small" muted>Usamos estes canais para confirmar o cadastro. Site e Instagram ficam visíveis na página da academia; telefone e e-mail não.</Txt>
-            <Input label="Telefone da academia *" value={f.phone} onChangeText={set("phone")} placeholder="+351 210 000 000" keyboardType="phone-pad" />
-            <Input label="E-mail da academia" value={f.email} onChangeText={set("email")} placeholder="contacto@academia.pt" keyboardType="email-address" autoCapitalize="none" />
-            <Input label="Site" value={f.website} onChangeText={set("website")} placeholder="https://academia.pt" autoCapitalize="none" keyboardType="url" />
-            <Input label="Instagram" value={f.instagram} onChangeText={set("instagram")} placeholder="@academia" autoCapitalize="none" hint="Informe pelo menos o site ou o Instagram." />
+            <Txt v="small" muted>{t.newAcademy.channelsText}</Txt>
+            <Input label={t.newAcademy.phone} value={f.phone} onChangeText={set("phone")} placeholder="+351 210 000 000" keyboardType="phone-pad" />
+            <Input label={t.newAcademy.email} value={f.email} onChangeText={set("email")} placeholder={t.newAcademy.emailPlaceholder} keyboardType="email-address" autoCapitalize="none" />
+            <Input label={t.newAcademy.website} value={f.website} onChangeText={set("website")} placeholder="https://academia.pt" autoCapitalize="none" keyboardType="url" />
+            <Input label="Instagram" value={f.instagram} onChangeText={set("instagram")} placeholder="@academia" autoCapitalize="none" hint={t.newAcademy.instagramHint} />
           </Col>
         </Card>
 
         <Card pad={false}>
-          <CardHead title="Você e a academia" />
+          <CardHead title={t.newAcademy.youAndAcademy} />
           <Col style={{ padding: space.lg }}>
-            <Segmented label="Qual é o seu papel? *" value={role} onChange={setRole} options={REQUESTER_ROLES.map((r) => ({ value: r, label: REQUESTER_ROLE_LABEL[r] }))} />
+            <Segmented label={t.newAcademy.role} value={role} onChange={setRole} options={REQUESTER_ROLES.map((r) => ({ value: r, label: t.requesterRole[r] }))} />
             <Input
-              label="Como podemos confirmar que é você? *"
+              label={t.newAcademy.proof}
               value={f.proof}
               onChangeText={set("proof")}
               multiline
-              placeholder="Ex.: apareço nos posts do Instagram da academia como professor; podem mandar mensagem para o Instagram oficial ou ligar para o número acima e perguntar por mim."
+              placeholder={t.newAcademy.proofPlaceholder}
             />
           </Col>
         </Card>
 
         <ErrorText error={error} />
-        <Button kind="primary" size="lg" icon={ShieldCheck} title={id ? "Reenviar para verificação" : "Enviar para verificação"} loading={busy} onPress={submit} />
+        <Button kind="primary" size="lg" icon={ShieldCheck} title={id ? t.newAcademy.resubmit : t.newAcademy.submit} loading={busy} onPress={submit} />
       </Screen>
     </>
   );

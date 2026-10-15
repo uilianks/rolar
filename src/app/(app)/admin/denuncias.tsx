@@ -11,13 +11,13 @@ import { View } from "react-native";
 
 import { api } from "@/lib/api";
 import { ago } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 import type { AdminReportGroup } from "@/lib/types";
-import { REPORT_ACTION_LABEL, type ReportAction, type ReportTarget } from "@/shared/domain";
+import { type ReportAction } from "@/shared/domain";
 import { Avatar, Badge, Button, Card, Col, Empty, ErrorText, Input, ListRow, Loading, Row, Tabs, Txt } from "@/ui/kit";
 import { Header, Screen } from "@/ui/shell";
 import { space } from "@/ui/theme";
 
-const TARGET_LABEL: Record<ReportTarget, string> = { user: "Perfil", session: "Treino", comment: "Comentário", academy: "Academia" };
 
 /** Distinct reasons with how many people gave each. */
 function reasonCounts(reasons: string[]) {
@@ -27,6 +27,7 @@ function reasonCounts(reasons: string[]) {
 }
 
 function ReportCase({ g }: { g: AdminReportGroup }) {
+  const t = useT();
   const qc = useQueryClient();
   const [note, setNote] = useState("");
   const [error, setError] = useState<unknown>(null);
@@ -37,7 +38,7 @@ function ReportCase({ g }: { g: AdminReportGroup }) {
   async function resolve(action: ReportAction) {
     setError(null);
     const needsNote = action === "suspend" || (action === "remove" && g.targetType === "academy");
-    if (needsNote && note.trim().length < 5) return setError("Escreva o motivo; a pessoa vai ler.");
+    if (needsNote && note.trim().length < 5) return setError(t.admin.writeReason);
     setBusy(action);
     try {
       await api("/admin/reports/resolve", { method: "POST", json: { targetType: g.targetType, targetId: g.targetId, action, note: note.trim() || undefined } });
@@ -52,12 +53,12 @@ function ReportCase({ g }: { g: AdminReportGroup }) {
     <Card style={{ gap: space.md }}>
       <Row wrap style={{ justifyContent: "space-between" }}>
         <Row gap={6}>
-          <Badge>{TARGET_LABEL[g.targetType]}</Badge>
+          <Badge>{t.reportTarget[g.targetType]}</Badge>
           <Txt v="small" muted>
-            {g.count === 1 ? "1 denúncia" : `${g.count} denúncias`} · desde {ago(g.firstAt)}
+            {t.admin.reports(g.count)} · {t.admin.since(ago(g.firstAt))}
           </Txt>
         </Row>
-        {g.resolvedAt && g.action ? <Badge tone={g.action === "dismiss" ? "default" : "success"}>{REPORT_ACTION_LABEL[g.action]}</Badge> : null}
+        {g.resolvedAt && g.action ? <Badge tone={g.action === "dismiss" ? "default" : "success"}>{t.reportAction[g.action]}</Badge> : null}
       </Row>
 
       {g.target ? (
@@ -66,7 +67,7 @@ function ReportCase({ g }: { g: AdminReportGroup }) {
           {g.target.body ? <Txt v="small">{g.target.body}</Txt> : null}
         </Col>
       ) : (
-        <Txt muted>O conteúdo já foi apagado.</Txt>
+        <Txt muted>{t.admin.contentGone}</Txt>
       )}
 
       {owner ? (
@@ -76,12 +77,12 @@ function ReportCase({ g }: { g: AdminReportGroup }) {
             <Txt bold>{owner.name}</Txt>
             <Txt v="tiny" muted>@{owner.username}</Txt>
           </View>
-          {owner.suspended ? <Badge tone="accent">Suspensa</Badge> : null}
+          {owner.suspended ? <Badge tone="accent">{t.admin.suspended}</Badge> : null}
         </ListRow>
       ) : null}
 
       <Col gap={2}>
-        <Txt v="tiny" muted>Motivos</Txt>
+        <Txt v="tiny" muted>{t.admin.reasons}</Txt>
         {reasonCounts(g.reasons).map(([reason, n]) => (
           <Txt key={reason} v="small">
             {n > 1 ? `${n}× ` : ""}
@@ -93,32 +94,32 @@ function ReportCase({ g }: { g: AdminReportGroup }) {
       {open ? (
         <>
           <Input
-            label="Nota (obrigatória para suspender ou recusar academia)"
+            label={t.admin.noteRequired}
             value={note}
             onChangeText={setNote}
             multiline
-            placeholder="Ex.: Mensagens de assédio a outros alunos, contra as regras de conduta."
+            placeholder={t.admin.notePlaceholder}
           />
           <ErrorText error={error} />
           <Row gap={space.sm} wrap>
-            <Button icon={Check} title="Sem violação" loading={busy === "dismiss"} disabled={!!busy} onPress={() => resolve("dismiss")} />
+            <Button icon={Check} title={t.reportAction.dismiss} loading={busy === "dismiss"} disabled={!!busy} onPress={() => resolve("dismiss")} />
             {g.target && g.targetType !== "user" ? (
               <Button
                 kind="danger"
                 icon={Trash}
-                title={g.targetType === "academy" ? "Recusar academia" : "Remover conteúdo"}
+                title={g.targetType === "academy" ? t.admin.rejectAcademy : t.admin.removeContent}
                 loading={busy === "remove"}
                 disabled={!!busy}
                 onPress={() => resolve("remove")}
               />
             ) : null}
-            {owner?.avatarUrl ? <Button kind="danger" icon={ImageOff} title="Remover foto" loading={busy === "remove_avatar"} disabled={!!busy} onPress={() => resolve("remove_avatar")} /> : null}
-            {owner && !owner.suspended ? <Button kind="danger" icon={Ban} title="Suspender conta" loading={busy === "suspend"} disabled={!!busy} onPress={() => resolve("suspend")} /> : null}
+            {owner?.avatarUrl ? <Button kind="danger" icon={ImageOff} title={t.admin.removePhoto} loading={busy === "remove_avatar"} disabled={!!busy} onPress={() => resolve("remove_avatar")} /> : null}
+            {owner && !owner.suspended ? <Button kind="danger" icon={Ban} title={t.admin.suspend} loading={busy === "suspend"} disabled={!!busy} onPress={() => resolve("suspend")} /> : null}
           </Row>
         </>
       ) : (
         <Txt v="small" muted>
-          Decidida {ago(g.resolvedAt!)}
+          {t.admin.decided(ago(g.resolvedAt!))}
           {g.note ? ` · ${g.note}` : ""}
         </Txt>
       )}
@@ -128,27 +129,28 @@ function ReportCase({ g }: { g: AdminReportGroup }) {
 
 /** Moderation queue (DSA notice and action): every report on one target is decided at once. */
 export default function AdminReports() {
+  const t = useT();
   const [status, setStatus] = useState<"open" | "resolved">("open");
   const list = useQuery({ queryKey: ["admin", "reports", status], queryFn: () => api<AdminReportGroup[]>(`/admin/reports?status=${status}`) });
 
   return (
     <>
       <Header
-        title="Denúncias"
-        left={<Button kind="ghost" icon={ArrowLeft} accessibilityLabel="Voltar" onPress={() => (router.canGoBack() ? router.back() : router.replace("/admin"))} />}
-        right={<Button kind="ghost" size="sm" title="Atualizar" onPress={() => list.refetch()} />}
+        title={t.admin.reportsTitle}
+        left={<Button kind="ghost" icon={ArrowLeft} accessibilityLabel={t.common.back} onPress={() => (router.canGoBack() ? router.back() : router.replace("/admin"))} />}
+        right={<Button kind="ghost" size="sm" title={t.notifications.refresh} onPress={() => list.refetch()} />}
       />
       <Screen onRefresh={() => list.refetch()} refreshing={list.isRefetching}>
-        <Txt muted>Quem denunciou é avisado da decisão. Quem teve conteúdo removido recebe uma notificação que aponta para os termos de uso.</Txt>
+        <Txt muted>{t.admin.reportsIntro}</Txt>
         <View style={{ maxWidth: 320 }}>
-          <Tabs value={status} onChange={setStatus} options={[{ value: "open", label: "Em aberto" }, { value: "resolved", label: "Decididas" }]} />
+          <Tabs value={status} onChange={setStatus} options={[{ value: "open", label: t.admin.openTab }, { value: "resolved", label: t.admin.resolvedTab }]} />
         </View>
         {list.isPending ? <Loading /> : null}
         <ErrorText error={list.error} />
         {list.data?.map((g) => <ReportCase key={`${g.targetType}/${g.targetId}/${g.resolvedAt ?? ""}`} g={g} />)}
         {list.data && !list.data.length ? (
           <Card>
-            <Empty icon={Inbox} title={status === "open" ? "Nenhuma denúncia em aberto" : "Nenhuma decisão ainda"} />
+            <Empty icon={Inbox} title={status === "open" ? t.admin.noOpenReports : t.admin.noDecisions} />
           </Card>
         ) : null}
       </Screen>

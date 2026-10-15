@@ -13,22 +13,22 @@ export const sessionsRoutes = new Hono<AppEnv>();
 
 async function requireProfile(db: Db, userId: string) {
   const [p] = await db.select().from(s.profiles).where(eq(s.profiles.userId, userId));
-  if (!p) fail(403, "Complete o cadastro primeiro");
+  if (!p) fail(403, "completeSignup");
   return p;
 }
 
 async function visibleSession(db: Db, viewerId: string, id: string) {
   const [card] = await sessionCards(db, viewerId).where(and(eq(s.sessions.id, id), sessionVisibleTo(viewerId)));
-  if (!card) fail(404, "Treino não encontrado");
+  if (!card) fail(404, "sessionNotFound");
   return normalizeCard(card);
 }
 
 async function checkAcademy(db: Db, userId: string, academyId: string | null | undefined) {
   if (!academyId) return null;
   const m = await membership(db, academyId, userId);
-  if (m?.status !== "active") fail(400, "Você não é membro ativo dessa academia");
+  if (m?.status !== "active") fail(400, "notActiveMember");
   const [a] = await db.select({ status: s.academies.status }).from(s.academies).where(eq(s.academies.id, academyId));
-  if (a?.status !== "approved") fail(400, "A academia ainda está em verificação");
+  if (a?.status !== "approved") fail(400, "academyUnderReview");
   return academyId;
 }
 
@@ -106,7 +106,7 @@ sessionsRoutes.patch("/sessions/:id", async (c) => {
     .set(patch)
     .where(and(eq(s.sessions.id, c.req.param("id")), eq(s.sessions.userId, userId)))
     .returning({ id: s.sessions.id });
-  if (!row) fail(404, "Treino não encontrado");
+  if (!row) fail(404, "sessionNotFound");
   return c.json(await visibleSession(db, userId, row.id));
 });
 
@@ -117,7 +117,7 @@ sessionsRoutes.delete("/sessions/:id", async (c) => {
     .delete(s.sessions)
     .where(and(eq(s.sessions.id, c.req.param("id")), eq(s.sessions.userId, userId)))
     .returning({ id: s.sessions.id });
-  if (!row) fail(404, "Treino não encontrado");
+  if (!row) fail(404, "sessionNotFound");
   return c.body(null, 204);
 });
 
@@ -164,6 +164,6 @@ sessionsRoutes.delete("/comments/:id", async (c) => {
       ),
     )
     .returning({ id: s.comments.id });
-  if (!row) fail(404, "Comentário não encontrado");
+  if (!row) fail(404, "commentNotFound");
   return c.body(null, 204);
 });

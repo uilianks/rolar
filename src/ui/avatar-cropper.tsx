@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { Modal, useWindowDimensions, View, type GestureResponderEvent } from "react-native";
 
 import type { CropRect, PickedImage } from "@/lib/avatar";
+import { useT } from "@/lib/i18n";
 
 import { Button, Row, Txt } from "./kit";
 import { radius, space, useTheme } from "./theme";
@@ -32,6 +33,7 @@ const pointers = (e: GestureResponderEvent) => {
  */
 export function AvatarCropper({ image, onCancel, onDone }: { image: PickedImage; onCancel: () => void; onDone: (rect: CropRect) => void }) {
   const { c } = useTheme();
+  const t = useT();
   const frame = Math.min(useWindowDimensions().width - space.xl * 2, 320);
   const cover = frame / Math.min(image.width, image.height);
   const [view, setView] = useState<Framing>({ zoom: 1, x: 0, y: 0 });
@@ -103,9 +105,9 @@ export function AvatarCropper({ image, onCancel, onDone }: { image: PickedImage;
             alignItems: "center",
           }}
         >
-          <Txt bold>Ajustar foto</Txt>
+          <Txt bold>{t.avatar.adjust}</Txt>
           <Txt v="small" muted>
-            Arraste a foto para posicionar. Com zoom, ela se move para todos os lados.
+            {t.avatar.adjustHint}
           </Txt>
           <View
             onStartShouldSetResponder={() => true}
@@ -138,7 +140,7 @@ export function AvatarCropper({ image, onCancel, onDone }: { image: PickedImage;
               }}
               contentFit="fill"
               pointerEvents="none"
-              accessibilityLabel="Foto escolhida"
+              accessibilityLabel={t.avatar.chosen}
             />
             <View
               pointerEvents="none"
@@ -155,12 +157,12 @@ export function AvatarCropper({ image, onCancel, onDone }: { image: PickedImage;
             />
           </View>
           <Row gap={space.sm}>
-            <Button kind="ghost" icon={Minus} accessibilityLabel="Diminuir zoom" disabled={view.zoom <= 1} onPress={() => apply({ ...view, zoom: view.zoom / STEP })} />
-            <Button kind="ghost" icon={Plus} accessibilityLabel="Aumentar zoom" disabled={view.zoom >= MAX_ZOOM} onPress={() => apply({ ...view, zoom: view.zoom * STEP })} />
+            <Button kind="ghost" icon={Minus} accessibilityLabel={t.avatar.zoomOut} disabled={view.zoom <= 1} onPress={() => apply({ ...view, zoom: view.zoom / STEP })} />
+            <Button kind="ghost" icon={Plus} accessibilityLabel={t.avatar.zoomIn} disabled={view.zoom >= MAX_ZOOM} onPress={() => apply({ ...view, zoom: view.zoom * STEP })} />
           </Row>
           <Row gap={space.sm}>
-            <Button kind="ghost" title="Cancelar" onPress={onCancel} />
-            <Button kind="primary" title="Usar foto" onPress={done} />
+            <Button kind="ghost" title={t.common.cancel} onPress={onCancel} />
+            <Button kind="primary" title={t.avatar.use} onPress={done} />
           </Row>
         </View>
       </View>

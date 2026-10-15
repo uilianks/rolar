@@ -68,7 +68,7 @@ me.post("/profile", async (c) => {
     await db.update(s.user).set({ name: input.name }).where(eq(s.user.id, userId));
     return c.json(profile, 201);
   } catch (e) {
-    if (isUniqueViolation(e)) fail(409, "Perfil ou nome de usuário já existe");
+    if (isUniqueViolation(e)) fail(409, "profileExists");
     throw e;
   }
 });
@@ -79,10 +79,10 @@ me.patch("/profile", async (c) => {
   const db = c.get("db");
   try {
     const [profile] = await db.update(s.profiles).set(input).where(eq(s.profiles.userId, userId)).returning();
-    if (!profile) fail(404, "Complete o cadastro primeiro");
+    if (!profile) fail(404, "completeSignup");
     return c.json(profile);
   } catch (e) {
-    if (isUniqueViolation(e)) fail(409, "Nome de usuário já em uso");
+    if (isUniqueViolation(e)) fail(409, "usernameTaken");
     throw e;
   }
 });
@@ -100,12 +100,12 @@ me.put("/avatar", async (c) => {
   const db = c.get("db");
   const { image } = await body(c, avatarInput);
   const [p] = await db.select({ birthYear: s.profiles.birthYear }).from(s.profiles).where(eq(s.profiles.userId, userId));
-  if (!p) fail(404, "Complete o cadastro primeiro");
-  if (!canHaveAvatar(p.birthYear)) fail(403, "Menores de idade não podem usar foto de perfil");
+  if (!p) fail(404, "completeSignup");
+  if (!canHaveAvatar(p.birthYear)) fail(403, "minorsNoAvatar");
   const [, mime, data] = image.match(/^data:(image\/[a-z]+);base64,(.*)$/)!;
   const bytes = Buffer.from(data, "base64");
-  if (bytes.length > AVATAR_MAX_BYTES) fail(400, "Imagem grande demais");
-  if (!SIGNATURES[mime]?.(bytes)) fail(400, "O arquivo não é uma imagem válida");
+  if (bytes.length > AVATAR_MAX_BYTES) fail(400, "imageTooLarge");
+  if (!SIGNATURES[mime]?.(bytes)) fail(400, "invalidImage");
   return c.json({ avatarUrl: await saveAvatar(db, userId, mime, bytes) });
 });
 
@@ -120,7 +120,7 @@ me.post("/sessions/visibility", async (c) => {
   const { visibility } = await body(c, z.object({ visibility: z.enum(VISIBILITIES) }));
   const db = c.get("db");
   const [p] = await db.select({ birthYear: s.profiles.birthYear }).from(s.profiles).where(eq(s.profiles.userId, userId));
-  if (!p) fail(404, "Complete o cadastro primeiro");
+  if (!p) fail(404, "completeSignup");
   const result = await db
     .update(s.sessions)
     .set({ visibility: effectiveVisibility(visibility, p.birthYear) })
@@ -133,7 +133,7 @@ me.get("/stats", async (c) => {
   const userId = viewer(c);
   const db = c.get("db");
   const tz = c.req.query("tz") ?? "UTC";
-  if (!isValidTimeZone(tz)) fail(400, "Fuso horário inválido");
+  if (!isValidTimeZone(tz)) fail(400, "invalidTimeZone");
   const range = c.req.query("range") ?? "year";
   const now = new Date();
   // Weekly views need ~8 weeks; the heatmap needs 26; "year"/"month" totals need their own window.

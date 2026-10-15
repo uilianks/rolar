@@ -6,31 +6,12 @@ import { View } from "react-native";
 
 import { api } from "@/lib/api";
 import { ago } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 import { useNotifications } from "@/lib/queries";
 import type { Notification } from "@/lib/types";
 import { Avatar, Button, Card, Empty, ErrorText, ListRow, Loading, Txt } from "@/ui/kit";
 import { Header, Screen } from "@/ui/shell";
 import { useTheme } from "@/ui/theme";
-
-const TEXT: Record<string, string> = {
-  oss: "deu Oss no seu treino",
-  comment: "comentou no seu treino",
-  follow: "começou a te seguir",
-  membership_request: "pediu para entrar na academia",
-  membership_approved: "aprovou a sua entrada na academia",
-  promotion_request: "pediu confirmação de graduação",
-  promotion_confirmed: "confirmou a sua graduação",
-  academy_submitted: "enviou uma academia para verificação",
-  academy_approved: "aprovou o cadastro da sua academia",
-  academy_rejected: "recusou o cadastro da sua academia",
-  attendance_confirmed: "confirmou a sua presença na aula. Toque para registrar o treino",
-  class_cancelled: "cancelou uma aula. Toque para ver o calendário",
-  event_published: "publicou um evento na academia",
-  announcement: "publicou um aviso na academia",
-  payment_reminder: "lembrou que a sua mensalidade está em aberto",
-  report_resolved: "analisou a sua denúncia. Obrigado por ajudar a manter o rolar seguro",
-  content_removed: "removeu um conteúdo seu que viola os termos de uso. Toque para ler",
-};
 
 function open(n: Notification) {
   if (n.type === "oss" || n.type === "comment") return router.push(`/treino/${n.targetId}`);
@@ -57,6 +38,7 @@ function open(n: Notification) {
 }
 
 export default function Notifications() {
+  const t = useT();
   const { c } = useTheme();
   const qc = useQueryClient();
   const list = useNotifications();
@@ -70,7 +52,7 @@ export default function Notifications() {
 
   return (
     <>
-      <Header title="Notificações" right={<Button kind="ghost" size="sm" title="Atualizar" onPress={() => list.refetch()} />} />
+      <Header title={t.nav.notifications} right={<Button kind="ghost" size="sm" title={t.notifications.refresh} onPress={() => list.refetch()} />} />
       <Screen onRefresh={() => list.refetch()} refreshing={list.isRefetching}>
         {list.isPending ? <Loading /> : null}
         <ErrorText error={list.error} />
@@ -81,7 +63,7 @@ export default function Notifications() {
                 <Avatar uri={n.actor?.avatarUrl} name={n.actor?.name ?? "?"} size={32} />
                 <View style={{ flex: 1 }}>
                   <Txt>
-                    <Txt bold>{n.actor?.name ?? "Alguém"}</Txt> {TEXT[n.type] ?? n.type}
+                    <Txt bold>{n.actor?.name ?? t.notifications.someone}</Txt> {(t.notifications.types as Record<string, string>)[n.type] ?? n.type}
                   </Txt>
                   <Txt v="tiny" muted>{ago(n.createdAt)}</Txt>
                 </View>
@@ -93,9 +75,9 @@ export default function Notifications() {
           <Card>
             <Empty
               icon={BellOff}
-              title="Nada por aqui ainda"
-              text="Quando alguém der Oss, comentar ou a sua academia aprovar a sua entrada, aparece aqui."
-              action={<Button size="sm" title="Encontrar minha academia" onPress={() => router.navigate("/academia")} />}
+              title={t.notifications.empty}
+              text={t.notifications.emptyText}
+              action={<Button size="sm" title={t.notifications.findAcademy} onPress={() => router.navigate("/academia")} />}
             />
           </Card>
         ) : null}

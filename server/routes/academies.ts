@@ -56,8 +56,8 @@ const publicColumns = {
 export async function findAcademy(c: Context<AppEnv>, idOrSlug: string) {
   const db = c.get("db");
   const [a] = await db.select(publicColumns).from(s.academies).where(or(eq(s.academies.id, idOrSlug), eq(s.academies.slug, idOrSlug)));
-  if (!a) fail(404, "Academia não encontrada");
-  if (a.status !== "approved" && !c.get("isAdmin") && !(await membership(db, a.id, viewer(c)))) fail(404, "Academia não encontrada");
+  if (!a) fail(404, "academyNotFound");
+  if (a.status !== "approved" && !c.get("isAdmin") && !(await membership(db, a.id, viewer(c)))) fail(404, "academyNotFound");
   return a;
 }
 
@@ -65,20 +65,20 @@ export async function findAcademy(c: Context<AppEnv>, idOrSlug: string) {
 export async function requireMember(c: Context<AppEnv>, idOrSlug: string) {
   const a = await findAcademy(c, idOrSlug);
   const m = await membership(c.get("db"), a.id, viewer(c));
-  if (m?.status !== "active" || a.status !== "approved") fail(403, "Só membros da academia");
+  if (m?.status !== "active" || a.status !== "approved") fail(403, "academyMembersOnly");
   return { a, m: m! };
 }
 
 export async function requireStaff(c: Context<AppEnv>, idOrSlug: string) {
   const r = await requireMember(c, idOrSlug);
-  if (!isActiveStaff(r.m)) fail(403, "Só professores da academia");
+  if (!isActiveStaff(r.m)) fail(403, "academyCoachesOnly");
   return r;
 }
 
 /** Billing is the owner's business only. */
 export async function requireBillingManager(c: Context<AppEnv>, idOrSlug: string) {
   const r = await requireMember(c, idOrSlug);
-  if (!canManageBilling(r.m)) fail(403, "Só o responsável da academia");
+  if (!canManageBilling(r.m)) fail(403, "academyOwnerOnly");
   return r;
 }
 
@@ -123,7 +123,7 @@ academiesRoutes.post("/academies", async (c) => {
     .select({ id: s.academies.id })
     .from(s.academies)
     .where(and(eq(s.academies.createdBy, userId), ne(s.academies.status, "approved")));
-  if (open) fail(409, "Você já tem uma academia em análise ou recusada; corrija-a em vez de criar outra");
+  if (open) fail(409, "academyAlreadyOpen");
   const base = slugify(input.name);
   for (let attempt = 0; attempt < 5; attempt++) {
     const slug = attempt === 0 ? base : `${base}-${Math.random().toString(36).slice(2, 6)}`;
@@ -136,7 +136,7 @@ academiesRoutes.post("/academies", async (c) => {
       if (!isUniqueViolation(e)) throw e;
     }
   }
-  fail(409, "Não foi possível gerar um endereço para a academia");
+  fail(409, "academySlugFailed");
 });
 
 /** The owner corrects a pending or rejected registration; it goes back to the review queue. */
@@ -145,8 +145,8 @@ academiesRoutes.put("/academies/:id", async (c) => {
   const db = c.get("db");
   const input = await body(c, academyInput);
   const a = await findAcademy(c, c.req.param("id"));
-  if ((await membership(db, a.id, userId))?.role !== "owner") fail(403, "Só o responsável edita o cadastro");
-  if (a.status === "approved") fail(409, "Academias aprovadas não podem ser alteradas por aqui; fale com o suporte");
+  if ((await membership(db, a.id, userId))?.role !== "owner") fail(403, "ownerEditsOnly");
+  if (a.status === "approved") fail(409, "approvedAcademyLocked");
   const [updated] = await db
     .update(s.academies)
     .set({ ...input, status: "pending", submittedAt: new Date(), reviewNote: null, reviewedBy: null, reviewedAt: null })
@@ -185,7 +185,7 @@ academiesRoutes.post("/academies/:id/join", async (c) => {
   const userId = viewer(c);
   const db = c.get("db");
   const a = await findAcademy(c, c.req.param("id"));
-  if (a.status !== "approved") fail(409, "A academia ainda está em verificação");
+  if (a.status !== "approved") fail(409, "academyUnderReview");
   const inserted = await db.insert(s.academyMembers).values({ academyId: a.id, userId }).onConflictDoNothing().returning();
   if (inserted.length) await notify(db, "membership_request", userId, await staffIds(db, a.id), a.id);
   return c.body(null, 204);
@@ -197,7 +197,7 @@ academiesRoutes.get("/academies/:id/members", async (c) => {
   const db = c.get("db");
   const a = await findAcademy(c, c.req.param("id"));
   const m = await membership(db, a.id, userId);
-  if (m?.status !== "active") fail(403, "Só membros veem a lista");
+  if (m?.status !== "active") fail(403, "membersSeeList");
   const rows = await db
     .select({
       id: s.profiles.userId,
@@ -234,10 +234,10 @@ academiesRoutes.patch("/academies/:id/members/:userId", async (c) => {
   const a = await findAcademy(c, c.req.param("id"));
   const actor = await membership(db, a.id, userId);
   const target = await membership(db, a.id, c.req.param("userId"));
-  if (!isActiveStaff(actor)) fail(403, "Só professores podem fazer isso");
-  if (!target) fail(404, "Membro não encontrado");
-  if (input.role && actor!.role !== "owner") fail(403, "Só o responsável muda papéis");
-  if (target.role === "owner" && target.userId !== userId) fail(403, "Não é possível alterar o responsável");
+  if (!isActiveStaff(actor)) fail(403, "coachesOnly");
+  if (!target) fail(404, "memberNotFound");
+  if (input.role && actor!.role !== "owner") fail(403, "ownerChangesRoles");
+  if (target.role === "owner" && target.userId !== userId) fail(403, "cannotChangeOwner");
   await db
     .update(s.academyMembers)
     .set(input)
@@ -256,11 +256,11 @@ academiesRoutes.delete("/academies/:id/members/:userId", async (c) => {
   const a = await findAcademy(c, c.req.param("id"));
   const targetId = c.req.param("userId");
   const target = await membership(db, a.id, targetId);
-  if (!target) fail(404, "Membro não encontrado");
-  if (target.role === "owner") fail(403, "O responsável não pode sair; transfira a academia antes");
+  if (!target) fail(404, "memberNotFound");
+  if (target.role === "owner") fail(403, "ownerCannotLeave");
   if (targetId !== userId) {
     const actor = await membership(db, a.id, userId);
-    if (!isActiveStaff(actor) || (target.role === "coach" && actor!.role !== "owner")) fail(403, "Sem permissão");
+    if (!isActiveStaff(actor) || (target.role === "coach" && actor!.role !== "owner")) fail(403, "noPermission");
   }
   await db.delete(s.academyMembers).where(and(eq(s.academyMembers.academyId, a.id), eq(s.academyMembers.userId, targetId)));
   await db.update(s.profiles).set({ homeAcademyId: null }).where(and(eq(s.profiles.userId, targetId), eq(s.profiles.homeAcademyId, a.id)));
@@ -272,7 +272,7 @@ academiesRoutes.get("/academies/:id/ranking", async (c) => {
   const userId = viewer(c);
   const db = c.get("db");
   const a = await findAcademy(c, c.req.param("id"));
-  if ((await membership(db, a.id, userId))?.status !== "active") fail(403, "Só membros veem o ranking");
+  if ((await membership(db, a.id, userId))?.status !== "active") fail(403, "membersSeeRanking");
   const monthStart = new Date();
   monthStart.setUTCDate(1);
   monthStart.setUTCHours(0, 0, 0, 0);

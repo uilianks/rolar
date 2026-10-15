@@ -11,8 +11,8 @@ import { Linking, View } from "react-native";
 import { api } from "@/lib/api";
 import { confirm } from "@/lib/confirm";
 import { ago, whenLong } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 import type { AdminAcademy } from "@/lib/types";
-import { ACADEMY_STATUS_LABEL, REQUESTER_ROLE_LABEL } from "@/shared/domain";
 import { Badge, Button, Card, CardHead, Col, ErrorText, Input, ListRow, Loading, Row, Txt } from "@/ui/kit";
 import { Header, Screen } from "@/ui/shell";
 import { space, useTheme } from "@/ui/theme";
@@ -30,24 +30,14 @@ function Field({ label, children, href }: { label: string; children: ReactNode; 
   );
 }
 
-const EDITABLE = [
-  ["name", "Nome"],
-  ["affiliation", "Equipe / filiação"],
-  ["address", "Morada"],
-  ["postalCode", "Código postal"],
-  ["city", "Cidade"],
-  ["country", "País (2 letras)"],
-  ["phone", "Telefone"],
-  ["email", "E-mail"],
-  ["website", "Site"],
-  ["instagram", "Instagram"],
-] as const;
-type EditableKey = (typeof EDITABLE)[number][0];
+const EDITABLE = ["name", "affiliation", "address", "postalCode", "city", "country", "phone", "email", "website", "instagram"] as const;
+type EditableKey = (typeof EDITABLE)[number];
 
 /** Admin correction of the academy's details, at any status (the address of its page stays the same). */
 function EditAcademy({ a, onDone }: { a: AdminAcademy; onDone: () => void }) {
+  const t = useT();
   const qc = useQueryClient();
-  const [form, setForm] = useState<Record<EditableKey, string>>(() => Object.fromEntries(EDITABLE.map(([k]) => [k, a[k] ?? ""])) as Record<EditableKey, string>);
+  const [form, setForm] = useState<Record<EditableKey, string>>(() => Object.fromEntries(EDITABLE.map((k) => [k, a[k] ?? ""])) as Record<EditableKey, string>);
   const [error, setError] = useState<unknown>(null);
 
   async function save() {
@@ -63,13 +53,13 @@ function EditAcademy({ a, onDone }: { a: AdminAcademy; onDone: () => void }) {
 
   return (
     <Col style={{ padding: space.lg }}>
-      {EDITABLE.map(([k, label]) => (
-        <Input key={k} label={label} value={form[k]} onChangeText={(v) => setForm({ ...form, [k]: v })} autoCapitalize={k === "name" || k === "address" || k === "city" || k === "affiliation" ? "sentences" : "none"} />
+      {EDITABLE.map((k) => (
+        <Input key={k} label={t.admin.field[k]} value={form[k]} onChangeText={(v) => setForm({ ...form, [k]: v })} autoCapitalize={k === "name" || k === "address" || k === "city" || k === "affiliation" ? "sentences" : "none"} />
       ))}
       <ErrorText error={error} />
       <Row>
-        <Button kind="primary" title="Salvar dados" onPress={save} />
-        <Button kind="ghost" title="Cancelar" onPress={onDone} />
+        <Button kind="primary" title={t.admin.saveData} onPress={save} />
+        <Button kind="ghost" title={t.common.cancel} onPress={onDone} />
       </Row>
     </Col>
   );
@@ -77,6 +67,7 @@ function EditAcademy({ a, onDone }: { a: AdminAcademy; onDone: () => void }) {
 
 /** Who answers for the academy, and handing it over to another account. */
 function Ownership({ a }: { a: AdminAcademy }) {
+  const t = useT();
   const qc = useQueryClient();
   const [username, setUsername] = useState("");
   const [error, setError] = useState<unknown>(null);
@@ -84,8 +75,8 @@ function Ownership({ a }: { a: AdminAcademy }) {
   async function transfer() {
     setError(null);
     const target = username.trim().replace(/^@/, "").toLowerCase();
-    if (!target) return setError("Informe o nome de usuário do novo responsável.");
-    if (!(await confirm(`Transferir para @${target}?`, "O responsável atual passa a professor da academia.", "Transferir"))) return;
+    if (!target) return setError(t.admin.newOwnerRequired);
+    if (!(await confirm(t.admin.transferTitle(target), t.admin.transferText, t.admin.transfer))) return;
     try {
       await api(`/admin/academies/${a.id}/owner`, { method: "POST", json: { username: target } });
       setUsername("");
@@ -98,23 +89,24 @@ function Ownership({ a }: { a: AdminAcademy }) {
   return (
     <Col style={{ padding: space.lg }}>
       {a.owner ? (
-        <Field label="Responsável atual">
+        <Field label={t.admin.currentOwner}>
           <Txt style={{ textDecorationLine: "underline" }} onPress={() => router.push(`/admin/usuario/${a.owner!.id}`)}>
             {a.owner.name} (@{a.owner.username})
           </Txt>
         </Field>
       ) : (
-        <Field label="Responsável atual">Ninguém (a conta foi apagada)</Field>
+        <Field label={t.admin.currentOwner}>{t.admin.ownerDeleted}</Field>
       )}
-      <Input label="Transferir para (nome de usuário)" value={username} onChangeText={setUsername} autoCapitalize="none" placeholder="@professor" />
+      <Input label={t.admin.transferTo} value={username} onChangeText={setUsername} autoCapitalize="none" placeholder="@professor" />
       <ErrorText error={error} />
-      <Button icon={ArrowRightLeft} title="Transferir academia" onPress={transfer} style={{ alignSelf: "flex-start" }} />
+      <Button icon={ArrowRightLeft} title={t.admin.transferAcademy} onPress={transfer} style={{ alignSelf: "flex-start" }} />
     </Col>
   );
 }
 
 /** One registration with everything needed to decide, plus approve / reject with a reason. */
 export default function AdminAcademyReview() {
+  const t = useT();
   const { c } = useTheme();
   const qc = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -126,7 +118,7 @@ export default function AdminAcademyReview() {
 
   async function review(decision: "approve" | "reject") {
     setError(null);
-    if (decision === "reject" && note.trim().length < 5) return setError("Escreva o motivo da recusa; o responsável vai ler.");
+    if (decision === "reject" && note.trim().length < 5) return setError(t.admin.writeRejectReason);
     setBusy(true);
     try {
       await api(`/admin/academies/${id}/review`, { method: "POST", json: { decision, note: note.trim() || undefined } });
@@ -143,8 +135,8 @@ export default function AdminAcademyReview() {
   return (
     <>
       <Header
-        title="Rever academia"
-        left={<Button kind="ghost" icon={ArrowLeft} accessibilityLabel="Voltar" onPress={() => (router.canGoBack() ? router.back() : router.replace("/admin/academias"))} />}
+        title={t.admin.reviewAcademy}
+        left={<Button kind="ghost" icon={ArrowLeft} accessibilityLabel={t.common.back} onPress={() => (router.canGoBack() ? router.back() : router.replace("/admin/academias"))} />}
       />
       <Screen wide>
         {q.isPending ? <Loading /> : null}
@@ -154,105 +146,104 @@ export default function AdminAcademyReview() {
             <Card style={{ gap: space.sm }}>
               <Row wrap style={{ justifyContent: "space-between" }}>
                 <Txt v="h1">{a.name}</Txt>
-                <Badge tone={a.status === "pending" ? "accent" : a.status === "approved" ? "success" : "default"}>{ACADEMY_STATUS_LABEL[a.status]}</Badge>
+                <Badge tone={a.status === "pending" ? "accent" : a.status === "approved" ? "success" : "default"}>{t.academyStatus[a.status]}</Badge>
               </Row>
               <Txt v="small" muted>
-                Enviada {ago(a.submittedAt)} ({whenLong(a.submittedAt)})
-                {a.reviewedAt ? ` · revista ${ago(a.reviewedAt)}` : ""}
+                {t.admin.submittedLong(ago(a.submittedAt), whenLong(a.submittedAt))}
+                {a.reviewedAt ? ` · ${t.admin.reviewed(ago(a.reviewedAt))}` : ""}
               </Txt>
-              {a.reviewNote ? <Txt v="small">Nota: {a.reviewNote}</Txt> : null}
+              {a.reviewNote ? <Txt v="small">{t.admin.note(a.reviewNote)}</Txt> : null}
             </Card>
 
             <Row wrap gap={space.md} style={{ alignItems: "flex-start" }}>
               <Card pad={false} style={{ flexGrow: 1, flexBasis: 320 }}>
-                <CardHead title="Academia" />
+                <CardHead title={t.nav.academy} />
                 <Col style={{ padding: space.lg }}>
-                  <Field label="Equipe / filiação">{a.affiliation}</Field>
-                  <Field label="Morada">{[a.address, a.postalCode, a.city, a.country].filter(Boolean).join(", ")}</Field>
-                  <Field label="Telefone" href={a.phone ? `tel:${a.phone.replace(/[^+0-9]/g, "")}` : undefined}>{a.phone}</Field>
-                  <Field label="E-mail" href={a.email ? `mailto:${a.email}` : undefined}>{a.email}</Field>
-                  <Field label="Site" href={a.website ?? undefined}>{a.website}</Field>
+                  <Field label={t.admin.field.affiliation}>{a.affiliation}</Field>
+                  <Field label={t.admin.field.address}>{[a.address, a.postalCode, a.city, a.country].filter(Boolean).join(", ")}</Field>
+                  <Field label={t.admin.field.phone} href={a.phone ? `tel:${a.phone.replace(/[^+0-9]/g, "")}` : undefined}>{a.phone}</Field>
+                  <Field label={t.admin.field.email} href={a.email ? `mailto:${a.email}` : undefined}>{a.email}</Field>
+                  <Field label={t.admin.field.website} href={a.website ?? undefined}>{a.website}</Field>
                   <Field label="Instagram" href={a.instagram ? `https://instagram.com/${a.instagram}` : undefined}>{a.instagram ? `@${a.instagram}` : null}</Field>
                   <Field
-                    label="Procurar no mapa"
+                    label={t.admin.searchMap}
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([a.name, a.address, a.city].filter(Boolean).join(" "))}`}
                   >
-                    Abrir no Google Maps
+                    {t.admin.openGoogleMaps}
                   </Field>
                 </Col>
               </Card>
 
               <Card pad={false} style={{ flexGrow: 1, flexBasis: 320 }}>
-                <CardHead title="Quem pediu" />
+                <CardHead title={t.admin.requester} />
                 <Col style={{ padding: space.lg }}>
                   {a.requester ? (
                     <>
-                      <Field label="Nome">{a.requester.name}</Field>
+                      <Field label={t.admin.field.name}>{a.requester.name}</Field>
                       {a.requester.username ? (
-                        <Button size="sm" kind="ghost" title={`@${a.requester.username} — ver perfil`} onPress={() => router.push(`/u/${a.requester!.username}`)} style={{ alignSelf: "flex-start" }} />
+                        <Button size="sm" kind="ghost" title={t.admin.seeProfile(a.requester.username)} onPress={() => router.push(`/u/${a.requester!.username}`)} style={{ alignSelf: "flex-start" }} />
                       ) : null}
-                      <Field label="E-mail da conta" href={`mailto:${a.requester.email}`}>{a.requester.email}</Field>
-                      <Field label="Conta criada">{`${ago(a.requester.accountCreatedAt)} · ${a.requester.sessions} treinos · ${a.requester.academiesRegistered} academia(s) cadastrada(s)`}</Field>
+                      <Field label={t.admin.accountEmail} href={`mailto:${a.requester.email}`}>{a.requester.email}</Field>
+                      <Field label={t.admin.accountCreated}>{`${ago(a.requester.accountCreatedAt)} · ${t.feed.sessions(a.requester.sessions)} · ${t.admin.academiesRegistered(a.requester.academiesRegistered)}`}</Field>
                     </>
                   ) : (
-                    <Txt muted>A conta foi apagada.</Txt>
+                    <Txt muted>{t.admin.accountDeleted}</Txt>
                   )}
-                  <Field label="Papel declarado">{a.requesterRole ? REQUESTER_ROLE_LABEL[a.requesterRole] : null}</Field>
-                  <Field label="Como confirmar">{a.proof}</Field>
+                  <Field label={t.admin.declaredRole}>{a.requesterRole ? t.requesterRole[a.requesterRole] : null}</Field>
+                  <Field label={t.admin.howToConfirm}>{a.proof}</Field>
                 </Col>
               </Card>
             </Row>
 
             <Card pad={false}>
-              <CardHead title="Academias parecidas" right={a.similar.length ? <Badge tone="accent">{String(a.similar.length)}</Badge> : undefined} />
+              <CardHead title={t.admin.similar} right={a.similar.length ? <Badge tone="accent">{String(a.similar.length)}</Badge> : undefined} />
               {a.similar.map((s) => (
                 <ListRow key={s.id} onPress={() => router.push(`/admin/${s.id}`)}>
                   <View style={{ flex: 1 }}>
                     <Txt bold>{s.name}</Txt>
-                    <Txt v="tiny" muted>{[s.city, ACADEMY_STATUS_LABEL[s.status]].filter(Boolean).join(" · ")}</Txt>
+                    <Txt v="tiny" muted>{[s.city, t.academyStatus[s.status]].filter(Boolean).join(" · ")}</Txt>
                   </View>
                 </ListRow>
               ))}
               {!a.similar.length ? (
                 <View style={{ padding: space.lg }}>
-                  <Txt v="small" muted>Nenhuma com o mesmo nome, telefone, site ou Instagram.</Txt>
+                  <Txt v="small" muted>{t.admin.noSimilar}</Txt>
                 </View>
               ) : null}
             </Card>
 
             <Row wrap gap={space.md} style={{ alignItems: "flex-start" }}>
               <Card pad={false} style={{ flexGrow: 1, flexBasis: 320 }}>
-                <CardHead title="Dados da academia" right={editing ? undefined : <Button size="sm" kind="ghost" icon={Pencil} title="Editar" onPress={() => setEditing(true)} />} />
+                <CardHead title={t.admin.academyData} right={editing ? undefined : <Button size="sm" kind="ghost" icon={Pencil} title={t.common.edit} onPress={() => setEditing(true)} />} />
                 {editing ? (
                   <EditAcademy a={a} onDone={() => setEditing(false)} />
                 ) : (
                   <View style={{ padding: space.lg }}>
-                    <Txt v="small" muted>Corrija nome, morada ou contactos sem mandar a academia de volta para a fila.</Txt>
+                    <Txt v="small" muted>{t.admin.editHint}</Txt>
                   </View>
                 )}
               </Card>
               <Card pad={false} style={{ flexGrow: 1, flexBasis: 320 }}>
-                <CardHead title="Responsável" />
+                <CardHead title={t.academy.role.owner} />
                 <Ownership a={a} />
               </Card>
             </Row>
 
             {a.status === "pending" ? (
               <Card style={{ gap: space.md }}>
-                <Txt v="h3">Decisão</Txt>
+                <Txt v="h3">{t.admin.decision}</Txt>
                 <Txt v="small" muted>
-                  Antes de aprovar, confirme pelos canais oficiais (não pelos contactos de quem pediu) que essa pessoa
-                  responde pela academia.
+                  {t.admin.decisionHint}
                 </Txt>
-                <Input label="Nota para o responsável (obrigatória ao recusar)" value={note} onChangeText={setNote} multiline placeholder="Ex.: Não conseguimos confirmar pelo Instagram oficial. Peça à academia para nos mandar mensagem." />
+                <Input label={t.admin.ownerNote} value={note} onChangeText={setNote} multiline placeholder={t.admin.ownerNotePlaceholder} />
                 <ErrorText error={error} />
                 <Row gap={space.sm} wrap>
-                  <Button kind="primary" icon={Check} title="Aprovar" loading={busy} onPress={() => review("approve")} />
-                  <Button kind="danger" icon={X} title="Recusar" disabled={busy} onPress={() => review("reject")} />
+                  <Button kind="primary" icon={Check} title={t.admin.approve} loading={busy} onPress={() => review("approve")} />
+                  <Button kind="danger" icon={X} title={t.academy.decline} disabled={busy} onPress={() => review("reject")} />
                 </Row>
               </Card>
             ) : (
-              <Txt v="small" color={c.mutedFg}>Já revista. Se o responsável corrigir os dados, ela volta para a fila.</Txt>
+              <Txt v="small" color={c.mutedFg}>{t.admin.alreadyReviewed}</Txt>
             )}
           </>
         ) : null}

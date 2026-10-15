@@ -36,7 +36,7 @@ const MATCH_WINDOW_MIN = 120;
 
 function timeZone(c: Parameters<typeof viewer>[0]) {
   const tz = c.req.query("tz") ?? "UTC";
-  if (!isValidTimeZone(tz)) fail(400, "Fuso horário inválido");
+  if (!isValidTimeZone(tz)) fail(400, "invalidTimeZone");
   return tz;
 }
 
@@ -86,7 +86,7 @@ async function findClass(c: Parameters<typeof viewer>[0], academyId: string, cla
     .select(classColumns)
     .from(s.academyClasses)
     .where(and(eq(s.academyClasses.id, classId), eq(s.academyClasses.academyId, academyId), isNull(s.academyClasses.archivedAt)));
-  if (!k) fail(404, "Aula não encontrada");
+  if (!k) fail(404, "classNotFound");
   return k;
 }
 
@@ -139,7 +139,7 @@ async function occurrence(c: Parameters<typeof viewer>[0], classId: string, date
  */
 classesRoutes.get("/classes/:classId", async (c) => {
   const [k] = await c.get("db").select(classColumns).from(s.academyClasses).where(eq(s.academyClasses.id, c.req.param("classId")));
-  if (!k) fail(404, "Aula não encontrada");
+  if (!k) fail(404, "classNotFound");
   await findAcademy(c, k.academyId);
   const date = c.req.query("date");
   if (!date) return c.json(k);
@@ -152,7 +152,7 @@ classesRoutes.put("/academies/:id/classes/:classId/occurrences/:date", async (c)
   const a = await staffAcademy(c, c.req.param("id"));
   const k = await findClass(c, a.id, c.req.param("classId"));
   const date = attendanceInput.shape.date.parse(c.req.param("date"));
-  if (isoWeekday(date) !== k.weekday) fail(400, "Essa data não é dia desta aula");
+  if (isoWeekday(date) !== k.weekday) fail(400, "notClassDay");
   const input = await body(c, occurrenceInput);
   const before = await occurrence(c, k.id, date);
   const db = c.get("db");
@@ -251,12 +251,12 @@ classesRoutes.put("/academies/:id/classes/:classId/attendance", async (c) => {
   const a = await staffAcademy(c, c.req.param("id"));
   const k = await findClass(c, a.id, c.req.param("classId"));
   const { date, userIds, topic } = await body(c, attendanceInput);
-  if (isoWeekday(date) !== k.weekday) fail(400, "Essa data não é dia desta aula");
+  if (isoWeekday(date) !== k.weekday) fail(400, "notClassDay");
   const today = new Date();
   const max = new Date(today.getTime() + 86_400_000).toISOString().slice(0, 10); // timezones ahead of UTC
   const min = new Date(today.getTime() - 60 * 86_400_000).toISOString().slice(0, 10);
-  if (date > max) fail(400, "Não dá para fazer chamada de uma aula futura");
-  if (date < min) fail(400, "Só dá para fazer chamada dos últimos 60 dias");
+  if (date > max) fail(400, "futureRollCall");
+  if (date < min) fail(400, "rollCallTooOld");
 
   const ids = [...new Set(userIds)];
   if (ids.length) {
@@ -264,7 +264,7 @@ classesRoutes.put("/academies/:id/classes/:classId/attendance", async (c) => {
       .select({ id: s.academyMembers.userId })
       .from(s.academyMembers)
       .where(and(eq(s.academyMembers.academyId, a.id), eq(s.academyMembers.status, "active"), inArray(s.academyMembers.userId, ids)));
-    if (members.length !== ids.length) fail(400, "Só membros ativos da academia entram na chamada");
+    if (members.length !== ids.length) fail(400, "rollCallActiveOnly");
   }
 
   const before = await db
@@ -299,7 +299,7 @@ classesRoutes.get("/academies/:id/checkin-qr", async (c) => {
 
 classesRoutes.post("/academies/:id/checkin-qr/rotate", async (c) => {
   const { a, m } = await requireStaff(c, c.req.param("id"));
-  if (m.role !== "owner") fail(403, "Só o responsável troca o QR");
+  if (m.role !== "owner") fail(403, "ownerRotatesQr");
   const token = randomBytes(16).toString("base64url");
   await c.get("db").update(s.academies).set({ checkinToken: token }).where(eq(s.academies.id, a.id));
   return c.json({ academyId: a.id, name: a.name, token });
@@ -316,12 +316,12 @@ const CHECKIN_EARLY_MIN = 45;
 classesRoutes.post("/checkin", async (c) => {
   const userId = viewer(c);
   const { a: academyId, t: token, tz } = await body(c, z.object({ a: z.string().min(1), t: z.string().min(1).max(64), tz: z.string().max(64).default("UTC") }));
-  if (!isValidTimeZone(tz)) fail(400, "Fuso horário inválido");
+  if (!isValidTimeZone(tz)) fail(400, "invalidTimeZone");
   const db = c.get("db");
   const [row] = await db.select({ token: s.academies.checkinToken }).from(s.academies).where(eq(s.academies.id, academyId));
   const expected = Buffer.from(row?.token ?? "");
   const given = Buffer.from(token);
-  if (!row || expected.length !== given.length || !timingSafeEqual(expected, given)) fail(400, "Este QR não é válido. Peça ao professor o QR atual da academia.");
+  if (!row || expected.length !== given.length || !timingSafeEqual(expected, given)) fail(400, "invalidQr");
   const { a } = await requireMember(c, academyId);
 
   const now = localParts(new Date(), tz);
@@ -334,12 +334,12 @@ classesRoutes.post("/checkin", async (c) => {
     .filter((k) => now.minutes >= minutesOf(k.startTime) - CHECKIN_EARLY_MIN && now.minutes <= minutesOf(k.startTime) + k.durationMin)
     .sort((x, y) => Math.abs(now.minutes - minutesOf(x.startTime)) - Math.abs(now.minutes - minutesOf(y.startTime)));
   const k = live[0];
-  if (!k) fail(409, "Não há aula agora nesta academia. O check-in abre 45 minutos antes do início.");
+  if (!k) fail(409, "noClassNow");
   const [o] = await db
     .select({ cancelled: s.classOccurrences.cancelled })
     .from(s.classOccurrences)
     .where(and(eq(s.classOccurrences.classId, k.id), eq(s.classOccurrences.date, now.date)));
-  if (o?.cancelled) fail(409, "A aula de hoje foi cancelada.");
+  if (o?.cancelled) fail(409, "classCancelledToday");
   await db.insert(s.checkins).values({ classId: k.id, date: now.date, userId }).onConflictDoNothing();
   return c.json({ class: k, academy: { id: a.id, name: a.name }, date: now.date });
 });

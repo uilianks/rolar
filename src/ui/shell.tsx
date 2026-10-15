@@ -18,32 +18,34 @@ import { Platform, Pressable, RefreshControl, ScrollView, Text, View, useWindowD
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { startCheckinScan } from "@/lib/checkin";
+import { useT } from "@/lib/i18n";
 import { useMe } from "@/lib/queries";
+import type { Messages } from "@/shared/i18n";
 
 import { Button, Card, Row, Txt } from "./kit";
 import { radius, space, useTheme } from "./theme";
 
 export const WIDE = 900;
 
-type NavItem = { href: string; label: string; icon: LucideIcon; match: (p: string) => boolean; onPress?: () => void };
+type NavItem = { href: string; label: keyof Messages["nav"]; icon: LucideIcon; match: (p: string) => boolean; onPress?: () => void };
 
 const MAIN: NavItem[] = [
-  { href: "/", label: "Feed", icon: House, match: (p) => p === "/" },
-  { href: "/progresso", label: "Progresso", icon: ChartNoAxesColumn, match: (p) => p.startsWith("/progresso") },
-  { href: "/academia", label: "Academia", icon: Users, match: (p) => p.startsWith("/academia") },
-  { href: "/perfil", label: "Perfil", icon: User, match: (p) => p.startsWith("/perfil") },
+  { href: "/", label: "feed", icon: House, match: (p) => p === "/" },
+  { href: "/progresso", label: "progress", icon: ChartNoAxesColumn, match: (p) => p.startsWith("/progresso") },
+  { href: "/academia", label: "academy", icon: Users, match: (p) => p.startsWith("/academia") },
+  { href: "/perfil", label: "profile", icon: User, match: (p) => p.startsWith("/perfil") },
 ];
 /** Check-in is an action (opens the scanner), not a page: the dock's centre button on phones. */
-const CHECKIN: NavItem = { href: "/ler-qr", label: "Check-in", icon: ScanLine, match: (p) => p.startsWith("/ler-qr") || p.startsWith("/checkin"), onPress: startCheckinScan };
+const CHECKIN: NavItem = { href: "/ler-qr", label: "checkin", icon: ScanLine, match: (p) => p.startsWith("/ler-qr") || p.startsWith("/checkin"), onPress: startCheckinScan };
 
 const TOOLS: NavItem[] = [
-  { href: "/timer", label: "Timer de rounds", icon: Timer, match: (p) => p.startsWith("/timer") },
-  { href: "/notificacoes", label: "Notificações", icon: Bell, match: (p) => p.startsWith("/notificacoes") },
-  { href: "/config", label: "Configurações", icon: Settings, match: (p) => p.startsWith("/config") },
-  { href: "/apoie", label: "Apoie o projeto", icon: Heart, match: (p) => p.startsWith("/apoie") },
+  { href: "/timer", label: "timer", icon: Timer, match: (p) => p.startsWith("/timer") },
+  { href: "/notificacoes", label: "notifications", icon: Bell, match: (p) => p.startsWith("/notificacoes") },
+  { href: "/config", label: "settings", icon: Settings, match: (p) => p.startsWith("/config") },
+  { href: "/apoie", label: "support", icon: Heart, match: (p) => p.startsWith("/apoie") },
 ];
 
-const ADMIN: NavItem = { href: "/admin", label: "Admin", icon: ShieldCheck, match: (p) => p.startsWith("/admin") };
+const ADMIN: NavItem = { href: "/admin", label: "admin", icon: ShieldCheck, match: (p) => p.startsWith("/admin") };
 
 export function useWide() {
   return useWindowDimensions().width >= WIDE;
@@ -62,6 +64,7 @@ export function BrandMark({ size = 26 }: { size?: number }) {
 
 function SideLink({ item, active, badge }: { item: NavItem; active: boolean; badge?: number }) {
   const { c } = useTheme();
+  const t = useT();
   const Icon = item.icon;
   return (
     <Pressable
@@ -79,7 +82,7 @@ function SideLink({ item, active, badge }: { item: NavItem; active: boolean; bad
       })}
     >
       <Icon size={18} color={active ? c.fg : c.mutedFg} strokeWidth={1.75} />
-      <Text style={{ color: active ? c.fg : c.mutedFg, fontWeight: "500", fontSize: 14, flex: 1 }}>{item.label}</Text>
+      <Text style={{ color: active ? c.fg : c.mutedFg, fontWeight: "500", fontSize: 14, flex: 1 }}>{t.nav[item.label]}</Text>
       {badge ? (
         <View style={{ backgroundColor: c.accentSoft, borderRadius: radius.full, paddingHorizontal: 7, height: 20, justifyContent: "center" }}>
           <Text style={{ color: c.accent, fontSize: 11, fontWeight: "600" }}>{badge}</Text>
@@ -91,6 +94,7 @@ function SideLink({ item, active, badge }: { item: NavItem; active: boolean; bad
 
 function Sidebar({ path }: { path: string }) {
   const { c, scheme, setPref } = useTheme();
+  const t = useT();
   const me = useMe().data;
   const unread = me?.unreadNotifications;
   return (
@@ -99,11 +103,11 @@ function Sidebar({ path }: { path: string }) {
         <BrandMark />
         <Txt v="h2" style={{ fontWeight: "800", letterSpacing: -0.6 }}>rolar</Txt>
       </Row>
-      <Button kind="primary" icon={Plus} title="Registrar treino" onPress={() => router.navigate("/registrar")} style={{ marginBottom: 12 }} />
+      <Button kind="primary" icon={Plus} title={t.nav.logSession} onPress={() => router.navigate("/registrar")} style={{ marginBottom: 12 }} />
       {MAIN.map((i) => (
         <SideLink key={i.href} item={i} active={i.match(path)} />
       ))}
-      <Txt v="tiny" muted style={{ paddingHorizontal: 10, paddingTop: 14, paddingBottom: 4 }}>Ferramentas</Txt>
+      <Txt v="tiny" muted style={{ paddingHorizontal: 10, paddingTop: 14, paddingBottom: 4 }}>{t.nav.tools}</Txt>
       <SideLink item={CHECKIN} active={CHECKIN.match(path)} />
       {TOOLS.map((i) => (
         <SideLink key={i.href} item={i} active={i.match(path)} badge={i.href === "/notificacoes" ? unread : undefined} />
@@ -113,13 +117,13 @@ function Sidebar({ path }: { path: string }) {
       <Card style={{ gap: 8 }}>
         <Row>
           <Heart size={16} color={c.fg} />
-          <Txt bold>Projeto open source</Txt>
+          <Txt bold>{t.nav.openSource}</Txt>
         </Row>
-        <Txt v="small" muted>Sem anúncios e sem paywall. Mantido por doações.</Txt>
-        <Button size="sm" title="Apoiar" onPress={() => router.navigate("/apoie")} />
+        <Txt v="small" muted>{t.nav.openSourceText}</Txt>
+        <Button size="sm" title={t.nav.donate} onPress={() => router.navigate("/apoie")} />
       </Card>
       <SideLink
-        item={{ href: "", label: "Tema claro/escuro", icon: SunMoon, match: () => false, onPress: () => setPref(scheme === "dark" ? "light" : "dark") }}
+        item={{ href: "", label: "theme", icon: SunMoon, match: () => false, onPress: () => setPref(scheme === "dark" ? "light" : "dark") }}
         active={false}
       />
     </View>
@@ -128,6 +132,7 @@ function Sidebar({ path }: { path: string }) {
 
 function Dock({ path }: { path: string }) {
   const { c } = useTheme();
+  const t = useT();
   const insets = useSafeAreaInsets();
   const items = [MAIN[0], MAIN[1], null, MAIN[2], MAIN[3]];
   return (
@@ -156,19 +161,19 @@ function Dock({ path }: { path: string }) {
           <Pressable
             key={item.href}
             accessibilityRole="tab"
-            accessibilityLabel={item.label}
+            accessibilityLabel={t.nav[item.label]}
             accessibilityState={{ selected: item.match(path) }}
             onPress={() => router.navigate(item.href as never)}
             style={{ width: 62, paddingVertical: 6, borderRadius: 12, alignItems: "center", gap: 2, backgroundColor: item.match(path) ? c.muted : "transparent" }}
           >
             <item.icon size={20} color={item.match(path) ? c.fg : c.mutedFg} strokeWidth={1.75} />
-            <Text style={{ fontSize: 10, fontWeight: "500", color: item.match(path) ? c.fg : c.mutedFg }}>{item.label}</Text>
+            <Text style={{ fontSize: 10, fontWeight: "500", color: item.match(path) ? c.fg : c.mutedFg }}>{t.nav[item.label]}</Text>
           </Pressable>
         ) : (
           <Pressable
             key="cta"
             accessibilityRole="button"
-            accessibilityLabel="Check-in"
+            accessibilityLabel={t.nav.checkin}
             onPress={startCheckinScan}
             style={{ width: 56, height: 46, marginHorizontal: 4, borderRadius: 14, backgroundColor: c.primary, alignItems: "center", justifyContent: "center" }}
           >

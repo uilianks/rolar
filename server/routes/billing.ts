@@ -2,10 +2,10 @@ import { and, asc, desc, eq, gte, isNull, lte } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { addMonths, type BillingStatus, PAYMENT_METHOD_LABEL, paymentInput, planInput } from "../../src/shared/domain";
+import { addMonths, type BillingStatus, paymentInput, planInput } from "../../src/shared/domain";
 import type { Db } from "../db/client";
 import * as s from "../db/schema";
-import { type AppEnv, body, fail, viewer } from "../http";
+import { type AppEnv, body, fail, t, viewer } from "../http";
 import { notify } from "../notify";
 import { membership } from "../policies";
 import { requireMember, requireBillingManager } from "./academies";
@@ -84,7 +84,7 @@ billingRoutes.put("/academies/:id/plans/:planId", async (c) => {
     .set(input)
     .where(and(eq(s.membershipPlans.id, c.req.param("planId")), eq(s.membershipPlans.academyId, a.id)))
     .returning(planColumns);
-  if (!p) fail(404, "Plano não encontrado");
+  if (!p) fail(404, "planNotFound");
   return c.json(p);
 });
 
@@ -158,9 +158,9 @@ billingRoutes.patch("/academies/:id/members/:userId/plan", async (c) => {
   const { a } = await requireBillingManager(c, c.req.param("id"));
   const db = c.get("db");
   const { planId } = await body(c, z.object({ planId: z.string().nullable() }));
-  if (planId && !(await plansOf(db, a.id)).some((p) => p.id === planId)) fail(400, "Plano inválido");
+  if (planId && !(await plansOf(db, a.id)).some((p) => p.id === planId)) fail(400, "invalidPlan");
   const target = await membership(db, a.id, c.req.param("userId"));
-  if (target?.status !== "active") fail(404, "Membro não encontrado");
+  if (target?.status !== "active") fail(404, "memberNotFound");
   await db.update(s.academyMembers).set({ planId }).where(and(eq(s.academyMembers.academyId, a.id), eq(s.academyMembers.userId, target.userId)));
   return c.body(null, 204);
 });
@@ -176,7 +176,7 @@ billingRoutes.post("/academies/:id/payments", async (c) => {
   const db = c.get("db");
   const input = await body(c, paymentInput);
   const target = await membership(db, a.id, input.userId);
-  if (target?.status !== "active") fail(400, "Só membros ativos");
+  if (target?.status !== "active") fail(400, "activeMembersOnly");
   const [row] = await db
     .select({ planId: s.academyMembers.planId })
     .from(s.academyMembers)
@@ -201,7 +201,7 @@ billingRoutes.post("/academies/:id/members/:userId/remind", async (c) => {
   const { a } = await requireBillingManager(c, c.req.param("id"));
   const db = c.get("db");
   const target = await membership(db, a.id, c.req.param("userId"));
-  if (target?.status !== "active") fail(404, "Membro não encontrado");
+  if (target?.status !== "active") fail(404, "memberNotFound");
   const [recent] = await db
     .select({ id: s.notifications.id })
     .from(s.notifications)
@@ -213,7 +213,7 @@ billingRoutes.post("/academies/:id/members/:userId/remind", async (c) => {
         gte(s.notifications.createdAt, new Date(Date.now() - 86_400_000)),
       ),
     );
-  if (recent) fail(409, "Já foi enviado um lembrete nas últimas 24 horas");
+  if (recent) fail(409, "reminderSentRecently");
   await notify(db, "payment_reminder", ownerId, [target.userId], a.id);
   return c.body(null, 204);
 });
@@ -243,13 +243,14 @@ billingRoutes.get("/academies/:id/payments.csv", async (c) => {
     const t = String(v ?? "");
     return /[";\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
   };
-  // Semicolons and decimal commas: what Excel expects in Portugal.
+  // Semicolons and decimal commas: what Excel expects in Portugal, whatever the language.
+  const m = t(c);
   const lines = [
-    ["Data", "Aluno", "Plano", "Referente a", "Meses", "Valor (€)", "Forma", "Nota"],
-    ...rows.map((r) => [r.paidOn, r.name, r.plan, r.coversFrom, r.months, (r.amountCents / 100).toFixed(2).replace(".", ","), PAYMENT_METHOD_LABEL[r.method], r.note]),
+    m.paymentsCsv.header,
+    ...rows.map((r) => [r.paidOn, r.name, r.plan, r.coversFrom, r.months, (r.amountCents / 100).toFixed(2).replace(".", ","), m.paymentMethod[r.method], r.note]),
   ].map((l) => l.map(cell).join(";"));
   return c.body(`﻿${lines.join("\r\n")}\r\n`, 200, {
     "Content-Type": "text/csv; charset=utf-8",
-    "Content-Disposition": `attachment; filename="mensalidades-${month}.csv"`,
+    "Content-Disposition": `attachment; filename="${m.paymentsCsv.filename(month)}"`,
   });
 });

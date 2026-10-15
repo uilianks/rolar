@@ -88,7 +88,7 @@ describe("suspension", () => {
     expect((await asAdmin("POST", `/admin/users/${bad.id}/suspend`, { reason: "Assédio a outros alunos" })).status).toBe(204);
 
     expect((await api.call("GET", "/me", { cookie: bad.cookie })).status).toBe(401);
-    await expect(api.signIn("suspenso@example.com")).rejects.toThrow(/no session cookie \(status 403.*"code":"ACCOUNT_SUSPENDED".*Conta suspensa: Assédio/);
+    await expect(api.signIn("suspenso@example.com")).rejects.toThrow(/no session cookie \(status 403.*"code":"ACCOUNT_SUSPENDED".*"message":"Assédio/);
     expect((await api.call("GET", "/users?q=suspenso", { cookie: other.cookie })).data).toHaveLength(0);
     expect((await api.call("GET", "/users/suspenso", { cookie: other.cookie })).status).toBe(404);
     expect((await api.call("GET", "/users/suspenso/sessions", { cookie: other.cookie })).data.items).toHaveLength(0);

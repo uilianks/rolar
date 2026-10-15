@@ -1,3 +1,5 @@
+import { msg } from "./i18n";
+
 export function duration(min: number) {
   const h = Math.floor(min / 60);
   const m = min % 60;
@@ -5,38 +7,48 @@ export function duration(min: number) {
   return m ? `${h}h ${m}min` : `${h}h`;
 }
 
-/** "1,5h" below 10 hours, "198h" above. */
+/** "1,5h" (or "1.5h") below 10 hours, "198h" above. */
 export function hours(min: number) {
   const h = min / 60;
-  return h < 10 ? `${h.toFixed(1).replace(".0", "").replace(".", ",")}h` : `${Math.round(h)}h`;
+  return h < 10 ? `${new Intl.NumberFormat(msg().intl, { maximumFractionDigits: 1 }).format(h)}h` : `${Math.round(h)}h`;
 }
 
-const dayFmt = new Intl.DateTimeFormat("pt-PT", { weekday: "short", day: "2-digit", month: "2-digit" });
-const timeFmt = new Intl.DateTimeFormat("pt-PT", { hour: "2-digit", minute: "2-digit" });
-const longFmt = new Intl.DateTimeFormat("pt-PT", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+/** "45 €" / "€45", cents only when there are any. */
+export function euros(cents: number) {
+  return new Intl.NumberFormat(msg().intl, { style: "currency", currency: "EUR", minimumFractionDigits: cents % 100 ? 2 : 0 }).format(cents / 100);
+}
+
+const formatters = new Map<string, Intl.DateTimeFormat>();
+/** Date formatter in the active language, cached per language and options. */
+export function dateFmt(options: Intl.DateTimeFormatOptions) {
+  const intl = msg().intl;
+  const key = `${intl}|${JSON.stringify(options)}`;
+  let f = formatters.get(key);
+  if (!f) formatters.set(key, (f = new Intl.DateTimeFormat(intl, options)));
+  return f;
+}
 
 /** "Hoje, 19:30", "Ontem, 07:00" or "qua., 08/10, 19:30". */
 export function when(iso: string, now = new Date()) {
   const d = new Date(iso);
   const days = Math.round((startOfDay(now) - startOfDay(d)) / 86_400_000);
-  const time = timeFmt.format(d);
-  if (days === 0) return `Hoje, ${time}`;
-  if (days === 1) return `Ontem, ${time}`;
-  return `${dayFmt.format(d)}, ${time}`;
+  const time = dateFmt({ hour: "2-digit", minute: "2-digit" }).format(d);
+  if (days === 0) return msg().format.today(time);
+  if (days === 1) return msg().format.yesterday(time);
+  return `${dateFmt({ weekday: "short", day: "2-digit", month: "2-digit" }).format(d)}, ${time}`;
 }
 
 export function whenLong(iso: string) {
-  return longFmt.format(new Date(iso));
+  return dateFmt({ weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
 }
 
 /** "agora", "5 min", "3 h", "2 dias". */
 export function ago(iso: string, now = new Date()) {
   const s = (now.getTime() - new Date(iso).getTime()) / 1000;
-  if (s < 60) return "agora";
+  if (s < 60) return msg().format.now;
   if (s < 3600) return `${Math.floor(s / 60)} min`;
   if (s < 86400) return `${Math.floor(s / 3600)} h`;
-  const d = Math.floor(s / 86400);
-  return d === 1 ? "1 dia" : `${d} dias`;
+  return msg().format.days(Math.floor(s / 86400));
 }
 
 function startOfDay(d: Date) {
@@ -74,4 +86,9 @@ export function lastWeekday(weekday: number, from = new Date()) {
   const d = new Date(from);
   d.setDate(d.getDate() - ((isoWeekday(d) - weekday + 7) % 7));
   return d;
+}
+
+/** "março de 2026" / "March 2026" for a "YYYY-MM". */
+export function monthYear(month: string) {
+  return dateFmt({ month: "long", year: "numeric" }).format(new Date(`${month}-15T12:00:00`));
 }

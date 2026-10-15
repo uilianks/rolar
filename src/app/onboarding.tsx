@@ -5,9 +5,11 @@ import { Pressable, ScrollView, View } from "react-native";
 import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { handoff } from "@/lib/handoff";
+import { useT } from "@/lib/i18n";
 import { useMe } from "@/lib/queries";
 import type { Academy } from "@/lib/types";
-import { BELT_LABEL, beltOptions, MIN_AGE, profileInput, VISIBILITY_LABEL, VISIBILITIES, type Belt as BeltName, type Visibility } from "@/shared/domain";
+import { beltOptions, profileInput, VISIBILITIES, type Belt as BeltName, type Visibility } from "@/shared/domain";
+import { validationMessage } from "@/shared/i18n";
 import { Avatar, Belt, Button, Card, Col, ErrorText, Input, ListRow, Row, Segmented, SwitchRow, Txt } from "@/ui/kit";
 import { radius, space, useTheme } from "@/ui/theme";
 
@@ -15,6 +17,7 @@ const STEPS = 4;
 
 export default function Onboarding() {
   const { c } = useTheme();
+  const t = useT();
   const qc = useQueryClient();
   const me = useMe().data;
   const [step, setStep] = useState(1);
@@ -56,7 +59,7 @@ export default function Onboarding() {
     setError(null);
     if (step === 1) {
       const check = profileInput.pick({ username: true, name: true, birthYear: true }).safeParse(profile);
-      if (!check.success) return setError(check.error.issues[0].message);
+      if (!check.success) return setError(validationMessage(t, check.error.issues[0].message));
     }
     if (step < STEPS) return setStep(step + 1);
     void finish();
@@ -85,9 +88,9 @@ export default function Onboarding() {
             ))}
           </Row>
           <Row style={{ justifyContent: "space-between" }}>
-            <Txt v="tiny" muted>Passo {step} de {STEPS}</Txt>
+            <Txt v="tiny" muted>{t.onboarding.step(step, STEPS)}</Txt>
             <Pressable onPress={() => authClient.signOut().then(() => qc.clear())}>
-              <Txt v="tiny" muted>Sair</Txt>
+              <Txt v="tiny" muted>{t.onboarding.signOut}</Txt>
             </Pressable>
           </Row>
         </Col>
@@ -95,25 +98,25 @@ export default function Onboarding() {
         {step === 1 && (
           <Col gap={space.lg}>
             <Col gap={4}>
-              <Txt v="h1">Oss! Como te chamam no tatame?</Txt>
-              <Txt muted>Isso aparece no seu perfil.</Txt>
+              <Txt v="h1">{t.onboarding.nameTitle}</Txt>
+              <Txt muted>{t.onboarding.nameText}</Txt>
             </Col>
-            <Input label="Nome" value={name} onChangeText={setName} autoComplete="name" />
+            <Input label={t.onboarding.name} value={name} onChangeText={setName} autoComplete="name" />
             <Input
-              label="Nome de usuário"
+              label={t.onboarding.username}
               value={username}
-              onChangeText={(t) => setUsername(t.toLowerCase())}
+              onChangeText={(v) => setUsername(v.toLowerCase())}
               autoCapitalize="none"
-              hint={`@${username || "voce"}`}
+              hint={`@${username || t.onboarding.usernamePlaceholder}`}
             />
             <Input
-              label="Ano de nascimento"
+              label={t.onboarding.birthYear}
               value={birthYear}
-              onChangeText={(t) => setBirthYear(t.replace(/\D/g, "").slice(0, 4))}
+              onChangeText={(v) => setBirthYear(v.replace(/\D/g, "").slice(0, 4))}
               keyboardType="number-pad"
               inputMode="numeric"
               placeholder="1995"
-              hint={`Não aparece para ninguém. É preciso ter ${MIN_AGE} anos ou mais. Menores de 18 ficam com treinos visíveis só para seguidores e fora da busca.`}
+              hint={t.onboarding.birthYearHint}
             />
           </Col>
         )}
@@ -121,8 +124,8 @@ export default function Onboarding() {
         {step === 2 && (
           <Col gap={space.lg}>
             <Col gap={4}>
-              <Txt v="h1">Qual é a sua faixa?</Txt>
-              <Txt muted>Você pode registrar o histórico de graduações depois.</Txt>
+              <Txt v="h1">{t.onboarding.beltTitle}</Txt>
+              <Txt muted>{t.onboarding.beltText}</Txt>
             </Col>
             <Row wrap gap={8}>
               {beltOptions(Number(birthYear), belt).map((b) => (
@@ -142,39 +145,39 @@ export default function Onboarding() {
                   }}
                 >
                   <Belt belt={b} />
-                  <Txt bold>{BELT_LABEL[b]}</Txt>
+                  <Txt bold>{t.belt[b]}</Txt>
                 </Pressable>
               ))}
             </Row>
-            <Segmented label="Graus" value={stripes} onChange={setStripes} options={[0, 1, 2, 3, 4].map((n) => ({ value: n, label: String(n) }))} />
-            <Input label="Treina desde (AAAA-MM)" value={startedAt} onChangeText={setStartedAt} placeholder="2020-02" />
+            <Segmented label={t.profile.stripes} value={stripes} onChange={setStripes} options={[0, 1, 2, 3, 4].map((n) => ({ value: n, label: String(n) }))} />
+            <Input label={t.onboarding.startedAt} value={startedAt} onChangeText={setStartedAt} placeholder="2020-02" />
           </Col>
         )}
 
         {step === 3 && (
           <Col gap={space.lg}>
             <Col gap={4}>
-              <Txt v="h1">Onde você treina?</Txt>
-              <Txt muted>O professor aprova a sua entrada. Dá para pular e fazer depois.</Txt>
+              <Txt v="h1">{t.onboarding.academyTitle}</Txt>
+              <Txt muted>{t.onboarding.academyText}</Txt>
             </Col>
-            <Input value={academyQuery} onChangeText={setAcademyQuery} placeholder="Buscar academia ou cidade" />
+            <Input value={academyQuery} onChangeText={setAcademyQuery} placeholder={t.onboarding.academySearch} />
             <Card pad={false}>
               {(academies.data ?? []).map((a) => (
                 <ListRow key={a.id} onPress={() => { setAcademyId(a.id); setRegisterAcademy(false); }} highlight={academyId === a.id}>
                   <Avatar name={a.name} size={32} square />
                   <View style={{ flex: 1 }}>
                     <Txt bold>{a.name}</Txt>
-                    <Txt v="tiny" muted>{[a.city, `${a.memberCount} membros`].filter(Boolean).join(" · ")}</Txt>
+                    <Txt v="tiny" muted>{[a.city, t.findAcademy.members(a.memberCount)].filter(Boolean).join(" · ")}</Txt>
                   </View>
                 </ListRow>
               ))}
-              {academies.data?.length === 0 ? <View style={{ padding: space.lg }}><Txt v="small" muted>Nenhuma academia encontrada.</Txt></View> : null}
+              {academies.data?.length === 0 ? <View style={{ padding: space.lg }}><Txt v="small" muted>{t.findAcademy.none}</Txt></View> : null}
             </Card>
             <Card pad={false}>
               <ListRow onPress={() => { setRegisterAcademy(!registerAcademy); setAcademyId(null); }} highlight={registerAcademy}>
                 <View style={{ flex: 1 }}>
-                  <Txt bold>Sou responsável e a minha academia não está aqui</Txt>
-                  <Txt v="tiny" muted>Ao terminar, você preenche o cadastro da academia. Ela passa por verificação antes de aparecer.</Txt>
+                  <Txt bold>{t.onboarding.registerTitle}</Txt>
+                  <Txt v="tiny" muted>{t.onboarding.registerText}</Txt>
                 </View>
               </ListRow>
             </Card>
@@ -184,23 +187,23 @@ export default function Onboarding() {
         {step === 4 && (
           <Col gap={space.lg}>
             <Col gap={4}>
-              <Txt v="h1">Últimos ajustes</Txt>
-              <Txt muted>Dá para mudar tudo depois nas configurações.</Txt>
+              <Txt v="h1">{t.onboarding.lastTitle}</Txt>
+              <Txt muted>{t.onboarding.lastText}</Txt>
             </Col>
             <Segmented
-              label="Quem vê seus treinos por padrão"
+              label={t.onboarding.defaultVisibility}
               value={visibility}
               onChange={setVisibility}
-              options={VISIBILITIES.map((v) => ({ value: v, label: VISIBILITY_LABEL[v] }))}
+              options={VISIBILITIES.map((v) => ({ value: v, label: t.visibility[v] }))}
             />
             <Card pad={false}>
-              <SwitchRow title="Aparecer na busca" hint="Outras pessoas podem te encontrar" value={searchable} onChange={setSearchable} />
+              <SwitchRow title={t.onboarding.searchable} hint={t.onboarding.searchableHint} value={searchable} onChange={setSearchable} />
             </Card>
             <Segmented
-              label="Meta de treinos por semana"
+              label={t.onboarding.weeklyGoal}
               value={weeklyGoal}
               onChange={setWeeklyGoal}
-              options={[2, 3, 4, 5, 0].map((n) => ({ value: n, label: n ? String(n) : "Sem meta" }))}
+              options={[2, 3, 4, 5, 0].map((n) => ({ value: n, label: n ? String(n) : t.onboarding.noGoal }))}
             />
           </Col>
         )}
@@ -208,8 +211,8 @@ export default function Onboarding() {
         <ErrorText error={error} />
         <View style={{ flex: 1 }} />
         <Row>
-          {step > 1 ? <Button size="lg" title="Voltar" onPress={() => setStep(step - 1)} /> : null}
-          <Button kind="primary" size="lg" title={step === STEPS ? "Começar a treinar" : "Continuar"} loading={busy} onPress={next} style={{ flex: 1 }} />
+          {step > 1 ? <Button size="lg" title={t.common.back} onPress={() => setStep(step - 1)} /> : null}
+          <Button kind="primary" size="lg" title={step === STEPS ? t.onboarding.start : t.onboarding.next} loading={busy} onPress={next} style={{ flex: 1 }} />
         </Row>
       </ScrollView>
     </View>

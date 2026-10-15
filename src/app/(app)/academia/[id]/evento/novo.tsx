@@ -5,8 +5,10 @@ import { useState } from "react";
 
 import { api } from "@/lib/api";
 import { ymd } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 import type { EventDetail } from "@/lib/types";
-import { EVENT_KIND_LABEL, EVENT_KINDS, eventInput, type EventKind } from "@/shared/domain";
+import { EVENT_KINDS, eventInput, type EventKind } from "@/shared/domain";
+import { validationMessage } from "@/shared/i18n";
 import { Button, Card, Col, ErrorText, Input, Loading, Row, Segmented, Txt } from "@/ui/kit";
 import { Header, Screen } from "@/ui/shell";
 import { space } from "@/ui/theme";
@@ -22,6 +24,7 @@ export default function EventFormScreen() {
 }
 
 function EventForm({ academyId, existing, initialKind }: { academyId: string; existing?: EventDetail; initialKind: EventKind }) {
+  const t = useT();
   const qc = useQueryClient();
   const start = existing ? new Date(existing.startsAt) : null;
   const end = existing?.endsAt ? new Date(existing.endsAt) : null;
@@ -42,15 +45,15 @@ function EventForm({ academyId, existing, initialKind }: { academyId: string; ex
   async function save() {
     setError(null);
     const startsAt = new Date(`${date}T${time}:00`);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(startsAt.getTime())) return setError("Data (AAAA-MM-DD) ou hora (HH:MM) inválida");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(startsAt.getTime())) return setError(t.eventForm.invalidStart);
     let endsAt: string | undefined;
     if (endDate || endTimeText) {
       const e = new Date(`${endDate || date}T${endTimeText || "23:59"}:00`);
-      if (Number.isNaN(e.getTime())) return setError("Fim inválido");
+      if (Number.isNaN(e.getTime())) return setError(t.eventForm.invalidEnd);
       endsAt = e.toISOString();
     }
     const check = eventInput.safeParse({ kind, title, startsAt: startsAt.toISOString(), endsAt, location, url, signupUntil, description });
-    if (!check.success) return setError(check.error.issues[0].message);
+    if (!check.success) return setError(validationMessage(t, check.error.issues[0].message));
     setBusy(true);
     try {
       const r = await api<{ id: string }>(existing ? `/academies/${academyId}/events/${existing.id}` : `/academies/${academyId}/events`, {
@@ -69,51 +72,51 @@ function EventForm({ academyId, existing, initialKind }: { academyId: string; ex
   return (
     <>
       <Header
-        title={existing ? "Editar evento" : "Novo evento"}
-        left={<Button kind="ghost" icon={ArrowLeft} accessibilityLabel="Voltar" onPress={() => (router.canGoBack() ? router.back() : router.replace(`/academia/${academyId}`))} />}
+        title={existing ? t.eventForm.editTitle : t.academyCards.newEvent}
+        left={<Button kind="ghost" icon={ArrowLeft} accessibilityLabel={t.common.back} onPress={() => (router.canGoBack() ? router.back() : router.replace(`/academia/${academyId}`))} />}
       />
       <Screen>
         <Card style={{ gap: space.md }}>
-          <Segmented label="Tipo" value={kind} onChange={setKind} options={EVENT_KINDS.map((k) => ({ value: k, label: EVENT_KIND_LABEL[k] }))} />
-          <Input label="Nome *" value={title} onChangeText={setTitle} placeholder={competition ? "Lisbon International Open" : "Seminário com o mestre convidado"} />
+          <Segmented label={t.eventForm.kind} value={kind} onChange={setKind} options={EVENT_KINDS.map((k) => ({ value: k, label: t.eventKind[k] }))} />
+          <Input label={t.newAcademy.name} value={title} onChangeText={setTitle} placeholder={competition ? t.eventForm.titleCompetition : t.eventForm.titleOther} />
           <Row gap={space.md} wrap>
             <Col style={{ flex: 2, minWidth: 150 }}>
-              <Input label="Data *" value={date} onChangeText={setDate} placeholder="2026-11-21" maxLength={10} />
+              <Input label={t.eventForm.date} value={date} onChangeText={setDate} placeholder="2026-11-21" maxLength={10} />
             </Col>
             <Col style={{ flex: 1, minWidth: 100 }}>
-              <Input label="Hora" value={time} onChangeText={setTime} placeholder="09:00" maxLength={5} />
+              <Input label={t.eventForm.time} value={time} onChangeText={setTime} placeholder="09:00" maxLength={5} />
             </Col>
           </Row>
           <Row gap={space.md} wrap>
             <Col style={{ flex: 2, minWidth: 150 }}>
-              <Input label="Termina em (opcional)" value={endDate} onChangeText={setEndDate} placeholder="2026-11-22" maxLength={10} />
+              <Input label={t.eventForm.endDate} value={endDate} onChangeText={setEndDate} placeholder="2026-11-22" maxLength={10} />
             </Col>
             <Col style={{ flex: 1, minWidth: 100 }}>
-              <Input label="Hora do fim" value={endTimeText} onChangeText={setEndTimeText} placeholder="18:00" maxLength={5} />
+              <Input label={t.eventForm.endTime} value={endTimeText} onChangeText={setEndTimeText} placeholder="18:00" maxLength={5} />
             </Col>
           </Row>
-          <Input label="Local" value={location} onChangeText={setLocation} placeholder={competition ? "Pavilhão Municipal, Odivelas" : "Na academia"} />
+          <Input label={t.academy.location} value={location} onChangeText={setLocation} placeholder={competition ? t.eventForm.locationCompetition : t.eventForm.locationOther} />
           <Input
-            label={competition ? "Link da prova (Smoothcomp, IBJJF, AJP…)" : "Link"}
+            label={competition ? t.eventForm.linkCompetition : t.eventForm.link}
             value={url}
             onChangeText={setUrl}
             placeholder="https://smoothcomp.com/en/event/…"
             autoCapitalize="none"
             keyboardType="url"
-            hint={competition ? "Os alunos se inscrevem no site da prova; aqui eles avisam que vão." : undefined}
+            hint={competition ? t.eventForm.linkHint : undefined}
           />
           <Input
-            label={competition ? "Inscrições na prova até" : "Confirmar presença até"}
+            label={competition ? t.eventForm.signupCompetition : t.eventForm.signupOther}
             value={signupUntil}
             onChangeText={setSignupUntil}
             placeholder="2026-11-14"
             maxLength={10}
-            hint="Depois desta data, ninguém mais marca que vai."
+            hint={t.eventForm.signupHint}
           />
-          <Input label="Descrição" value={description} onChangeText={setDescription} multiline placeholder={competition ? "Pesagem às 8h. Levem kimono branco e azul." : "Detalhes, preço, o que trazer…"} />
+          <Input label={t.eventForm.description} value={description} onChangeText={setDescription} multiline placeholder={competition ? t.eventForm.descriptionCompetition : t.eventForm.descriptionOther} />
           <ErrorText error={error} />
-          <Button kind="primary" size="lg" title={existing ? "Salvar alterações" : "Publicar e avisar os alunos"} loading={busy} onPress={save} />
-          {!existing ? <Txt v="small" muted>Todos os membros da academia recebem uma notificação.</Txt> : null}
+          <Button kind="primary" size="lg" title={existing ? t.eventForm.saveChanges : t.eventForm.publish} loading={busy} onPress={save} />
+          {!existing ? <Txt v="small" muted>{t.academyCards.everyoneNotified}</Txt> : null}
         </Card>
       </Screen>
     </>

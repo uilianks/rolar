@@ -21,7 +21,8 @@ import {
 
 import { API_URL } from "@/lib/auth-client";
 import { initials } from "@/lib/format";
-import { BELT_LABEL, type Belt as BeltName } from "@/shared/domain";
+import { useT } from "@/lib/i18n";
+import { type Belt as BeltName } from "@/shared/domain";
 
 import { BELT_COLORS, BELT_MIDLINE, radius, space, useTheme } from "./theme";
 
@@ -176,6 +177,7 @@ export function Badge({ children, tone = "default" }: { children: ReactNode; ton
 /** Photo when there is one (`uri`: the API's /api/avatars path), initials underneath while it loads or if it fails. */
 export function Avatar({ name, size = 40, square, uri }: { name: string; size?: number; square?: boolean; uri?: string | null }) {
   const { c } = useTheme();
+  const t = useT();
   // Remember which URL failed, so a new photo (new URL) is tried again.
   const [failedUri, setFailedUri] = useState<string | null>(null);
   const radiusValue = square ? size * 0.25 : size / 2;
@@ -197,7 +199,7 @@ export function Avatar({ name, size = 40, square, uri }: { name: string; size?: 
       {uri && uri !== failedUri ? (
         <Image
           source={uri.startsWith("/") ? `${API_URL}${uri}` : uri}
-          accessibilityLabel={`Foto de ${name}`}
+          accessibilityLabel={t.kit.photoOf(name)}
           style={{ position: "absolute", width: "100%", height: "100%" }}
           contentFit="cover"
           transition={120}
@@ -210,11 +212,12 @@ export function Avatar({ name, size = 40, square, uri }: { name: string; size?: 
 
 /** Belt with a tip holding one white bar per stripe; the black belt has a red tip, two-tone kids belts a centre stripe. */
 export function Belt({ belt, stripes = 0, size = "sm" }: { belt: BeltName; stripes?: number; size?: "sm" | "lg" }) {
+  const t = useT();
   const lg = size === "lg";
   const midline = BELT_MIDLINE[belt];
   return (
     <View
-      accessibilityLabel={`Faixa ${BELT_LABEL[belt].toLowerCase()}, ${stripes} graus`}
+      accessibilityLabel={t.kit.belt(t.belt[belt], stripes)}
       style={{
         width: lg ? 160 : 76,
         maxWidth: "100%",
@@ -353,10 +356,11 @@ export function Tabs<T extends string>({ options, value, onChange }: { options: 
 
 export function Stepper({ label, value, onChange, step = 1, min = 0, max = 999 }: { label: string; value: number; onChange: (v: number) => void; step?: number; min?: number; max?: number }) {
   const { c } = useTheme();
+  const t = useT();
   const btn = (delta: number, text: string) => (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${delta > 0 ? "Aumentar" : "Diminuir"} ${label}`}
+      accessibilityLabel={delta > 0 ? t.kit.increase(label) : t.kit.decrease(label)}
       onPress={() => onChange(Math.min(max, Math.max(min, value + delta)))}
       style={{ width: 40, height: 40, alignItems: "center", justifyContent: "center", backgroundColor: c.muted }}
     >
@@ -445,6 +449,7 @@ export function Kpi({ label, value, sub, icon: Icon, subTone }: { label: string;
 /** Training calendar, GitHub-contributions style: columns are weeks (Mon→Sun), newest on the right. */
 export function Heatmap({ days, weeks = 26 }: { days: Record<string, number>; weeks?: number }) {
   const { c } = useTheme();
+  const t = useT();
   const today = new Date();
   const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - ((today.getDay() + 6) % 7));
   const cols = Array.from({ length: weeks }, (_, w) =>
@@ -469,7 +474,7 @@ export function Heatmap({ days, weeks = 26 }: { days: Record<string, number>; we
           {col.map((cell) => (
             <View
               key={cell.key}
-              accessibilityLabel={`${cell.key}: ${cell.n} treinos`}
+              accessibilityLabel={t.kit.heatCell(cell.key, cell.n)}
               style={{
                 width: 11,
                 height: 11,

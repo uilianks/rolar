@@ -11,15 +11,15 @@ import { Pressable, View } from "react-native";
 
 import { api } from "@/lib/api";
 import { confirm } from "@/lib/confirm";
-import { endTime, isoWeekday, ymd } from "@/lib/format";
+import { dateFmt, endTime, isoWeekday, monthYear, ymd } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 import { useAcademy, useCalendar } from "@/lib/queries";
 import type { AcademyClass, AcademyEvent, Calendar } from "@/lib/types";
-import { addMonths, EVENT_KIND_LABEL, KIND_LABEL, WEEKDAY_SHORT } from "@/shared/domain";
+import { addMonths } from "@/shared/domain";
 import { Badge, Button, Card, CardHead, ErrorText, ListRow, Loading, Row, Txt } from "@/ui/kit";
 import { Header, Screen } from "@/ui/shell";
 import { radius, space, useTheme } from "@/ui/theme";
 
-const MONTHS = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
 
 function daysIn(month: string) {
   const [y, m] = month.split("-").map(Number);
@@ -46,6 +46,7 @@ function buildMonth(month: string, cal: Calendar | undefined): Day[] {
 
 /** Month view of the academy: classes, cancellations, topics taught, events and competitions. */
 export default function AcademyCalendar() {
+  const t = useT();
   const { c } = useTheme();
   const qc = useQueryClient();
   const { id, date: dateParam } = useLocalSearchParams<{ id: string; date?: string }>();
@@ -70,7 +71,7 @@ export default function AcademyCalendar() {
 
   async function toggleCancel(k: Day["classes"][number]) {
     if (!a || !day) return;
-    if (!k.cancelled && !(await confirm(`Cancelar "${k.title}" neste dia?`, "Os membros da academia recebem um aviso.", "Cancelar aula"))) return;
+    if (!k.cancelled && !(await confirm(t.calendar.cancelTitle(k.title), t.calendar.cancelText, t.calendar.cancelClass))) return;
     setError(null);
     try {
       await api(`/academies/${a.id}/classes/${k.id}/occurrences/${day.date}`, { method: "PUT", json: { cancelled: !k.cancelled, note: k.cancelled ? undefined : "Aula cancelada" } });
@@ -86,23 +87,23 @@ export default function AcademyCalendar() {
   return (
     <>
       <Header
-        title="Calendário"
-        left={<Button kind="ghost" icon={ArrowLeft} accessibilityLabel="Voltar" onPress={() => (router.canGoBack() ? router.back() : router.replace(`/academia/${a.id}`))} />}
-        right={staff ? <Button size="sm" kind="primary" icon={Plus} title="Evento" onPress={() => router.push(`/academia/${a.id}/evento/novo`)} /> : undefined}
+        title={t.academyCards.calendar}
+        left={<Button kind="ghost" icon={ArrowLeft} accessibilityLabel={t.common.back} onPress={() => (router.canGoBack() ? router.back() : router.replace(`/academia/${a.id}`))} />}
+        right={staff ? <Button size="sm" kind="primary" icon={Plus} title={t.calendar.event} onPress={() => router.push(`/academia/${a.id}/evento/novo`)} /> : undefined}
       />
       <Screen>
         <Card style={{ gap: space.md }}>
           <Row style={{ justifyContent: "space-between" }}>
-            <Button size="sm" icon={ChevronLeft} accessibilityLabel="Mês anterior" onPress={() => go(-1)} />
+            <Button size="sm" icon={ChevronLeft} accessibilityLabel={t.calendar.prevMonth} onPress={() => go(-1)} />
             <Txt v="h3">
-              {MONTHS[Number(month.slice(5)) - 1]} {month.slice(0, 4)}
+              {monthYear(month)}
             </Txt>
-            <Button size="sm" icon={ChevronRight} accessibilityLabel="Mês seguinte" onPress={() => go(1)} />
+            <Button size="sm" icon={ChevronRight} accessibilityLabel={t.calendar.nextMonth} onPress={() => go(1)} />
           </Row>
           <View style={{ flexDirection: "row" }}>
             {[1, 2, 3, 4, 5, 6, 7].map((w) => (
               <Txt key={w} v="tiny" muted style={{ flex: 1, textAlign: "center" }}>
-                {WEEKDAY_SHORT[w]}
+                {t.weekdayShort[w]}
               </Txt>
             ))}
           </View>
@@ -119,7 +120,7 @@ export default function AcademyCalendar() {
                 <View key={d.date} style={{ width: `${100 / 7}%`, padding: 2 }}>
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel={`Dia ${Number(d.date.slice(8))}: ${live} aulas, ${d.events.length} eventos`}
+                    accessibilityLabel={t.calendar.dayA11y(Number(d.date.slice(8)), live, d.events.length)}
                     onPress={() => setSelected(d.date)}
                     style={{
                       height: 52,
@@ -142,10 +143,10 @@ export default function AcademyCalendar() {
             })}
           </View>
           <Row wrap gap={space.md}>
-            <Legend color={c.mutedFg} label="aulas" />
-            <Legend color={c.mutedFg} label="aula cancelada" hollow />
-            <Legend color={c.success} label="evento" />
-            <Legend color={c.accent} label="campeonato" />
+            <Legend color={c.mutedFg} label={t.calendar.legendClasses} />
+            <Legend color={c.mutedFg} label={t.calendar.legendCancelled} hollow />
+            <Legend color={c.success} label={t.calendar.legendEvent} />
+            <Legend color={c.accent} label={t.calendar.legendCompetition} />
           </Row>
         </Card>
         {cal.isPending ? <Loading /> : null}
@@ -153,17 +154,17 @@ export default function AcademyCalendar() {
 
         {day ? (
           <Card pad={false}>
-            <CardHead title={new Date(`${day.date}T12:00:00`).toLocaleDateString("pt-PT", { weekday: "long", day: "numeric", month: "long" })} />
+            <CardHead title={dateFmt({ weekday: "long", day: "numeric", month: "long" }).format(new Date(`${day.date}T12:00:00`))} />
             {day.events.map((e) => (
               <ListRow key={e.id} onPress={() => router.push(`/academia/${a.id}/evento/${e.id}`)}>
                 {e.kind === "competition" ? <Trophy size={18} color={c.accent} /> : null}
                 <View style={{ flex: 1 }}>
                   <Txt bold>{e.title}</Txt>
                   <Txt v="tiny" muted>
-                    {[EVENT_KIND_LABEL[e.kind], new Date(e.startsAt).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" }), e.location, `${e.going} vão`].filter(Boolean).join(" · ")}
+                    {[t.eventKind[e.kind], dateFmt({ hour: "2-digit", minute: "2-digit" }).format(new Date(e.startsAt)), e.location, t.academyCards.going(e.going)].filter(Boolean).join(" · ")}
                   </Txt>
                 </View>
-                {e.isGoing ? <Badge tone="success">Vou</Badge> : null}
+                {e.isGoing ? <Badge tone="success">{t.academyCards.imGoing}</Badge> : null}
               </ListRow>
             ))}
             {day.classes.map((k) => (
@@ -173,18 +174,18 @@ export default function AcademyCalendar() {
                 </Txt>
                 <View style={{ flex: 1, gap: 2 }}>
                   <Txt bold style={{ textDecorationLine: k.cancelled ? "line-through" : "none" }}>{k.title}</Txt>
-                  <Txt v="tiny" muted>{k.cancelled ? k.note ?? "Aula cancelada" : [KIND_LABEL[k.kind], k.topic ? `Tema: ${k.topic}` : null].filter(Boolean).join(" · ")}</Txt>
+                  <Txt v="tiny" muted>{k.cancelled ? k.note ?? t.calendar.classCancelled : [t.sessionKind[k.kind], k.topic ? t.calendar.topic(k.topic) : null].filter(Boolean).join(" · ")}</Txt>
                 </View>
-                {k.cancelled ? <Badge tone="accent">Cancelada</Badge> : null}
+                {k.cancelled ? <Badge tone="accent">{t.calendar.cancelled}</Badge> : null}
                 {staff && !k.cancelled && day.date <= today ? (
-                  <Button size="sm" icon={ClipboardCheck} accessibilityLabel={`Chamada de ${k.title}`} onPress={() => router.push(`/academia/${a.id}/chamada?classId=${k.id}&date=${day.date}`)} />
+                  <Button size="sm" icon={ClipboardCheck} accessibilityLabel={t.calendar.rollCallOf(k.title)} onPress={() => router.push(`/academia/${a.id}/chamada?classId=${k.id}&date=${day.date}`)} />
                 ) : null}
-                {staff ? <Button size="sm" kind="ghost" title={k.cancelled ? "Reativar" : "Cancelar"} onPress={() => toggleCancel(k)} /> : null}
+                {staff ? <Button size="sm" kind="ghost" title={k.cancelled ? t.calendar.reactivate : t.common.cancel} onPress={() => toggleCancel(k)} /> : null}
               </ListRow>
             ))}
             {!day.events.length && !day.classes.length ? (
               <View style={{ padding: space.lg }}>
-                <Txt v="small" muted>Nada neste dia.</Txt>
+                <Txt v="small" muted>{t.calendar.nothing}</Txt>
               </View>
             ) : null}
           </Card>

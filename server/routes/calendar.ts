@@ -29,7 +29,7 @@ const eventColumns = {
 const goingColumn = (userId: string) =>
   sql<boolean>`exists (select 1 from event_attendees x where x.event_id = ${s.academyEvents.id} and x.user_id = ${userId})`;
 
-const range = z.object({ from: z.iso.date(), to: z.iso.date() }).refine((r) => r.from <= r.to, "Intervalo inválido");
+const range = z.object({ from: z.iso.date(), to: z.iso.date() }).refine((r) => r.from <= r.to, "dateRange");
 
 /**
  * Everything to draw a month: the weekly classes (the client repeats them over the dates), the
@@ -101,7 +101,7 @@ calendarRoutes.get("/academies/:id/events/:eventId", async (c) => {
     .select({ ...eventColumns, isGoing: goingColumn(userId) })
     .from(s.academyEvents)
     .where(and(eq(s.academyEvents.id, c.req.param("eventId")), eq(s.academyEvents.academyId, a.id)));
-  if (!e) fail(404, "Evento não encontrado");
+  if (!e) fail(404, "eventNotFound");
   // Who is going (with division and result) is for the academy's members only.
   const m = await membership(db, a.id, userId);
   const attendees =
@@ -155,7 +155,7 @@ calendarRoutes.put("/academies/:id/events/:eventId", async (c) => {
     })
     .where(and(eq(s.academyEvents.id, c.req.param("eventId")), eq(s.academyEvents.academyId, a.id)))
     .returning({ id: s.academyEvents.id });
-  if (!e) fail(404, "Evento não encontrado");
+  if (!e) fail(404, "eventNotFound");
   return c.json(e);
 });
 
@@ -172,7 +172,7 @@ async function memberEvent(c: Parameters<typeof viewer>[0]) {
     .select({ id: s.academyEvents.id, startsAt: s.academyEvents.startsAt, signupUntil: s.academyEvents.signupUntil, kind: s.academyEvents.kind })
     .from(s.academyEvents)
     .where(and(eq(s.academyEvents.id, c.req.param("eventId")!), eq(s.academyEvents.academyId, a.id)));
-  if (!e) fail(404, "Evento não encontrado");
+  if (!e) fail(404, "eventNotFound");
   return { a, m, e };
 }
 
@@ -182,7 +182,7 @@ calendarRoutes.put("/academies/:id/events/:eventId/rsvp", async (c) => {
   const { e } = await memberEvent(c);
   const { category } = await body(c, rsvpInput);
   const today = new Date().toISOString().slice(0, 10);
-  if (e.startsAt.getTime() < Date.now() - 86_400_000 || (e.signupUntil && today > e.signupUntil)) fail(409, "As inscrições terminaram");
+  if (e.startsAt.getTime() < Date.now() - 86_400_000 || (e.signupUntil && today > e.signupUntil)) fail(409, "signupClosed");
   await c
     .get("db")
     .insert(s.eventAttendees)
@@ -203,9 +203,9 @@ calendarRoutes.put("/academies/:id/events/:eventId/results/:userId", async (c) =
   const userId = viewer(c);
   const { m, e } = await memberEvent(c);
   const target = c.req.param("userId");
-  if (target !== userId && !isActiveStaff(m)) fail(403, "Só o atleta ou um professor registra o resultado");
-  if (e.kind !== "competition") fail(400, "Só campeonatos têm resultado");
-  if (e.startsAt.getTime() > Date.now()) fail(409, "O campeonato ainda não começou");
+  if (target !== userId && !isActiveStaff(m)) fail(403, "resultByAthleteOrCoach");
+  if (e.kind !== "competition") fail(400, "resultsOnlyCompetitions");
+  if (e.startsAt.getTime() > Date.now()) fail(409, "competitionNotStarted");
   const { result } = await body(c, z.object({ result: z.enum(RESULTS).nullable() }));
   const [row] = await c
     .get("db")
@@ -213,7 +213,7 @@ calendarRoutes.put("/academies/:id/events/:eventId/results/:userId", async (c) =
     .set({ result })
     .where(and(eq(s.eventAttendees.eventId, e.id), eq(s.eventAttendees.userId, target)))
     .returning({ userId: s.eventAttendees.userId });
-  if (!row) fail(404, "Essa pessoa não estava inscrita");
+  if (!row) fail(404, "notSignedUp");
   return c.body(null, 204);
 });
 

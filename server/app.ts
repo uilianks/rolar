@@ -2,9 +2,10 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
 
+import { messages, requestLocale } from "../src/shared/i18n";
 import type { Auth } from "./auth";
 import type { Db } from "./db/client";
-import type { AppEnv } from "./http";
+import { Failure, type AppEnv } from "./http";
 import { academiesRoutes } from "./routes/academies";
 import { adminRoutes } from "./routes/admin";
 import { billingRoutes } from "./routes/billing";
@@ -29,6 +30,11 @@ export function createApp({
 }) {
   const app = new Hono<AppEnv>().basePath("/api");
 
+  app.use("*", async (c, next) => {
+    c.set("locale", requestLocale(c.req.header("accept-language")));
+    await next();
+  });
+
   app.use(
     "*",
     cors({
@@ -47,7 +53,7 @@ export function createApp({
       const origin = c.req.header("origin");
       const crossSite = c.req.header("sec-fetch-site") === "cross-site";
       if ((origin && !trustedOrigins.includes(origin)) || (crossSite && !origin)) {
-        return c.json({ error: "Origem não permitida" }, 403);
+        return c.json({ error: messages(c.get("locale")).errors.originNotAllowed }, 403);
       }
     }
     await next();
@@ -79,11 +85,13 @@ export function createApp({
   app.route("/admin", adminRoutes);
 
   app.onError((err, c) => {
+    const m = messages(c.get("locale") ?? "en");
+    if (err instanceof Failure) return c.json({ error: err.text(m) }, err.status);
     if (err instanceof HTTPException) return c.json({ error: err.message }, err.status);
     console.error(err);
-    return c.json({ error: "Erro interno" }, 500);
+    return c.json({ error: m.errors.internal }, 500);
   });
-  app.notFound((c) => c.json({ error: "Rota não encontrada" }, 404));
+  app.notFound((c) => c.json({ error: messages(c.get("locale") ?? "en").errors.routeNotFound }, 404));
 
   return app;
 }

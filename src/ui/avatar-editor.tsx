@@ -5,6 +5,7 @@ import { View } from "react-native";
 
 import { pickImage, removeAvatar, uploadAvatar, type PickedImage } from "@/lib/avatar";
 import { confirm } from "@/lib/confirm";
+import { useT } from "@/lib/i18n";
 import { useMe } from "@/lib/queries";
 import { isMinor } from "@/shared/domain";
 
@@ -14,6 +15,7 @@ import { space } from "./theme";
 
 /** The person's own photo with change / remove. Minors keep their initials (the API refuses photos for them). */
 export function AvatarEditor() {
+  const t = useT();
   const qc = useQueryClient();
   const me = useMe().data;
   const [busy, setBusy] = useState(false);
@@ -42,18 +44,18 @@ export function AvatarEditor() {
       <Row gap={space.lg}>
         <Avatar uri={profile.avatarUrl} name={profile.name} size={72} />
         {minor ? (
-          <Txt v="small" muted style={{ flex: 1 }}>Para proteger menores de idade, o perfil usa as iniciais em vez de foto.</Txt>
+          <Txt v="small" muted style={{ flex: 1 }}>{t.avatar.minorHint}</Txt>
         ) : (
           <Row gap={space.sm} wrap style={{ flex: 1 }}>
-            <Button size="sm" icon={Camera} title={profile.avatarUrl ? "Trocar foto" : "Escolher foto"} loading={busy} onPress={() => pickImage().then(setPicked, setError)} />
+            <Button size="sm" icon={Camera} title={profile.avatarUrl ? t.avatar.change : t.avatar.choose} loading={busy} onPress={() => pickImage().then(setPicked, setError)} />
             {profile.avatarUrl ? (
               <Button
                 size="sm"
                 kind="ghost"
-                title="Remover"
+                title={t.common.remove}
                 disabled={busy}
                 onPress={async () => {
-                  if (await confirm("Remover a foto?", "O perfil volta a mostrar as suas iniciais.", "Remover")) void run(removeAvatar);
+                  if (await confirm(t.avatar.removeTitle, t.avatar.removeText, t.common.remove)) void run(removeAvatar);
                 }}
               />
             ) : null}

@@ -11,19 +11,18 @@ import { Platform, View } from "react-native";
 import { api } from "@/lib/api";
 import { API_URL } from "@/lib/auth-client";
 import { confirm } from "@/lib/confirm";
-import { ymd } from "@/lib/format";
+import { dateFmt, euros, ymd } from "@/lib/format";
+import { currentLocale, useT } from "@/lib/i18n";
 import type { BillingOverview, Payment, Plan } from "@/lib/types";
 import {
   addMonths,
-  BILLING_STATUS_LABEL,
   type BillingStatus,
-  formatEuros,
-  PAYMENT_METHOD_LABEL,
   PAYMENT_METHODS,
   paymentInput,
   type PaymentMethod,
   planInput,
 } from "@/shared/domain";
+import { validationMessage } from "@/shared/i18n";
 import { Avatar, Badge, Button, Card, CardHead, Col, ErrorText, Input, Kpi, ListRow, Loading, Row, Segmented, Stepper, Txt } from "@/ui/kit";
 import { Header, Screen } from "@/ui/shell";
 import { space, useTheme } from "@/ui/theme";
@@ -33,10 +32,11 @@ type MemberRow = BillingOverview["members"][number];
 
 const TONE: Record<BillingStatus, "default" | "accent" | "success"> = { paid: "success", due: "default", late: "accent", exempt: "default", no_plan: "default" };
 
-const monthLabel = (m: string) => new Date(`${m}-15T12:00:00`).toLocaleDateString("pt-PT", { month: "short", year: "numeric" });
+const monthLabel = (m: string) => dateFmt({ month: "short", year: "numeric" }).format(new Date(`${m}-15T12:00:00`));
 
 /** The owner's fee book: plans, who is on which plan, payments received, who is late. */
 export default function Fees() {
+  const t = useT();
   const { id } = useLocalSearchParams<{ id: string }>();
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["academy", id, "billing"], queryFn: () => api<BillingOverview>(`/academies/${id}/billing`) });
@@ -49,11 +49,11 @@ export default function Fees() {
     setError(null);
     const month = ymd(new Date()).slice(0, 7);
     try {
-      const res = await fetch(`${API_URL}/api/academies/${id}/payments.csv?month=${month}`, { credentials: "include" });
-      if (!res.ok) throw new Error(`Erro ${res.status}`);
+      const res = await fetch(`${API_URL}/api/academies/${id}/payments.csv?month=${month}`, { credentials: "include", headers: { "Accept-Language": currentLocale() } });
+      if (!res.ok) throw new Error(t.common.error(res.status));
       const link = document.createElement("a");
       link.href = URL.createObjectURL(await res.blob());
-      link.download = `mensalidades-${month}.csv`;
+      link.download = t.paymentsCsv.filename(month);
       link.click();
       URL.revokeObjectURL(link.href);
     } catch (e) {
@@ -69,9 +69,9 @@ export default function Fees() {
   return (
     <>
       <Header
-        title="Mensalidades"
-        left={<Button kind="ghost" icon={ArrowLeft} accessibilityLabel="Voltar" onPress={() => (router.canGoBack() ? router.back() : router.replace(`/academia/${id}`))} />}
-        right={Platform.OS === "web" ? <Button size="sm" icon={Download} title="CSV do mês" onPress={exportCsv} /> : undefined}
+        title={t.academy.fees}
+        left={<Button kind="ghost" icon={ArrowLeft} accessibilityLabel={t.common.back} onPress={() => (router.canGoBack() ? router.back() : router.replace(`/academia/${id}`))} />}
+        right={Platform.OS === "web" ? <Button size="sm" icon={Download} title={t.fees.csv} onPress={exportCsv} /> : undefined}
       />
       <Screen wide>
         {q.isPending ? <Loading /> : null}
@@ -79,25 +79,25 @@ export default function Fees() {
         {b ? (
           <>
             <Txt v="small" muted>
-              Controlo de pagamentos para o responsável. O app não cobra nem movimenta dinheiro; só os alunos veem a própria situação.
+              {t.fees.intro}
             </Txt>
             <Row wrap gap={space.md}>
-              <View style={{ flexGrow: 1, flexBasis: 140 }}><Kpi label="Em dia" value={String(count("paid"))} /></View>
-              <View style={{ flexGrow: 1, flexBasis: 140 }}><Kpi label="A vencer" value={String(count("due"))} sub={`vence dia ${b.billingDueDay}`} /></View>
-              <View style={{ flexGrow: 1, flexBasis: 140 }}><Kpi label="Em atraso" value={String(count("late"))} subTone={count("late") ? "down" : undefined} sub={count("late") ? "precisa de atenção" : undefined} /></View>
-              <View style={{ flexGrow: 1, flexBasis: 140 }}><Kpi label="Sem plano" value={String(count("no_plan"))} /></View>
+              <View style={{ flexGrow: 1, flexBasis: 140 }}><Kpi label={t.billingStatus.paid} value={String(count("paid"))} /></View>
+              <View style={{ flexGrow: 1, flexBasis: 140 }}><Kpi label={t.billingStatus.due} value={String(count("due"))} sub={t.academyCards.dueDay(b.billingDueDay)} /></View>
+              <View style={{ flexGrow: 1, flexBasis: 140 }}><Kpi label={t.billingStatus.late} value={String(count("late"))} subTone={count("late") ? "down" : undefined} sub={count("late") ? t.fees.needsAttention : undefined} /></View>
+              <View style={{ flexGrow: 1, flexBasis: 140 }}><Kpi label={t.billingStatus.no_plan} value={String(count("no_plan"))} /></View>
             </Row>
 
             <Segmented
               value={filter}
               onChange={setFilter}
               options={[
-                { value: "all", label: `Todos (${b.members.length})` },
-                { value: "late", label: `Em atraso (${count("late")})` },
-                { value: "due", label: `A vencer (${count("due")})` },
-                { value: "paid", label: "Em dia" },
-                { value: "no_plan", label: "Sem plano" },
-                { value: "exempt", label: "Isentos" },
+                { value: "all", label: t.fees.filterAll(b.members.length) },
+                { value: "late", label: `${t.billingStatus.late} (${count("late")})` },
+                { value: "due", label: `${t.billingStatus.due} (${count("due")})` },
+                { value: "paid", label: t.billingStatus.paid },
+                { value: "no_plan", label: t.billingStatus.no_plan },
+                { value: "exempt", label: t.fees.exemptPlural },
               ]}
             />
 
@@ -109,14 +109,14 @@ export default function Fees() {
                     <View style={{ flex: 1, gap: 2 }}>
                       <Txt bold>{m.name}</Txt>
                       <Txt v="tiny" muted>
-                        {[m.plan ? `${m.plan.name} · ${formatEuros(m.plan.priceCents)}` : "Sem plano", m.paidThrough ? `pago até ${monthLabel(m.paidThrough)}` : null]
+                        {[m.plan ? `${m.plan.name} · ${euros(m.plan.priceCents)}` : t.billingStatus.no_plan, m.paidThrough ? t.academyCards.paidThrough(monthLabel(m.paidThrough)) : null]
                           .filter(Boolean)
                           .join(" · ")}
                       </Txt>
                     </View>
                     <Badge tone={TONE[m.status]}>
-                      {BILLING_STATUS_LABEL[m.status]}
-                      {m.status === "late" ? ` · ${m.lateMonths} ${m.lateMonths === 1 ? "mês" : "meses"}` : ""}
+                      {t.billingStatus[m.status]}
+                      {m.status === "late" ? ` · ${t.academyCards.months(m.lateMonths)}` : ""}
                     </Badge>
                   </ListRow>
                   {open === m.id ? <MemberBilling key={m.id} academyId={id} member={m} plans={b.plans} onChange={refresh} /> : null}
@@ -124,7 +124,7 @@ export default function Fees() {
               ))}
               {!shown.length ? (
                 <View style={{ padding: space.lg }}>
-                  <Txt v="small" muted>Ninguém aqui.</Txt>
+                  <Txt v="small" muted>{t.fees.nobody}</Txt>
                 </View>
               ) : null}
             </Card>
@@ -139,6 +139,7 @@ export default function Fees() {
 
 /** Expanded row: plan, record a payment, remind, history. */
 function MemberBilling({ academyId, member: m, plans, onChange }: { academyId: string; member: MemberRow; plans: Plan[]; onChange: () => void }) {
+  const t = useT();
   const { c } = useTheme();
   const qc = useQueryClient();
   const history = useQuery({ queryKey: ["payments", academyId, m.id], queryFn: () => api<Payment[]>(`/academies/${academyId}/members/${m.id}/payments`) });
@@ -167,39 +168,39 @@ function MemberBilling({ academyId, member: m, plans, onChange }: { academyId: s
   function record() {
     const cents = Math.round(Number(amount.replace(",", ".")) * 100);
     const check = paymentInput.safeParse({ userId: m.id, amountCents: cents, method, paidOn, coversFrom, months, note });
-    if (!check.success || Number.isNaN(cents)) return setError(check.success ? "Valor inválido" : check.error.issues[0].message);
-    void run(() => api(`/academies/${academyId}/payments`, { method: "POST", json: check.data }), "Pagamento registrado.");
+    if (!check.success || Number.isNaN(cents)) return setError(check.success ? t.fees.invalidAmount : validationMessage(t, check.error.issues[0].message));
+    void run(() => api(`/academies/${academyId}/payments`, { method: "POST", json: check.data }), t.fees.recorded);
   }
 
   return (
     <View style={{ padding: space.lg, gap: space.md, backgroundColor: c.muted }}>
       <Segmented
-        label="Plano"
+        label={t.fees.plan}
         value={m.planId ?? ""}
         onChange={(planId) => run(() => api(`/academies/${academyId}/members/${m.id}/plan`, { method: "PATCH", json: { planId: planId || null } }))}
-        options={[{ value: "", label: "Sem plano" }, ...plans.map((p) => ({ value: p.id, label: `${p.name} · ${formatEuros(p.priceCents)}` }))]}
+        options={[{ value: "", label: t.billingStatus.no_plan }, ...plans.map((p) => ({ value: p.id, label: `${p.name} · ${euros(p.priceCents)}` }))]}
       />
       {m.plan && m.plan.priceCents > 0 ? (
         <Card style={{ gap: space.md }}>
-          <Txt v="h3">Registrar pagamento</Txt>
+          <Txt v="h3">{t.fees.record}</Txt>
           <Row gap={space.md} wrap>
             <Col style={{ flex: 1, minWidth: 110 }}>
-              <Input label="Valor (€)" value={amount} onChangeText={setAmount} keyboardType="decimal-pad" />
+              <Input label={t.fees.amount} value={amount} onChangeText={setAmount} keyboardType="decimal-pad" />
             </Col>
             <Col style={{ flex: 1, minWidth: 140 }}>
-              <Input label="Pago em" value={paidOn} onChangeText={setPaidOn} maxLength={10} />
+              <Input label={t.fees.paidOn} value={paidOn} onChangeText={setPaidOn} maxLength={10} />
             </Col>
             <Col style={{ flex: 1, minWidth: 120 }}>
-              <Input label="Referente a (AAAA-MM)" value={coversFrom} onChangeText={setCoversFrom} maxLength={7} />
+              <Input label={t.fees.covers} value={coversFrom} onChangeText={setCoversFrom} maxLength={7} />
             </Col>
           </Row>
-          <Stepper label="Meses" value={months} onChange={setMonths} min={1} max={12} />
-          <Segmented label="Forma" value={method} onChange={setMethod} options={PAYMENT_METHODS.map((p) => ({ value: p, label: PAYMENT_METHOD_LABEL[p] }))} />
-          <Input label="Nota" value={note} onChangeText={setNote} placeholder="Opcional" />
+          <Stepper label={t.fees.months} value={months} onChange={setMonths} min={1} max={12} />
+          <Segmented label={t.fees.method} value={method} onChange={setMethod} options={PAYMENT_METHODS.map((p) => ({ value: p, label: t.paymentMethod[p] }))} />
+          <Input label={t.fees.note} value={note} onChangeText={setNote} placeholder={t.fees.optional} />
           <Row gap={space.sm} wrap>
-            <Button kind="primary" icon={Plus} title="Registrar pagamento" onPress={record} />
+            <Button kind="primary" icon={Plus} title={t.fees.record} onPress={record} />
             {m.status === "late" || m.status === "due" ? (
-              <Button icon={Bell} title="Lembrar o aluno" onPress={() => run(() => api(`/academies/${academyId}/members/${m.id}/remind`, { method: "POST" }), "Lembrete enviado no app.")} />
+              <Button icon={Bell} title={t.fees.remind} onPress={() => run(() => api(`/academies/${academyId}/members/${m.id}/remind`, { method: "POST" }), t.fees.reminded)} />
             ) : null}
           </Row>
         </Card>
@@ -207,12 +208,12 @@ function MemberBilling({ academyId, member: m, plans, onChange }: { academyId: s
       {info ? <Txt v="small" color={c.success}>{info}</Txt> : null}
       <ErrorText error={error} />
       <Col gap={4}>
-        <Txt v="small" bold>Histórico</Txt>
+        <Txt v="small" bold>{t.fees.history}</Txt>
         {history.data?.length ? (
           history.data.map((p) => (
             <Row key={p.id} gap={space.sm}>
               <Txt v="small" style={{ flex: 1 }}>
-                {new Date(`${p.paidOn}T12:00:00`).toLocaleDateString("pt-PT")} · {formatEuros(p.amountCents)} · {PAYMENT_METHOD_LABEL[p.method]} · {monthLabel(p.coversFrom)}
+                {dateFmt({ day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(`${p.paidOn}T12:00:00`))} · {euros(p.amountCents)} · {t.paymentMethod[p.method]} · {monthLabel(p.coversFrom)}
                 {p.months > 1 ? ` (+${p.months - 1})` : ""}
                 {p.note ? ` · ${p.note}` : ""}
               </Txt>
@@ -220,9 +221,9 @@ function MemberBilling({ academyId, member: m, plans, onChange }: { academyId: s
                 size="sm"
                 kind="ghost"
                 icon={Trash}
-                accessibilityLabel="Apagar pagamento"
+                accessibilityLabel={t.fees.deletePayment}
                 onPress={async () => {
-                  if (await confirm("Apagar este pagamento?", "Use só para corrigir um registro feito por engano.", "Apagar")) {
+                  if (await confirm(t.fees.deletePaymentTitle, t.fees.deletePaymentText, t.academyCards.deleteAction)) {
                     void run(() => api(`/academies/${academyId}/payments/${p.id}`, { method: "DELETE" }));
                   }
                 }}
@@ -230,7 +231,7 @@ function MemberBilling({ academyId, member: m, plans, onChange }: { academyId: s
             </Row>
           ))
         ) : (
-          <Txt v="small" muted>{history.isPending ? "…" : "Nenhum pagamento registrado."}</Txt>
+          <Txt v="small" muted>{history.isPending ? "…" : t.fees.noPayments}</Txt>
         )}
       </Col>
     </View>
@@ -238,6 +239,7 @@ function MemberBilling({ academyId, member: m, plans, onChange }: { academyId: s
 }
 
 function Plans({ academyId, plans, dueDay, onChange }: { academyId: string; plans: Plan[]; dueDay: number; onChange: () => void }) {
+  const t = useT();
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [period, setPeriod] = useState(1);
@@ -256,7 +258,7 @@ function Plans({ academyId, plans, dueDay, onChange }: { academyId: string; plan
 
   function add() {
     const check = planInput.safeParse({ name, priceCents: Math.round(Number(price.replace(",", ".") || "0") * 100), periodMonths: period });
-    if (!check.success) return setError(check.error.issues[0].message);
+    if (!check.success) return setError(validationMessage(t, check.error.issues[0].message));
     void run(async () => {
       await api(`/academies/${academyId}/plans`, { method: "POST", json: check.data });
       setName("");
@@ -266,22 +268,22 @@ function Plans({ academyId, plans, dueDay, onChange }: { academyId: string; plan
 
   return (
     <Card pad={false}>
-      <CardHead title="Planos" />
+      <CardHead title={t.fees.plans} />
       {plans.map((p) => (
         <ListRow key={p.id}>
           <View style={{ flex: 1 }}>
             <Txt bold>{p.name}</Txt>
             <Txt v="tiny" muted>
-              {p.priceCents ? formatEuros(p.priceCents) : "Isento"} · {p.periodMonths === 1 ? "mensal" : `a cada ${p.periodMonths} meses`}
+              {p.priceCents ? euros(p.priceCents) : t.billingStatus.exempt} · {t.fees.period(p.periodMonths)}
             </Txt>
           </View>
           <Button
             size="sm"
             kind="ghost"
             icon={Trash}
-            accessibilityLabel={`Remover ${p.name}`}
+            accessibilityLabel={t.scheduleEdit.removeA11y(p.name)}
             onPress={async () => {
-              if (await confirm(`Remover o plano "${p.name}"?`, "Quem está nele fica sem plano. Os pagamentos antigos continuam.", "Remover")) {
+              if (await confirm(t.fees.removePlanTitle(p.name), t.fees.removePlanText, t.common.remove)) {
                 void run(() => api(`/academies/${academyId}/plans/${p.id}`, { method: "DELETE" }));
               }
             }}
@@ -291,17 +293,17 @@ function Plans({ academyId, plans, dueDay, onChange }: { academyId: string; plan
       <Col style={{ padding: space.lg }}>
         <Row gap={space.md} wrap>
           <Col style={{ flex: 2, minWidth: 160 }}>
-            <Input label="Novo plano" value={name} onChangeText={setName} placeholder="Mensal adulto" />
+            <Input label={t.fees.newPlan} value={name} onChangeText={setName} placeholder={t.fees.newPlanPlaceholder} />
           </Col>
           <Col style={{ flex: 1, minWidth: 100 }}>
-            <Input label="Valor (€)" value={price} onChangeText={setPrice} placeholder="45" keyboardType="decimal-pad" hint="0 = isento (bolsa)" />
+            <Input label={t.fees.amount} value={price} onChangeText={setPrice} placeholder="45" keyboardType="decimal-pad" hint={t.fees.zeroExempt} />
           </Col>
         </Row>
-        <Stepper label="Período (meses)" value={period} onChange={setPeriod} min={1} max={12} />
-        <Button icon={Plus} title="Adicionar plano" onPress={add} style={{ alignSelf: "flex-start" }} />
-        <Stepper label="Dia de vencimento" value={day} onChange={setDay} min={1} max={28} />
+        <Stepper label={t.fees.periodMonths} value={period} onChange={setPeriod} min={1} max={12} />
+        <Button icon={Plus} title={t.fees.addPlan} onPress={add} style={{ alignSelf: "flex-start" }} />
+        <Stepper label={t.fees.dueDay} value={day} onChange={setDay} min={1} max={28} />
         {day !== dueDay ? (
-          <Button size="sm" title="Salvar dia de vencimento" onPress={() => run(() => api(`/academies/${academyId}/billing/settings`, { method: "PATCH", json: { billingDueDay: day } }))} style={{ alignSelf: "flex-start" }} />
+          <Button size="sm" title={t.fees.saveDueDay} onPress={() => run(() => api(`/academies/${academyId}/billing/settings`, { method: "PATCH", json: { billingDueDay: day } }))} style={{ alignSelf: "flex-start" }} />
         ) : null}
         <ErrorText error={error} />
       </Col>

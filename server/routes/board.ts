@@ -49,7 +49,7 @@ boardRoutes.patch("/academies/:id/announcements/:announcementId", async (c) => {
     .set({ pinned })
     .where(and(eq(s.announcements.id, c.req.param("announcementId")), eq(s.announcements.academyId, a.id)))
     .returning({ id: s.announcements.id });
-  if (!row) fail(404, "Aviso não encontrado");
+  if (!row) fail(404, "announcementNotFound");
   return c.body(null, 204);
 });
 

@@ -11,14 +11,15 @@ import { Pressable, View } from "react-native";
 
 import { api } from "@/lib/api";
 import { ymd } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 import { useCreateSession, useMe } from "@/lib/queries";
 import type { ClassWithOccurrence } from "@/lib/types";
-import { KIND_LABEL, SESSION_KINDS, sessionInput, VISIBILITY_LABEL, type SessionKind, type Visibility } from "@/shared/domain";
+import { SESSION_KINDS, sessionInput, type SessionKind, type Visibility } from "@/shared/domain";
+import { validationMessage } from "@/shared/i18n";
 import { Button, Card, Col, ErrorText, Input, Loading, Row, Segmented, Stepper, Txt } from "@/ui/kit";
 import { Header, Screen } from "@/ui/shell";
 import { space, useTheme } from "@/ui/theme";
 
-const RPE_LABEL = ["", "Muito leve", "Leve", "Leve", "Moderado", "Moderado", "Puxado", "Puxado", "Muito puxado", "Máximo", "Máximo"];
 const VIS_ICON = { public: Globe, followers: Users, private: Lock };
 
 type Params = { durationMin?: string; rounds?: string; kind?: string; source?: string; classId?: string; date?: string };
@@ -36,6 +37,7 @@ export default function Register() {
 }
 
 function RegisterForm({ params, fromClass }: { params: Params; fromClass?: ClassWithOccurrence }) {
+  const t = useT();
   const { c } = useTheme();
   const me = useMe().data;
   const create = useCreateSession();
@@ -51,22 +53,22 @@ function RegisterForm({ params, fromClass }: { params: Params; fromClass?: Class
   const [rpe, setRpe] = useState(7);
   const [academyId, setAcademyId] = useState<string | null>(fromClass?.academyId ?? me?.profile?.homeAcademyId ?? null);
   const [title, setTitle] = useState(fromClass?.title ?? "");
-  const [notes, setNotes] = useState(fromClass?.topic ? `Tema da aula: ${fromClass.topic}` : "");
+  const [notes, setNotes] = useState(fromClass?.topic ? t.log.topicNote(fromClass.topic) : "");
   const [techniques, setTechniques] = useState<string[]>([]);
   const [technique, setTechnique] = useState("");
   const [visibility, setVisibility] = useState<Visibility>(me?.profile?.defaultVisibility ?? "followers");
   const [error, setError] = useState<string | null>(null);
 
   function addTechnique() {
-    const t = technique.trim();
-    if (t && !techniques.includes(t)) setTechniques([...techniques, t]);
+    const v = technique.trim();
+    if (v && !techniques.includes(v)) setTechniques([...techniques, v]);
     setTechnique("");
   }
 
   async function save() {
     setError(null);
     const startedAt = new Date(`${date}T${time}:00`);
-    if (Number.isNaN(startedAt.getTime())) return setError("Data ou hora inválida");
+    if (Number.isNaN(startedAt.getTime())) return setError(t.log.invalidDate);
     const input = sessionInput.safeParse({
       kind,
       startedAt: startedAt.toISOString(),
@@ -80,7 +82,7 @@ function RegisterForm({ params, fromClass }: { params: Params; fromClass?: Class
       visibility,
       source: params.source === "timer" ? "timer" : "manual",
     });
-    if (!input.success) return setError(input.error.issues[0].message);
+    if (!input.success) return setError(validationMessage(t, input.error.issues[0].message));
     try {
       const s = await create.mutateAsync(input.data);
       router.replace(`/treino/${s.id}`);
@@ -92,9 +94,9 @@ function RegisterForm({ params, fromClass }: { params: Params; fromClass?: Class
   return (
     <>
       <Header
-        title="Registrar treino"
-        left={<Button kind="ghost" icon={X} accessibilityLabel="Cancelar" onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))} />}
-        right={<Button kind="primary" size="sm" title="Salvar" loading={create.isPending} onPress={save} />}
+        title={t.nav.logSession}
+        left={<Button kind="ghost" icon={X} accessibilityLabel={t.common.cancel} onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))} />}
+        right={<Button kind="primary" size="sm" title={t.common.save} loading={create.isPending} onPress={save} />}
       />
       <Screen>
         {params.source !== "timer" ? (
@@ -105,8 +107,8 @@ function RegisterForm({ params, fromClass }: { params: Params; fromClass?: Class
                   <Timer size={18} color={c.fg} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Txt bold>Usar o timer de rounds</Txt>
-                  <Txt v="small" muted>O treino é preenchido sozinho ao terminar</Txt>
+                  <Txt bold>{t.log.useTimer}</Txt>
+                  <Txt v="small" muted>{t.log.useTimerHint}</Txt>
                 </View>
                 <ChevronRight size={18} color={c.mutedFg} />
               </Row>
@@ -114,28 +116,28 @@ function RegisterForm({ params, fromClass }: { params: Params; fromClass?: Class
           </Pressable>
         ) : null}
 
-        <Segmented label="Modalidade" value={kind} onChange={setKind} options={SESSION_KINDS.map((k) => ({ value: k, label: KIND_LABEL[k] }))} />
+        <Segmented label={t.session.kind} value={kind} onChange={setKind} options={SESSION_KINDS.map((k) => ({ value: k, label: t.sessionKind[k] }))} />
 
         <Row gap={space.md}>
           <View style={{ flex: 1 }}>
-            <Input label="Data" value={date} onChangeText={setDate} placeholder="AAAA-MM-DD" />
+            <Input label={t.log.date} value={date} onChangeText={setDate} placeholder={t.log.datePlaceholder} />
           </View>
           <View style={{ flex: 1 }}>
-            <Input label="Início" value={time} onChangeText={setTime} placeholder="19:30" />
+            <Input label={t.log.start} value={time} onChangeText={setTime} placeholder="19:30" />
           </View>
         </Row>
 
         <Row gap={space.md}>
-          <Stepper label="Duração (min)" value={durationMin} onChange={setDuration} step={15} min={15} max={600} />
-          <Stepper label="Rolas" value={rounds} onChange={setRounds} max={100} />
+          <Stepper label={t.log.durationMin} value={durationMin} onChange={setDuration} step={15} min={15} max={600} />
+          <Stepper label={t.session.rounds} value={rounds} onChange={setRounds} max={100} />
         </Row>
 
         <Col gap={8}>
           <Row style={{ justifyContent: "space-between" }}>
-            <Txt bold>Intensidade (esforço percebido)</Txt>
-            <Txt bold>{rpe} · {RPE_LABEL[rpe]}</Txt>
+            <Txt bold>{t.log.intensity}</Txt>
+            <Txt bold>{rpe} · {t.log.rpe[rpe]}</Txt>
           </Row>
-          <Row gap={4} accessibilityRole="adjustable" accessibilityLabel="Intensidade de 1 a 10">
+          <Row gap={4} accessibilityRole="adjustable" accessibilityLabel={t.log.intensityA11y}>
             {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
               <Pressable
                 key={n}
@@ -147,22 +149,22 @@ function RegisterForm({ params, fromClass }: { params: Params; fromClass?: Class
               </Pressable>
             ))}
           </Row>
-          <Txt v="small" muted>Usado para calcular a sua carga semanal. Não precisa de relógio nem de cinta cardíaca.</Txt>
+          <Txt v="small" muted>{t.log.intensityHint}</Txt>
         </Col>
 
         {activeAcademies.length ? (
           <Segmented
-            label="Academia"
+            label={t.nav.academy}
             value={academyId ?? ""}
             onChange={(v) => setAcademyId(v || null)}
-            options={[...activeAcademies.map((m) => ({ value: m.academy.id, label: m.academy.name })), { value: "", label: "Outro lugar" }]}
+            options={[...activeAcademies.map((m) => ({ value: m.academy.id, label: m.academy.name })), { value: "", label: t.log.elsewhere }]}
           />
         ) : null}
 
-        <Input label="Título" value={title} onChangeText={setTitle} placeholder={`Treino de ${KIND_LABEL[kind].toLowerCase()}`} maxLength={120} />
+        <Input label={t.log.title} value={title} onChangeText={setTitle} placeholder={t.sessionTitle(t.sessionKind[kind])} maxLength={120} />
 
         <Col gap={8}>
-          <Txt bold>Técnicas da aula</Txt>
+          <Txt bold>{t.log.techniques}</Txt>
           <Row wrap gap={6}>
             {techniques.map((t) => (
               <Pressable key={t} onPress={() => setTechniques(techniques.filter((x) => x !== t))} style={{ backgroundColor: c.muted, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, flexDirection: "row", gap: 4, alignItems: "center" }}>
@@ -173,23 +175,23 @@ function RegisterForm({ params, fromClass }: { params: Params; fromClass?: Class
           </Row>
           <Row>
             <View style={{ flex: 1 }}>
-              <Input value={technique} onChangeText={setTechnique} placeholder="Ex.: armlock da guarda" onSubmitEditing={addTechnique} returnKeyType="done" />
+              <Input value={technique} onChangeText={setTechnique} placeholder={t.log.techniquePlaceholder} onSubmitEditing={addTechnique} returnKeyType="done" />
             </View>
-            <Button title="Adicionar" onPress={addTechnique} disabled={!technique.trim()} />
+            <Button title={t.log.add} onPress={addTechnique} disabled={!technique.trim()} />
           </Row>
         </Col>
 
-        <Input label="Notas" value={notes} onChangeText={setNotes} placeholder="O que funcionou, o que travou, o que estudar…" multiline maxLength={5000} />
+        <Input label={t.log.notes} value={notes} onChangeText={setNotes} placeholder={t.log.notesPlaceholder} multiline maxLength={5000} />
 
         <Segmented
-          label="Quem pode ver"
+          label={t.log.whoSees}
           value={visibility}
           onChange={setVisibility}
-          options={(["public", "followers", "private"] as const).map((v) => ({ value: v, label: VISIBILITY_LABEL[v], icon: VIS_ICON[v] }))}
+          options={(["public", "followers", "private"] as const).map((v) => ({ value: v, label: t.visibility[v], icon: VIS_ICON[v] }))}
         />
 
         <ErrorText error={error} />
-        <Button kind="primary" size="lg" title="Salvar treino" loading={create.isPending} onPress={save} />
+        <Button kind="primary" size="lg" title={t.log.save} loading={create.isPending} onPress={save} />
       </Screen>
     </>
   );

@@ -3,6 +3,7 @@
 import { Platform } from "react-native";
 
 import { API_URL, authClient } from "./auth-client";
+import { currentLocale, msg } from "./i18n";
 
 export class ApiError extends Error {
   constructor(
@@ -14,7 +15,7 @@ export class ApiError extends Error {
 }
 
 export async function api<T = unknown>(path: string, init: { method?: string; json?: unknown } = {}): Promise<T> {
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { "Accept-Language": currentLocale() };
   if (init.json !== undefined) headers["Content-Type"] = "application/json";
   if (Platform.OS !== "web") {
     const cookie = authClient.getCookie();
@@ -28,6 +29,6 @@ export async function api<T = unknown>(path: string, init: { method?: string; js
   });
   if (res.status === 204) return undefined as T;
   const data = await res.json().catch(() => null);
-  if (!res.ok) throw new ApiError(res.status, data?.error ?? `Erro ${res.status}`);
+  if (!res.ok) throw new ApiError(res.status, data?.error ?? msg().common.error(res.status));
   return data as T;
 }

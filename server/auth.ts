@@ -5,6 +5,7 @@ import { APIError } from "better-auth/api";
 import { eq } from "drizzle-orm";
 import { emailOTP } from "better-auth/plugins";
 
+import { messages, requestLocale, type Locale } from "../src/shared/i18n";
 import type { Db } from "./db/client";
 import * as schema from "./db/schema";
 import type { Env } from "./env";
@@ -13,22 +14,23 @@ import type { Env } from "./env";
  * Login is a 6-digit code sent by e-mail: the same flow works on web and Android without deep links
  * (a magic link would have to reopen the app and hand it the session cookie).
  */
-export type LoginCodeSender = (email: string, code: string) => Promise<void>;
+export type LoginCodeSender = (email: string, code: string, locale: Locale) => Promise<void>;
 
 /** Resend in production; in development the code is printed so login works without an e-mail domain. */
 export function defaultLoginCodeSender(env: Env): LoginCodeSender {
   if (!env.RESEND_API_KEY) {
     return async (email, code) => console.info(`[login-code] ${email}: ${code}`);
   }
-  return async (email, code) => {
+  return async (email, code, locale) => {
+    const m = messages(locale).loginEmail;
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         from: env.EMAIL_FROM,
         to: email,
-        subject: `${code} é o seu código do rolar`,
-        text: `Oss! O seu código para entrar é ${code}. Ele vale 10 minutos.\n\nSe não foi você, ignore este e-mail.`,
+        subject: m.subject(code),
+        text: m.text(code),
       }),
     });
     if (!res.ok) throw new Error(`Resend ${res.status}: ${await res.text()}`);
@@ -73,7 +75,7 @@ export function createAuth(db: Db, env: Env, sendLoginCode: LoginCodeSender = de
               .select({ suspendedAt: schema.user.suspendedAt, reason: schema.user.suspensionReason })
               .from(schema.user)
               .where(eq(schema.user.id, session.userId));
-            if (u?.suspendedAt) throw new APIError("FORBIDDEN", { code: "ACCOUNT_SUSPENDED", message: `Conta suspensa: ${u.reason}` });
+            if (u?.suspendedAt) throw new APIError("FORBIDDEN", { code: "ACCOUNT_SUSPENDED", message: u.reason ?? "" });
           },
         },
       },
@@ -88,7 +90,7 @@ export function createAuth(db: Db, env: Env, sendLoginCode: LoginCodeSender = de
         otpLength: 6,
         expiresIn: 600,
         allowedAttempts: 5,
-        sendVerificationOTP: ({ email, otp }) => sendLoginCode(email, otp),
+        sendVerificationOTP: ({ email, otp }, ctx) => sendLoginCode(email, otp, requestLocale(ctx?.request?.headers.get("accept-language"))),
       }),
     ],
   });

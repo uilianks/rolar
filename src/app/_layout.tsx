@@ -7,6 +7,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ApiError } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { handoff } from "@/lib/handoff";
+import { LocaleProvider } from "@/lib/i18n";
 import { useMe } from "@/lib/queries";
 import { Loading } from "@/ui/kit";
 import { ThemeProvider, useTheme } from "@/ui/theme";
@@ -64,11 +65,13 @@ function Gate() {
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <ThemeProvider>
-        <QueryClientProvider client={queryClient}>
-          <Gate />
-        </QueryClientProvider>
-      </ThemeProvider>
+      <LocaleProvider>
+        <ThemeProvider>
+          <QueryClientProvider client={queryClient}>
+            <Gate />
+          </QueryClientProvider>
+        </ThemeProvider>
+      </LocaleProvider>
     </SafeAreaProvider>
   );
 }

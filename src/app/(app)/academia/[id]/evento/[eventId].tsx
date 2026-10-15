@@ -9,10 +9,11 @@ import { Linking, View } from "react-native";
 
 import { api } from "@/lib/api";
 import { confirm } from "@/lib/confirm";
-import { whenLong } from "@/lib/format";
+import { dateFmt, whenLong } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 import { useAcademy, useMe } from "@/lib/queries";
 import type { EventDetail } from "@/lib/types";
-import { EVENT_KIND_LABEL, RESULT_LABEL, RESULTS, type Result } from "@/shared/domain";
+import { RESULTS, type Result } from "@/shared/domain";
 import { Avatar, Badge, Belt, Button, Card, CardHead, Col, ErrorText, Input, ListRow, Loading, Row, Txt } from "@/ui/kit";
 import { Header, Screen } from "@/ui/shell";
 import { space, useTheme } from "@/ui/theme";
@@ -21,6 +22,7 @@ const MEDAL: Record<Result, string> = { gold: "🥇", silver: "🥈", bronze: "�
 
 /** An event: details, "I'm going" (with division for competitions), who goes, and results afterwards. */
 export default function EventScreen() {
+  const t = useT();
   const { c } = useTheme();
   const qc = useQueryClient();
   const { id, eventId } = useLocalSearchParams<{ id: string; eventId: string }>();
@@ -53,7 +55,7 @@ export default function EventScreen() {
   }
 
   async function remove() {
-    if (!e || !(await confirm(`Apagar "${e.title}"?`, "Some do calendário, com as inscrições e os resultados.", "Apagar"))) return;
+    if (!e || !(await confirm(t.event.deleteTitle(e.title), t.event.deleteText, t.academyCards.deleteAction))) return;
     await run(`/academies/${id}/events/${e.id}`, "DELETE");
     router.replace(`/academia/${id}`);
   }
@@ -64,54 +66,54 @@ export default function EventScreen() {
   return (
     <>
       <Header
-        title={EVENT_KIND_LABEL[e.kind]}
-        left={<Button kind="ghost" icon={ArrowLeft} accessibilityLabel="Voltar" onPress={() => (router.canGoBack() ? router.back() : router.replace(`/academia/${id}`))} />}
+        title={t.eventKind[e.kind]}
+        left={<Button kind="ghost" icon={ArrowLeft} accessibilityLabel={t.common.back} onPress={() => (router.canGoBack() ? router.back() : router.replace(`/academia/${id}`))} />}
         right={
           staff ? (
             <Row gap={4}>
-              <Button kind="ghost" icon={Pencil} accessibilityLabel="Editar evento" onPress={() => router.push(`/academia/${id}/evento/novo?eventId=${e.id}`)} />
-              <Button kind="ghost" icon={Trash} accessibilityLabel="Apagar evento" onPress={remove} />
+              <Button kind="ghost" icon={Pencil} accessibilityLabel={t.eventForm.editTitle} onPress={() => router.push(`/academia/${id}/evento/novo?eventId=${e.id}`)} />
+              <Button kind="ghost" icon={Trash} accessibilityLabel={t.event.delete} onPress={remove} />
             </Row>
           ) : undefined
         }
       />
       <Screen>
         <Card style={{ gap: space.sm }}>
-          <Badge tone={competition ? "accent" : "default"}>{EVENT_KIND_LABEL[e.kind]}</Badge>
+          <Badge tone={competition ? "accent" : "default"}>{t.eventKind[e.kind]}</Badge>
           <Txt v="h1">{e.title}</Txt>
           <Txt muted>
             {whenLong(e.startsAt)}
-            {e.endsAt ? ` até ${whenLong(e.endsAt)}` : ""}
+            {e.endsAt ? ` ${t.event.until(whenLong(e.endsAt))}` : ""}
           </Txt>
           {e.location ? <Txt>{e.location}</Txt> : null}
-          {e.signupUntil ? <Txt v="small" muted>Inscrições até {new Date(`${e.signupUntil}T12:00:00`).toLocaleDateString("pt-PT", { day: "numeric", month: "long" })}</Txt> : null}
+          {e.signupUntil ? <Txt v="small" muted>{t.event.signupUntil(dateFmt({ day: "numeric", month: "long" }).format(new Date(`${e.signupUntil}T12:00:00`)))}</Txt> : null}
           {e.description ? <Txt style={{ marginTop: space.sm }}>{e.description}</Txt> : null}
           {e.url ? (
-            <Button size="sm" icon={ExternalLink} title={competition ? "Página da prova / inscrição" : "Abrir link"} onPress={() => Linking.openURL(e.url!)} style={{ alignSelf: "flex-start" }} />
+            <Button size="sm" icon={ExternalLink} title={competition ? t.event.competitionPage : t.event.openLink} onPress={() => Linking.openURL(e.url!)} style={{ alignSelf: "flex-start" }} />
           ) : null}
         </Card>
 
         {member && (signupOpen || mine) && !started ? (
           <Card style={{ gap: space.md }}>
-            <Txt v="h3">{mine ? "Você vai ✔" : competition ? "Vai competir?" : "Vai participar?"}</Txt>
+            <Txt v="h3">{mine ? t.event.youGo : competition ? t.event.competeQ : t.event.joinQ}</Txt>
             {competition ? (
               <Input
-                label="Categoria"
+                label={t.event.category}
                 value={category ?? mine?.category ?? ""}
                 onChangeText={setCategory}
-                placeholder="Adulto · Azul · Médio (-82,3 kg)"
-                hint="Como se inscreveu na prova; ajuda o professor a preparar o treino."
+                placeholder={t.event.categoryPlaceholder}
+                hint={t.event.categoryHint}
               />
             ) : null}
             <Row gap={space.sm} wrap>
               {signupOpen ? (
                 <Button
                   kind="primary"
-                  title={mine ? "Atualizar" : competition ? "Vou competir" : "Vou"}
+                  title={mine ? t.event.update : competition ? t.event.willCompete : t.academyCards.imGoing}
                   onPress={() => run(`/academies/${id}/events/${e.id}/rsvp`, "PUT", { category: (category ?? mine?.category ?? "") || undefined })}
                 />
               ) : null}
-              {mine ? <Button kind="danger" title="Não vou mais" onPress={() => run(`/academies/${id}/events/${e.id}/rsvp`, "DELETE")} /> : null}
+              {mine ? <Button kind="danger" title={t.event.notGoing} onPress={() => run(`/academies/${id}/events/${e.id}/rsvp`, "DELETE")} /> : null}
             </Row>
           </Card>
         ) : null}
@@ -119,7 +121,7 @@ export default function EventScreen() {
 
         {member ? (
           <Card pad={false}>
-            <CardHead title={competition ? `Atletas (${e.attendees.length})` : `Vão (${e.attendees.length})`} />
+            <CardHead title={competition ? t.event.athletes(e.attendees.length) : t.event.goingList(e.attendees.length)} />
             {e.attendees.map((x) => {
               const canResult = competition && started && (x.id === me?.user.id || staff);
               return (
@@ -129,7 +131,7 @@ export default function EventScreen() {
                     <Txt bold>
                       {x.name} {x.result ? MEDAL[x.result] : ""}
                     </Txt>
-                    <Txt v="tiny" muted>{[x.category, x.result ? RESULT_LABEL[x.result] : null].filter(Boolean).join(" · ") || " "}</Txt>
+                    <Txt v="tiny" muted>{[x.category, x.result ? t.result[x.result] : null].filter(Boolean).join(" · ") || " "}</Txt>
                   </View>
                   <Belt belt={x.belt} stripes={x.stripes} />
                   {canResult ? (
@@ -141,7 +143,7 @@ export default function EventScreen() {
                             size="sm"
                             kind={x.result === r ? "primary" : "default"}
                             title={MEDAL[r]}
-                            accessibilityLabel={`${RESULT_LABEL[r]} para ${x.name}`}
+                            accessibilityLabel={t.event.resultFor(t.result[r], x.name)}
                             onPress={() => run(`/academies/${id}/events/${e.id}/results/${x.id}`, "PUT", { result: x.result === r ? null : r })}
                           />
                         ))}
@@ -153,13 +155,13 @@ export default function EventScreen() {
             })}
             {!e.attendees.length ? (
               <View style={{ padding: space.lg }}>
-                <Txt v="small" color={c.mutedFg}>Ninguém confirmou ainda.</Txt>
+                <Txt v="small" color={c.mutedFg}>{t.event.nobodyYet}</Txt>
               </View>
             ) : null}
           </Card>
         ) : (
           <Card>
-            <Txt muted>{e.going} pessoa(s) da academia vão. A lista é só para membros.</Txt>
+            <Txt muted>{t.event.membersOnly(e.going)}</Txt>
           </Card>
         )}
       </Screen>

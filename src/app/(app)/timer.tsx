@@ -10,6 +10,7 @@ import { useEffect, useReducer, useRef, useState } from "react";
 import { Platform, Vibration, View } from "react-native";
 import Svg, { Circle } from "react-native-svg";
 
+import { useT } from "@/lib/i18n";
 import { prefs } from "@/lib/prefs";
 import { Button, Card, Col, Kpi, Row, Segmented, Txt } from "@/ui/kit";
 import { Header, Screen } from "@/ui/shell";
@@ -73,6 +74,7 @@ function next(s: State, a: { round: number; rest: number }): State {
 }
 
 export default function RoundTimer() {
+  const t = useT();
   const { c } = useTheme();
   const [presetId, setPresetId] = useState<PresetId>("5/1");
   const preset = PRESETS.find((p) => p.id === presetId)!;
@@ -123,7 +125,7 @@ export default function RoundTimer() {
 
   return (
     <>
-      <Header title="Timer de rounds" left={<Button kind="ghost" icon={ArrowLeft} accessibilityLabel="Voltar" onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))} />} />
+      <Header title={t.nav.timer} left={<Button kind="ghost" icon={ArrowLeft} accessibilityLabel={t.common.back} onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))} />} />
       <Screen>
         <View style={{ maxWidth: 480, width: "100%", alignSelf: "center", gap: 20 }}>
           <View style={{ alignItems: "center" }}>
@@ -136,26 +138,26 @@ export default function RoundTimer() {
               <Circle cx={60} cy={60} r={R} stroke={color} strokeWidth={10} fill="none" strokeLinecap="round" strokeDasharray={CIRC} strokeDashoffset={CIRC * (1 - progress)} />
             </Svg>
             <Col gap={4} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center" }}>
-              <Txt v="small" bold color={color}>{resting ? "DESCANSO" : "ROLA"}</Txt>
+              <Txt v="small" bold color={color}>{resting ? t.timer.rest : t.timer.roll}</Txt>
               <Txt style={{ fontSize: 64, lineHeight: 72, fontWeight: "700", letterSpacing: -2, fontVariant: ["tabular-nums"] }} accessibilityLiveRegion="polite">{mmss(left)}</Txt>
-              <Txt muted>Round {roundsDone + (resting ? 0 : 1)}</Txt>
+              <Txt muted>{t.timer.round(roundsDone + (resting ? 0 : 1))}</Txt>
             </Col>
           </View>
 
           <Row style={{ justifyContent: "center" }} gap={12}>
-            <Button size="lg" icon={RotateCcw} accessibilityLabel="Reiniciar fase" onPress={() => dispatch({ type: "restart", round: preset.round, rest: preset.rest })} />
-            <Button kind="primary" size="lg" icon={running ? Pause : Play} title={running ? "Pausar" : elapsed ? "Retomar" : "Iniciar"} onPress={() => setRunning(!running)} style={{ width: 140, height: 60, borderRadius: 999 }} />
-            <Button size="lg" icon={SkipForward} accessibilityLabel="Pular fase" onPress={() => dispatch({ type: "skip", round: preset.round, rest: preset.rest })} />
+            <Button size="lg" icon={RotateCcw} accessibilityLabel={t.timer.restart} onPress={() => dispatch({ type: "restart", round: preset.round, rest: preset.rest })} />
+            <Button kind="primary" size="lg" icon={running ? Pause : Play} title={running ? t.timer.pause : elapsed ? t.timer.resume : t.timer.start} onPress={() => setRunning(!running)} style={{ width: 140, height: 60, borderRadius: 999 }} />
+            <Button size="lg" icon={SkipForward} accessibilityLabel={t.timer.skip} onPress={() => dispatch({ type: "skip", round: preset.round, rest: preset.rest })} />
           </Row>
 
           <Row gap={12}>
-            <Kpi label="Tempo total" value={mmss(elapsed)} />
-            <Kpi label="Rolas" value={String(roundsDone)} />
+            <Kpi label={t.timer.totalTime} value={mmss(elapsed)} />
+            <Kpi label={t.session.rounds} value={String(roundsDone)} />
           </Row>
 
-          <Button size="lg" icon={Flag} title="Encerrar e registrar treino" onPress={finish} disabled={!elapsed} />
+          <Button size="lg" icon={Flag} title={t.timer.finish} onPress={finish} disabled={!elapsed} />
           <Card style={{ borderStyle: "dashed" }}>
-            <Txt v="small" muted>Mantenha a tela aberta durante o treino. Ao encerrar, o treino abre já preenchido com a duração e o número de rolas.</Txt>
+            <Txt v="small" muted>{t.timer.hint}</Txt>
           </Card>
         </View>
       </Screen>

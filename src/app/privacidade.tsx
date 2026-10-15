@@ -1,9 +1,11 @@
 // Public (no login): linked from the login screen and settings; required by the GDPR and the Play Store listing.
+import { useLocale } from "@/lib/i18n";
+import type { Locale } from "@/shared/i18n";
 import { LegalPage } from "@/ui/legal-page";
 
 const CONTACT = "contato@rolar.app";
 
-const SECTIONS: [string, string][] = [
+const PT: [string, string][] = [
   [
     "Quem somos",
     `O rolar (rolar.app) é um projeto open source (AGPL-3.0), sem fins lucrativos, financiado por doações. Responsável pelo tratamento dos dados: Uilian Kidricki, contacto ${CONTACT}.`,
@@ -36,6 +38,42 @@ const SECTIONS: [string, string][] = [
   ["Alterações", "Se esta política mudar de forma relevante, avisamos no app antes de a mudança valer."],
 ];
 
+const EN: [string, string][] = [
+  [
+    "Who we are",
+    `rolar (rolar.app) is a non-profit open source project (AGPL-3.0), funded by donations. Data controller: Uilian Kidricki, contact ${CONTACT}. This is a translation; if it differs from the Portuguese version, the Portuguese version prevails.`,
+  ],
+  [
+    "What data we keep",
+    "E-mail (to sign in), name, username, profile photo (if you upload one; minors cannot), year of birth, belt and stripes, academies, the sessions you log (date, duration, type, rounds, intensity, notes, techniques), attendance and check-ins, event sign-ups and results, followers, Oss, comments, promotions and the reports you make. If you register an academy: its official contact details (address, phone, e-mail, website, Instagram), your role and the explanation you give, used only to verify the registration. The person in charge of an academy can record their students' membership payments; the app does not charge or process payments. We do not keep passwords, location or health data.",
+  ],
+  [
+    "What we use it for",
+    "Only to run the app: showing your history and statistics, your academy and the feed of the people you follow. Legal basis: performance of a contract, that is, the terms of use (Art. 6(1)(b) GDPR). Membership payment records are kept by the academy, for its own management. We do not sell data, show ads or use third-party trackers.",
+  ],
+  [
+    "Who sees it",
+    "Each session has the visibility you choose: everyone, followers or only you. Name, username, belt and profile photo are public. Your year of birth is never public. Membership payments are seen only by the person in charge of the academy and by you. Under-18s have no photo, do not appear in search, cannot publish sessions to everyone and can only be followed by members of the same academy.",
+  ],
+  [
+    "Where it is kept",
+    "Neon database (Postgres) and Vercel hosting. The login e-mail is sent by Resend. If you sign in with Google, Google confirms your e-mail and name. We choose the European Union region whenever the provider allows it; when it does not, the transfer follows the European Commission's standard contractual clauses.",
+  ],
+  [
+    "Your rights",
+    `In Settings you can download all your data (portability) and delete your account with everything in it (erasure). For access, rectification, objection or questions, write to ${CONTACT}; we reply within 30 days. You can complain to the CNPD (cnpd.pt) or to the data protection authority of your country.`,
+  ],
+  ["Minimum age", "You must be 13 or older to create an account."],
+  [
+    "Retention",
+    "Data is kept while the account exists. When you delete the account, everything is removed from the database immediately; encrypted backups expire within 30 days.",
+  ],
+  ["Changes", "If this policy changes in a meaningful way, we will tell you in the app before the change takes effect."],
+];
+
+const SECTIONS: Record<Locale, [string, string][]> = { pt: PT, en: EN };
+
 export default function Privacy() {
-  return <LegalPage title="Política de privacidade" version="Versão 1.0 · 15 de outubro de 2026" sections={SECTIONS} />;
+  const { t, locale } = useLocale();
+  return <LegalPage title={t.legal.privacyTitle} version={t.legal.version} sections={SECTIONS[locale]} />;
 }

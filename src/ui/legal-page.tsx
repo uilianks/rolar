@@ -2,6 +2,8 @@ import { router } from "expo-router";
 import ArrowLeft from "lucide-react-native/icons/arrow-left";
 import { ScrollView } from "react-native";
 
+import { useT } from "@/lib/i18n";
+
 import { Button, Col, Txt } from "./kit";
 import { Header } from "./shell";
 import { space, useTheme } from "./theme";
@@ -9,11 +11,12 @@ import { space, useTheme } from "./theme";
 /** Public legal text (privacy policy, terms): readable without an account. */
 export function LegalPage({ title, version, sections }: { title: string; version: string; sections: [string, string][] }) {
   const { c } = useTheme();
+  const t = useT();
   return (
     <>
       <Header
         title={title}
-        left={<Button kind="ghost" icon={ArrowLeft} accessibilityLabel="Voltar" onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))} />}
+        left={<Button kind="ghost" icon={ArrowLeft} accessibilityLabel={t.common.back} onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))} />}
       />
       <ScrollView style={{ backgroundColor: c.bg }} contentContainerStyle={{ padding: space.lg, gap: space.lg, maxWidth: 720, width: "100%", alignSelf: "center" }}>
         <Txt v="h1">{title}</Txt>

@@ -4,9 +4,9 @@ import MessageCircle from "lucide-react-native/icons/message-circle";
 import { Pressable, View } from "react-native";
 
 import { duration, when } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 import { useToggleOss } from "@/lib/queries";
 import type { SessionCard } from "@/lib/types";
-import { KIND_LABEL } from "@/shared/domain";
 
 import { Avatar, Belt, Card, Row, Txt } from "./kit";
 import { space, useTheme } from "./theme";
@@ -36,26 +36,28 @@ export function Chips({ items }: { items: string[] }) {
 
 export function OssButton({ session }: { session: Pick<SessionCard, "id" | "ossed" | "ossCount"> }) {
   const { c } = useTheme();
+  const t = useT();
   const toggle = useToggleOss();
   const on = toggle.isPending ? !session.ossed : session.ossed;
   const count = session.ossCount + (toggle.isPending ? (on ? 1 : -1) : 0);
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel="Oss"
+      accessibilityLabel={t.session.oss}
       accessibilityState={{ selected: on }}
       onPress={() => toggle.mutate({ id: session.id, on: !session.ossed })}
       style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, height: 32, borderRadius: 8 }}
     >
       <HandHeart size={16} color={on ? c.accent : c.fg} />
-      <Txt v="small" bold color={on ? c.accent : c.fg}>Oss · {count}</Txt>
+      <Txt v="small" bold color={on ? c.accent : c.fg}>{t.session.oss} · {count}</Txt>
     </Pressable>
   );
 }
 
 export function SessionCardView({ s }: { s: SessionCard }) {
   const { c } = useTheme();
-  const title = s.title || `Treino de ${KIND_LABEL[s.kind].toLowerCase()}`;
+  const t = useT();
+  const title = s.title || t.sessionTitle(t.sessionKind[s.kind]);
   return (
     <Card pad={false}>
       <Row gap={10} style={{ paddingHorizontal: space.lg, paddingTop: 14 }}>
@@ -78,10 +80,10 @@ export function SessionCardView({ s }: { s: SessionCard }) {
           <Txt v="h3" style={{ fontSize: 16 }}>{title}</Txt>
           {s.notes ? <Txt muted numberOfLines={3}>{s.notes}</Txt> : null}
           <Row gap={20} wrap>
-            <Stat label="Modalidade" value={KIND_LABEL[s.kind]} />
-            <Stat label="Duração" value={duration(s.durationMin)} />
-            <Stat label="Rolas" value={String(s.rounds)} />
-            <Stat label="Intensidade" value={`${s.rpe}/10`} />
+            <Stat label={t.session.kind} value={t.sessionKind[s.kind]} />
+            <Stat label={t.session.duration} value={duration(s.durationMin)} />
+            <Stat label={t.session.rounds} value={String(s.rounds)} />
+            <Stat label={t.session.intensity} value={`${s.rpe}/10`} />
           </Row>
           <Chips items={s.techniques} />
         </Pressable>
@@ -89,7 +91,7 @@ export function SessionCardView({ s }: { s: SessionCard }) {
       <Row gap={4} style={{ paddingHorizontal: 8, paddingVertical: 6, borderTopWidth: 1, borderColor: c.border }}>
         <OssButton session={s} />
         <Link href={`/treino/${s.id}`} asChild>
-          <Pressable accessibilityLabel="Comentários" style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, height: 32 }}>
+          <Pressable accessibilityLabel={t.session.comments} style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, height: 32 }}>
             <MessageCircle size={16} color={c.fg} />
             <Txt v="small" bold>{s.commentCount}</Txt>
           </Pressable>

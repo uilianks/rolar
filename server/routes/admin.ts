@@ -9,7 +9,6 @@ import {
   FLAG_KEY,
   featureFlagInput,
   isMinor,
-  KIND_LABEL,
   type ReportTarget,
   reportResolution,
   suspensionInput,
@@ -17,7 +16,8 @@ import {
 } from "../../src/shared/domain";
 import type { Db } from "../db/client";
 import * as s from "../db/schema";
-import { admin, type AppEnv, body, fail } from "../http";
+import type { Messages } from "../../src/shared/i18n";
+import { admin, type AppEnv, body, fail, t } from "../http";
 import { removeAvatar } from "../avatars";
 import { suspendUser, unsuspendUser } from "../moderation";
 import { notify } from "../notify";
@@ -71,7 +71,7 @@ adminRoutes.get("/academies", async (c) => {
 adminRoutes.get("/academies/:id", async (c) => {
   const db = c.get("db");
   const [a] = await db.select().from(s.academies).where(eq(s.academies.id, c.req.param("id")));
-  if (!a) fail(404, "Academia não encontrada");
+  if (!a) fail(404, "academyNotFound");
   const [who] = a.createdBy
     ? await db
         .select({
@@ -112,8 +112,8 @@ adminRoutes.post("/academies/:id/review", async (c) => {
   const db = c.get("db");
   const { decision, note } = await body(c, academyReview);
   const [a] = await db.select().from(s.academies).where(eq(s.academies.id, c.req.param("id")));
-  if (!a) fail(404, "Academia não encontrada");
-  if (a.status !== "pending") fail(409, "Esta academia já foi revista");
+  if (!a) fail(404, "academyNotFound");
+  if (a.status !== "pending") fail(409, "alreadyReviewed");
   const status = decision === "approve" ? "approved" : "rejected";
   await db
     .update(s.academies)
@@ -138,7 +138,7 @@ adminRoutes.patch("/academies/:id", async (c) => {
     .set({ ...input, affiliation: input.affiliation ?? null, postalCode: input.postalCode ?? null, email: input.email ?? null, website: input.website ?? null, instagram: input.instagram ?? null })
     .where(eq(s.academies.id, c.req.param("id")))
     .returning();
-  if (!updated) fail(404, "Academia não encontrada");
+  if (!updated) fail(404, "academyNotFound");
   return c.json(updated);
 });
 
@@ -147,9 +147,9 @@ adminRoutes.post("/academies/:id/owner", async (c) => {
   const db = c.get("db");
   const { username } = await body(c, z.object({ username: usernameSchema }));
   const [a] = await db.select({ id: s.academies.id }).from(s.academies).where(eq(s.academies.id, c.req.param("id")));
-  if (!a) fail(404, "Academia não encontrada");
+  if (!a) fail(404, "academyNotFound");
   const [next] = await db.select({ id: s.profiles.userId }).from(s.profiles).where(eq(s.profiles.username, username));
-  if (!next) fail(404, `Usuário @${username} não encontrado`);
+  if (!next) fail(404, "userNotFound", username);
   await db.transaction(async (tx) => {
     await tx
       .update(s.academyMembers)
@@ -175,7 +175,7 @@ const person = {
 type Person = { id: string; name: string; username: string; avatarUrl: string | null; suspended: boolean };
 
 /** The reported content as the admin needs to judge it, and whose it is; null once it was deleted. */
-async function reportTarget(db: Db, type: ReportTarget, id: string): Promise<{ title: string; body: string | null; owner: Person | null } | null> {
+async function reportTarget(db: Db, m: Messages, type: ReportTarget, id: string): Promise<{ title: string; body: string | null; owner: Person | null } | null> {
   if (type === "user") {
     const [p] = await db.select(person).from(s.profiles).where(eq(s.profiles.userId, id));
     return p ? { title: p.name, body: `@${p.username}`, owner: p } : null;
@@ -186,7 +186,7 @@ async function reportTarget(db: Db, type: ReportTarget, id: string): Promise<{ t
       .from(s.sessions)
       .innerJoin(s.profiles, eq(s.profiles.userId, s.sessions.userId))
       .where(eq(s.sessions.id, id));
-    return x ? { title: x.title || `Treino de ${KIND_LABEL[x.kind]}`, body: x.notes, owner: x.owner } : null;
+    return x ? { title: x.title || m.sessionTitle(m.sessionKind[x.kind]), body: x.notes, owner: x.owner } : null;
   }
   if (type === "comment") {
     const [x] = await db
@@ -194,7 +194,7 @@ async function reportTarget(db: Db, type: ReportTarget, id: string): Promise<{ t
       .from(s.comments)
       .innerJoin(s.profiles, eq(s.profiles.userId, s.comments.userId))
       .where(eq(s.comments.id, id));
-    return x ? { title: "Comentário", body: x.body, owner: x.owner } : null;
+    return x ? { title: m.reportTarget.comment, body: x.body, owner: x.owner } : null;
   }
   const [x] = await db.select({ name: s.academies.name, city: s.academies.city }).from(s.academies).where(eq(s.academies.id, id));
   if (!x) return null;
@@ -227,7 +227,7 @@ adminRoutes.get("/reports", async (c) => {
     // Oldest first in the queue; most recent decisions first in the history.
     .orderBy(status === "open" ? sql`min(${s.reports.createdAt})` : desc(s.reports.resolvedAt))
     .limit(50);
-  const rows = await Promise.all(groups.map(async (g) => ({ ...g, target: await reportTarget(db, g.targetType as ReportTarget, g.targetId) })));
+  const rows = await Promise.all(groups.map(async (g) => ({ ...g, target: await reportTarget(db, t(c), g.targetType as ReportTarget, g.targetId) })));
   return c.json(rows);
 });
 
@@ -240,12 +240,12 @@ adminRoutes.post("/reports/resolve", async (c) => {
     .select({ id: s.reports.id, reporterId: s.reports.reporterId })
     .from(s.reports)
     .where(and(eq(s.reports.targetType, targetType), eq(s.reports.targetId, targetId), eq(s.reports.status, "open")));
-  if (!open.length) fail(409, "Não há denúncias em aberto sobre este conteúdo");
-  const target = await reportTarget(db, targetType, targetId);
-  if (action !== "dismiss" && !target) fail(409, "O conteúdo já não existe; marque como sem violação");
+  if (!open.length) fail(409, "noOpenReports");
+  const target = await reportTarget(db, t(c), targetType, targetId);
+  if (action !== "dismiss" && !target) fail(409, "contentGone");
   const ownerId = target?.owner?.id ?? null;
-  if ((action === "suspend" || action === "remove_avatar") && !ownerId) fail(409, "Não há conta associada a este conteúdo");
-  if (action === "suspend" && (await adminIds(c)).includes(ownerId!)) fail(409, "Não é possível suspender um administrador");
+  if ((action === "suspend" || action === "remove_avatar") && !ownerId) fail(409, "noOwnerAccount");
+  if (action === "suspend" && (await adminIds(c)).includes(ownerId!)) fail(409, "cannotSuspendAdmin");
 
   if (action === "remove") {
     if (targetType === "session") await db.delete(s.sessions).where(eq(s.sessions.id, targetId));
@@ -311,7 +311,7 @@ adminRoutes.get("/users/:id", async (c) => {
     })
     .from(s.user)
     .where(eq(s.user.id, id));
-  if (!u) fail(404, "Conta não encontrada");
+  if (!u) fail(404, "accountNotFound");
   const [profile] = await db
     .select({ name: s.profiles.name, username: s.profiles.username, avatarUrl: s.profiles.avatarUrl, belt: s.profiles.belt, stripes: s.profiles.stripes, birthYear: s.profiles.birthYear })
     .from(s.profiles)
@@ -334,8 +334,8 @@ adminRoutes.post("/users/:id/suspend", async (c) => {
   const { reason } = await body(c, suspensionInput);
   const id = c.req.param("id");
   const [u] = await db.select({ id: s.user.id }).from(s.user).where(eq(s.user.id, id));
-  if (!u) fail(404, "Conta não encontrada");
-  if ((await adminIds(c)).includes(id)) fail(409, "Não é possível suspender um administrador");
+  if (!u) fail(404, "accountNotFound");
+  if ((await adminIds(c)).includes(id)) fail(409, "cannotSuspendAdmin");
   await suspendUser(db, id, reason);
   return c.body(null, 204);
 });
@@ -370,13 +370,13 @@ adminRoutes.get("/flags", async (c) => {
 adminRoutes.put("/flags/:key", async (c) => {
   const db = c.get("db");
   const key = c.req.param("key");
-  if (!FLAG_KEY.test(key)) fail(400, "Chave: letras minúsculas, números, - ou _ (2–40)");
+  if (!FLAG_KEY.test(key)) fail(400, "invalidFlagKey");
   const { enabledForAll, usernames } = await body(c, featureFlagInput);
   const found = usernames.length
     ? await db.select({ id: s.profiles.userId, username: s.profiles.username }).from(s.profiles).where(inArray(s.profiles.username, usernames))
     : [];
   const missing = usernames.filter((u) => !found.some((f) => f.username === u));
-  if (missing.length) fail(400, `Usuários não encontrados: ${missing.map((u) => `@${u}`).join(", ")}`);
+  if (missing.length) fail(400, "usersNotFound", missing);
   const userIds = found.map((f) => f.id);
   await db
     .insert(s.featureFlags)

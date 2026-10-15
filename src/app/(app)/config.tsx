@@ -11,9 +11,11 @@ import { Linking, Platform, View } from "react-native";
 import { api } from "@/lib/api";
 import { API_URL, authClient } from "@/lib/auth-client";
 import { confirm } from "@/lib/confirm";
+import { useLocale, type LocalePref } from "@/lib/i18n";
 import { useMe } from "@/lib/queries";
 import type { Profile } from "@/lib/types";
-import { BELT_LABEL, beltOptions, VISIBILITY_LABEL, VISIBILITIES, type Visibility } from "@/shared/domain";
+import { beltOptions, VISIBILITIES, type Visibility } from "@/shared/domain";
+import { LOCALES } from "@/shared/i18n";
 import { AvatarEditor } from "@/ui/avatar-editor";
 import { Button, Card, CardHead, Col, ErrorText, Input, ListRow, Row, Segmented, SwitchRow, Tabs, Txt } from "@/ui/kit";
 import { Header, Screen, useWide } from "@/ui/shell";
@@ -27,6 +29,7 @@ function pick({ name, username, belt, stripes, startedAt, weeklyGoal, defaultVis
 
 export default function Settings() {
   const { c, pref, setPref } = useTheme();
+  const { t, pref: localePref, setPref: setLocalePref } = useLocale();
   const wide = useWide();
   const qc = useQueryClient();
   const me = useMe().data;
@@ -57,7 +60,7 @@ export default function Settings() {
   }
 
   async function applyToPast(visibility: Visibility) {
-    if (!(await confirm("Mudar treinos antigos?", `Todos os seus treinos passam a ser visíveis para: ${VISIBILITY_LABEL[visibility]}.`, "Aplicar"))) return;
+    if (!(await confirm(t.settings.applyOldTitle, t.settings.applyOldText(t.visibility[visibility]), t.settings.apply))) return;
     const res = await api<{ updated: number }>("/me/sessions/visibility", { method: "POST", json: { visibility } });
     await qc.invalidateQueries({ queryKey: ["feed"] });
     setError(null);
@@ -85,7 +88,7 @@ export default function Settings() {
   }
 
   async function deleteAccount() {
-    if (!(await confirm("Apagar conta?", "Todos os seus treinos, comentários, graduações e dados serão apagados para sempre.", "Apagar tudo"))) return;
+    if (!(await confirm(t.settings.deleteAccountTitle, t.settings.deleteAccountText, t.settings.deleteAll))) return;
     await api("/me", { method: "DELETE" });
     await authClient.signOut().catch(() => undefined);
     qc.clear();
@@ -94,58 +97,64 @@ export default function Settings() {
   return (
     <>
       <Header
-        title="Configurações"
-        left={wide ? undefined : <Button kind="ghost" icon={ArrowLeft} accessibilityLabel="Voltar" onPress={() => (router.canGoBack() ? router.back() : router.replace("/perfil"))} />}
+        title={t.nav.settings}
+        left={wide ? undefined : <Button kind="ghost" icon={ArrowLeft} accessibilityLabel={t.common.back} onPress={() => (router.canGoBack() ? router.back() : router.replace("/perfil"))} />}
       />
       <Screen>
         {form ? (
           <Card pad={false}>
-            <CardHead title="Perfil" right={saved ? <Txt v="small" color={c.success}>Salvo</Txt> : null} />
+            <CardHead title={t.nav.profile} right={saved ? <Txt v="small" color={c.success}>{t.settings.saved}</Txt> : null} />
             <Col style={{ padding: space.lg }}>
               <AvatarEditor />
-              <Input label="Nome" value={form.name} onChangeText={(t) => set("name", t)} />
-              <Input label="Nome de usuário" value={form.username} autoCapitalize="none" onChangeText={(t) => set("username", t.toLowerCase())} />
-              <Segmented label="Faixa" value={form.belt} onChange={(v) => set("belt", v)} options={beltOptions(me?.profile?.birthYear, form.belt).map((b) => ({ value: b, label: BELT_LABEL[b] }))} />
-              <Segmented label="Graus" value={form.stripes} onChange={(v) => set("stripes", v)} options={[0, 1, 2, 3, 4].map((n) => ({ value: n, label: String(n) }))} />
-              <Input label="Treina desde (AAAA-MM)" value={form.startedAt ?? ""} onChangeText={(t) => set("startedAt", t)} />
-              <Segmented label="Meta de treinos por semana" value={form.weeklyGoal} onChange={(v) => set("weeklyGoal", v)} options={[0, 2, 3, 4, 5, 6].map((n) => ({ value: n, label: n ? String(n) : "Sem meta" }))} />
+              <Input label={t.onboarding.name} value={form.name} onChangeText={(v) => set("name", v)} />
+              <Input label={t.onboarding.username} value={form.username} autoCapitalize="none" onChangeText={(v) => set("username", v.toLowerCase())} />
+              <Segmented label={t.profile.belt} value={form.belt} onChange={(v) => set("belt", v)} options={beltOptions(me?.profile?.birthYear, form.belt).map((b) => ({ value: b, label: t.belt[b] }))} />
+              <Segmented label={t.profile.stripes} value={form.stripes} onChange={(v) => set("stripes", v)} options={[0, 1, 2, 3, 4].map((n) => ({ value: n, label: String(n) }))} />
+              <Input label={t.onboarding.startedAt} value={form.startedAt ?? ""} onChangeText={(v) => set("startedAt", v)} />
+              <Segmented label={t.onboarding.weeklyGoal} value={form.weeklyGoal} onChange={(v) => set("weeklyGoal", v)} options={[0, 2, 3, 4, 5, 6].map((n) => ({ value: n, label: n ? String(n) : t.onboarding.noGoal }))} />
               <ErrorText error={error} />
-              <Button kind="primary" title="Salvar perfil" onPress={() => save()} />
+              <Button kind="primary" title={t.settings.saveProfile} onPress={() => save()} />
             </Col>
           </Card>
         ) : null}
 
         {form ? (
           <Card pad={false}>
-            <CardHead title="Privacidade" />
+            <CardHead title={t.settings.privacy} />
             <View style={{ padding: space.lg }}>
               <Segmented
-                label="Visibilidade padrão dos treinos"
+                label={t.settings.defaultVisibility}
                 value={form.defaultVisibility}
                 onChange={(v) => {
                   set("defaultVisibility", v);
                   void save({ defaultVisibility: v });
                 }}
-                options={VISIBILITIES.map((v) => ({ value: v, label: VISIBILITY_LABEL[v] }))}
+                options={VISIBILITIES.map((v) => ({ value: v, label: t.visibility[v] }))}
               />
             </View>
-            <SwitchRow title="Aparecer na busca e nas sugestões" hint="Menores de 18 nunca aparecem na busca" value={form.searchable} onChange={(v) => { set("searchable", v); void save({ searchable: v }); }} />
-            <SwitchRow title="Aparecer no ranking da academia" value={form.showInRanking} onChange={(v) => { set("showInRanking", v); void save({ showInRanking: v }); }} />
+            <SwitchRow title={t.settings.searchable} hint={t.settings.searchableHint} value={form.searchable} onChange={(v) => { set("searchable", v); void save({ searchable: v }); }} />
+            <SwitchRow title={t.settings.ranking} value={form.showInRanking} onChange={(v) => { set("showInRanking", v); void save({ showInRanking: v }); }} />
             <ListRow onPress={() => applyToPast(form.defaultVisibility)}>
               <View style={{ flex: 1 }}>
-                <Txt bold>Aplicar a visibilidade padrão aos treinos antigos</Txt>
-                <Txt v="tiny" muted>Muda todos os treinos já registrados para “{VISIBILITY_LABEL[form.defaultVisibility]}”</Txt>
+                <Txt bold>{t.settings.applyOld}</Txt>
+                <Txt v="tiny" muted>{t.settings.applyOldHint(t.visibility[form.defaultVisibility])}</Txt>
               </View>
             </ListRow>
           </Card>
         ) : null}
 
         <Card pad={false}>
-          <CardHead title="Preferências" />
+          <CardHead title={t.settings.preferences} />
           <ListRow>
-            <Txt style={{ flex: 1 }}>Tema</Txt>
+            <Txt style={{ flex: 1 }}>{t.settings.theme}</Txt>
             <View style={{ width: 220 }}>
-              <Tabs<ThemePref> value={pref} onChange={setPref} options={[{ value: "light", label: "Claro" }, { value: "dark", label: "Escuro" }, { value: "system", label: "Sistema" }]} />
+              <Tabs<ThemePref> value={pref} onChange={setPref} options={[{ value: "light", label: t.settings.light }, { value: "dark", label: t.settings.dark }, { value: "system", label: t.settings.system }]} />
+            </View>
+          </ListRow>
+          <ListRow>
+            <Txt style={{ flex: 1 }}>{t.settings.language}</Txt>
+            <View style={{ width: 220 }}>
+              <Tabs<LocalePref> value={localePref} onChange={setLocalePref} options={[...LOCALES.map((l) => ({ value: l, label: t.languageName[l] })), { value: "system", label: t.settings.system }]} />
             </View>
           </ListRow>
         </Card>
@@ -155,32 +164,32 @@ export default function Settings() {
           <Card style={{ gap: 8 }}>
             <Row>
               <Heart size={16} color={c.fg} />
-              <Txt bold>Apoie o projeto</Txt>
+              <Txt bold>{t.nav.support}</Txt>
             </Row>
-            <Txt v="small" muted>Sem anúncios e sem paywall. Mantido por doações.</Txt>
-            <Button size="sm" title="Apoiar" onPress={() => router.push("/apoie")} />
+            <Txt v="small" muted>{t.nav.openSourceText}</Txt>
+            <Button size="sm" title={t.nav.donate} onPress={() => router.push("/apoie")} />
           </Card>
         )}
 
         <Card pad={false}>
-          <CardHead title="Seus dados" />
+          <CardHead title={t.settings.yourData} />
           <ListRow onPress={exportData}>
             <Download size={18} color={c.fg} />
-            <Txt style={{ flex: 1 }}>Baixar meus dados (JSON)</Txt>
+            <Txt style={{ flex: 1 }}>{t.settings.download}</Txt>
           </ListRow>
           <ListRow onPress={() => router.push("/privacidade")}>
-            <Txt style={{ flex: 1 }}>Política de privacidade</Txt>
+            <Txt style={{ flex: 1 }}>{t.legal.privacyTitle}</Txt>
           </ListRow>
           <ListRow onPress={() => router.push("/termos")}>
-            <Txt style={{ flex: 1 }}>Termos de uso</Txt>
+            <Txt style={{ flex: 1 }}>{t.legal.termsTitle}</Txt>
           </ListRow>
           <ListRow onPress={signOut}>
             <LogOut size={18} color={c.fg} />
-            <Txt style={{ flex: 1 }}>Sair</Txt>
+            <Txt style={{ flex: 1 }}>{t.onboarding.signOut}</Txt>
           </ListRow>
           <ListRow onPress={deleteAccount}>
             <Trash2 size={18} color={c.accent} />
-            <Txt style={{ flex: 1 }} color={c.accent}>Apagar conta e todos os dados</Txt>
+            <Txt style={{ flex: 1 }} color={c.accent}>{t.settings.deleteAccount}</Txt>
           </ListRow>
         </Card>
         <Row>

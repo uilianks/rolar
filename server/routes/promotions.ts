@@ -23,7 +23,7 @@ promotionsRoutes.post("/promotions", async (c) => {
   const db = c.get("db");
   const input = await body(c, promotionInput);
   if (input.academyId && (await membership(db, input.academyId, userId))?.status !== "active") {
-    fail(400, "Você não é membro ativo dessa academia");
+    fail(400, "notActiveMember");
   }
   const [row] = await db.insert(s.promotions).values({ ...input, userId, academyId: input.academyId ?? null }).returning();
   const [latest] = await db
@@ -77,9 +77,9 @@ promotionsRoutes.post("/promotions/:id/confirm", async (c) => {
   const userId = viewer(c);
   const db = c.get("db");
   const [p] = await db.select().from(s.promotions).where(eq(s.promotions.id, c.req.param("id")));
-  if (!p) fail(404, "Graduação não encontrada");
-  if (p.userId === userId) fail(403, "Ninguém confirma a própria graduação");
-  if (!p.academyId || !isActiveStaff(await membership(db, p.academyId, userId))) fail(403, "Só professores da academia confirmam");
+  if (!p) fail(404, "promotionNotFound");
+  if (p.userId === userId) fail(403, "noSelfPromotion");
+  if (!p.academyId || !isActiveStaff(await membership(db, p.academyId, userId))) fail(403, "coachesConfirm");
   await db.update(s.promotions).set({ confirmedBy: userId, confirmedAt: new Date() }).where(eq(s.promotions.id, p.id));
   await notify(db, "promotion_confirmed", userId, [p.userId], p.id);
   return c.body(null, 204);
@@ -92,6 +92,6 @@ promotionsRoutes.delete("/promotions/:id", async (c) => {
     .delete(s.promotions)
     .where(and(eq(s.promotions.id, c.req.param("id")), eq(s.promotions.userId, userId)))
     .returning({ id: s.promotions.id });
-  if (!row) fail(404, "Graduação não encontrada");
+  if (!row) fail(404, "promotionNotFound");
   return c.body(null, 204);
 });

@@ -6,6 +6,7 @@ import { View } from "react-native";
 
 import { startCheckinScan, useClassNow } from "@/lib/checkin";
 import { ymd } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 import { useMe } from "@/lib/queries";
 
 import { Button, Card, Row, Txt } from "./kit";
@@ -17,6 +18,7 @@ import { space, useTheme } from "./theme";
  */
 export function ClassNowCard() {
   const { c } = useTheme();
+  const t = useT();
   const now = useClassNow();
   const me = useMe().data;
   if (!now) return null;
@@ -26,7 +28,7 @@ export function ClassNowCard() {
     <Card style={{ borderColor: c.accent, borderWidth: 1.5, gap: space.md }}>
       <Row style={{ justifyContent: "space-between" }} wrap>
         <View style={{ gap: 2, flexShrink: 1 }}>
-          <Txt v="tiny" bold color={c.accent}>AULA AGORA</Txt>
+          <Txt v="tiny" bold color={c.accent}>{t.checkin.classNow}</Txt>
           <Txt v="h3">{now.label}</Txt>
         </View>
       </Row>
@@ -35,18 +37,18 @@ export function ClassNowCard() {
           kind="primary"
           size="lg"
           icon={QrCode}
-          title="Mostrar QR de check-in"
+          title={t.checkin.showQr}
           onPress={() => router.push(`/academia/${now.academyId}/chamada?classId=${now.klass.id}&date=${ymd(new Date())}&qr=1`)}
         />
       ) : null}
       {staff ? (
         <Button
           icon={Printer}
-          title="QR para imprimir na entrada"
+          title={t.checkin.printQr}
           onPress={() => router.push(`/academia/${now.academyId}/qr`)}
         />
       ) : null}
-      {!staff ? <Button kind="primary" size="lg" icon={ScanLine} title="Fazer check-in" onPress={startCheckinScan} /> : null}
+      {!staff ? <Button kind="primary" size="lg" icon={ScanLine} title={t.checkin.checkIn} onPress={startCheckinScan} /> : null}
     </Card>
   );
 }

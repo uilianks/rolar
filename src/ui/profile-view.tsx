@@ -12,22 +12,25 @@ import { View } from "react-native";
 import { api } from "@/lib/api";
 import { confirm } from "@/lib/confirm";
 import { hours } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 import { useMe, useProfile, useStats, useUserSessions } from "@/lib/queries";
-import { BELT_LABEL, beltOptions, type Belt as BeltName } from "@/shared/domain";
+import { beltOptions, type Belt as BeltName } from "@/shared/domain";
+import type { Messages } from "@/shared/i18n";
 
 import { Avatar, Belt, Button, Card, CardHead, Col, ErrorText, Heatmap, Input, Kpi, Loading, Row, Segmented, Txt } from "./kit";
 import { SessionCardView } from "./session-card";
 import { BELT_COLORS, space, useTheme } from "./theme";
 
-function years(startedAt: string | null) {
+function years(t: Messages, startedAt: string | null) {
   if (!startedAt) return null;
   const [y, m] = startedAt.split("-").map(Number);
   const now = new Date();
   const total = (now.getFullYear() - y) * 12 + (now.getMonth() + 1 - m);
-  return total >= 12 ? `${Math.floor(total / 12)} ${Math.floor(total / 12) === 1 ? "ano" : "anos"}` : `${Math.max(total, 0)} meses`;
+  return total >= 12 ? t.profile.years(Math.floor(total / 12)) : t.profile.months(Math.max(total, 0));
 }
 
 function PromotionForm({ onDone }: { onDone: () => void }) {
+  const t = useT();
   const me = useMe().data;
   const qc = useQueryClient();
   const [belt, setBelt] = useState<BeltName>(me?.profile?.belt ?? "white");
@@ -48,14 +51,14 @@ function PromotionForm({ onDone }: { onDone: () => void }) {
 
   return (
     <Col style={{ padding: space.lg }}>
-      <Segmented label="Faixa" value={belt} onChange={setBelt} options={beltOptions(me?.profile?.birthYear, belt).map((b) => ({ value: b, label: BELT_LABEL[b] }))} />
-      <Segmented label="Graus" value={stripes} onChange={setStripes} options={[0, 1, 2, 3, 4].map((n) => ({ value: n, label: String(n) }))} />
-      <Input label="Data (AAAA-MM-DD)" value={date} onChangeText={setDate} />
-      <Txt v="small" muted>{academyId ? "O professor da sua academia vai receber um pedido para confirmar." : "Sem academia: a graduação fica registrada sem confirmação."}</Txt>
+      <Segmented label={t.profile.belt} value={belt} onChange={setBelt} options={beltOptions(me?.profile?.birthYear, belt).map((b) => ({ value: b, label: t.belt[b] }))} />
+      <Segmented label={t.profile.stripes} value={stripes} onChange={setStripes} options={[0, 1, 2, 3, 4].map((n) => ({ value: n, label: String(n) }))} />
+      <Input label={t.profile.dateField} value={date} onChangeText={setDate} />
+      <Txt v="small" muted>{academyId ? t.profile.promotionToCoach : t.profile.promotionNoAcademy}</Txt>
       <ErrorText error={error} />
       <Row>
-        <Button kind="primary" title="Salvar graduação" onPress={save} />
-        <Button kind="ghost" title="Cancelar" onPress={onDone} />
+        <Button kind="primary" title={t.profile.savePromotion} onPress={save} />
+        <Button kind="ghost" title={t.common.cancel} onPress={onDone} />
       </Row>
     </Col>
   );
@@ -63,6 +66,7 @@ function PromotionForm({ onDone }: { onDone: () => void }) {
 
 export function ProfileView({ username }: { username: string }) {
   const { c } = useTheme();
+  const t = useT();
   const qc = useQueryClient();
   const me = useMe().data;
   const profile = useProfile(username);
@@ -83,21 +87,21 @@ export function ProfileView({ username }: { username: string }) {
   }
 
   async function block() {
-    if (!p || !(await confirm(`Bloquear ${p.name}?`, "Vocês deixam de se seguir e não veem mais os treinos um do outro.", "Bloquear"))) return;
+    if (!p || !(await confirm(t.profile.blockTitle(p.name), t.profile.blockText, t.profile.block))) return;
     await act(`/users/${p.id}/block`, "POST");
     router.replace("/");
   }
 
   async function report() {
-    if (!p || !(await confirm(`Denunciar ${p.name}?`, "A equipe do projeto vai analisar o perfil.", "Denunciar"))) return;
-    await api("/reports", { method: "POST", json: { targetType: "user", targetId: p.id, reason: "Denúncia pelo app" } });
+    if (!p || !(await confirm(t.profile.reportTitle(p.name), t.profile.reportText, t.profile.report))) return;
+    await api("/reports", { method: "POST", json: { targetType: "user", targetId: p.id, reason: t.profile.reportReason } });
   }
 
   if (profile.isPending) return <Loading />;
   if (!p) return <ErrorText error={profile.error} />;
 
   const items = sessions.data?.pages.flatMap((pg) => pg.items) ?? [];
-  const started = years(p.startedAt);
+  const started = years(t, p.startedAt);
 
   return (
     <>
@@ -109,11 +113,11 @@ export function ProfileView({ username }: { username: string }) {
               <Avatar uri={p.avatarUrl} name={p.name} size={72} />
             </View>
             {own ? (
-              <Button size="sm" title="Editar perfil" onPress={() => router.push("/config")} />
+              <Button size="sm" title={t.profile.edit} onPress={() => router.push("/config")} />
             ) : p.isFollowing ? (
-              <Button size="sm" title="Seguindo" onPress={() => act(`/users/${p.id}/follow`, "DELETE")} />
+              <Button size="sm" title={t.profile.followingButton} onPress={() => act(`/users/${p.id}/follow`, "DELETE")} />
             ) : p.canFollow ? (
-              <Button size="sm" kind="primary" icon={UserPlus} title="Seguir" onPress={() => act(`/users/${p.id}/follow`, "POST")} />
+              <Button size="sm" kind="primary" icon={UserPlus} title={t.profile.follow} onPress={() => act(`/users/${p.id}/follow`, "POST")} />
             ) : null}
           </Row>
           <View>
@@ -126,19 +130,19 @@ export function ProfileView({ username }: { username: string }) {
           <Row gap={12} wrap>
             <Belt belt={p.belt} stripes={p.stripes} size="lg" />
             <Txt v="small">
-              <Txt v="small" bold>{BELT_LABEL[p.belt]}{p.stripes ? `, ${p.stripes} ${p.stripes === 1 ? "grau" : "graus"}` : ""}</Txt>
+              <Txt v="small" bold>{t.belt[p.belt]}{p.stripes ? `, ${t.profile.stripeCount(p.stripes)}` : ""}</Txt>
             </Txt>
           </Row>
           <Row gap={16} wrap>
-            <Txt v="small"><Txt v="small" bold>{p.followers}</Txt> <Txt v="small" muted>seguidores</Txt></Txt>
-            <Txt v="small"><Txt v="small" bold>{p.following}</Txt> <Txt v="small" muted>seguindo</Txt></Txt>
-            {started ? <Txt v="small"><Txt v="small" bold>{started}</Txt> <Txt v="small" muted>de jiu-jitsu</Txt></Txt> : null}
+            <Txt v="small"><Txt v="small" bold>{p.followers}</Txt> <Txt v="small" muted>{t.profile.followers}</Txt></Txt>
+            <Txt v="small"><Txt v="small" bold>{p.following}</Txt> <Txt v="small" muted>{t.profile.following}</Txt></Txt>
+            {started ? <Txt v="small"><Txt v="small" bold>{started}</Txt> <Txt v="small" muted>{t.profile.ofJiuJitsu}</Txt></Txt> : null}
           </Row>
           <ErrorText error={error} />
           {!own ? (
             <Row>
-              <Button kind="ghost" size="sm" icon={Ban} title="Bloquear" onPress={block} />
-              <Button kind="ghost" size="sm" icon={Flag} title="Denunciar" onPress={report} />
+              <Button kind="ghost" size="sm" icon={Ban} title={t.profile.block} onPress={block} />
+              <Button kind="ghost" size="sm" icon={Flag} title={t.profile.report} onPress={report} />
             </Row>
           ) : null}
         </Col>
@@ -147,12 +151,12 @@ export function ProfileView({ username }: { username: string }) {
       {own && stats.data ? (
         <>
           <Row wrap gap={space.md}>
-            <Kpi label="Treinos (total)" value={String(stats.data.totals.sessions)} />
-            <Kpi label="Horas no tatame" value={hours(stats.data.totals.minutes)} />
-            <Kpi label="Esta semana" value={String(stats.data.thisWeek.sessions)} />
+            <Kpi label={t.profile.totalSessions} value={String(stats.data.totals.sessions)} />
+            <Kpi label={t.profile.matHours} value={hours(stats.data.totals.minutes)} />
+            <Kpi label={t.profile.thisWeek} value={String(stats.data.thisWeek.sessions)} />
           </Row>
           <Card pad={false}>
-            <CardHead title="Dias no tatame" />
+            <CardHead title={t.profile.matDays} />
             <View style={{ padding: space.lg }}>
               <Heatmap days={stats.data.days} />
             </View>
@@ -161,22 +165,22 @@ export function ProfileView({ username }: { username: string }) {
       ) : null}
 
       <Card pad={false}>
-        <CardHead title="Graduações" right={own && !promoting ? <Button size="sm" icon={Plus} title="Registrar" onPress={() => setPromoting(true)} /> : null} />
+        <CardHead title={t.profile.promotions} right={own && !promoting ? <Button size="sm" icon={Plus} title={t.profile.add} onPress={() => setPromoting(true)} /> : null} />
         {promoting ? <PromotionForm onDone={() => setPromoting(false)} /> : null}
         <View style={{ padding: space.lg, gap: 14 }}>
-          {p.promotions.length === 0 ? <Txt v="small" muted>Nenhuma graduação registrada.</Txt> : null}
+          {p.promotions.length === 0 ? <Txt v="small" muted>{t.profile.noPromotions}</Txt> : null}
           {p.promotions.map((g) => (
             <Row key={g.id} gap={12} style={{ alignItems: "flex-start" }}>
               <View style={{ width: 12, height: 12, borderRadius: 6, marginTop: 3, borderWidth: 2, borderStyle: g.confirmedBy ? "solid" : "dashed", borderColor: g.confirmedBy ? c.fg : c.mutedFg }} />
               <Col gap={4} style={{ flex: 1 }}>
                 <Row wrap>
                   <Belt belt={g.belt} stripes={g.stripes} />
-                  <Txt bold>{BELT_LABEL[g.belt]}{g.stripes ? ` · ${g.stripes}º grau` : ""}</Txt>
+                  <Txt bold>{t.belt[g.belt]}{g.stripes ? ` · ${t.profile.nthStripe(g.stripes)}` : ""}</Txt>
                 </Row>
                 <Row gap={4}>
                   {g.confirmedBy ? <BadgeCheck size={13} color={c.success} /> : null}
                   <Txt v="small" muted>
-                    {g.promotedOn.split("-").reverse().join("/")} · {g.confirmedBy ? "confirmada pelo professor" : g.academyId ? "aguardando professor" : "registrada pelo atleta"}
+                    {g.promotedOn.split("-").reverse().join("/")} · {g.confirmedBy ? t.profile.confirmed : g.academyId ? t.profile.awaitingCoach : t.profile.selfReported}
                   </Txt>
                 </Row>
               </Col>
@@ -185,12 +189,12 @@ export function ProfileView({ username }: { username: string }) {
         </View>
       </Card>
 
-      <Txt v="h3">Treinos</Txt>
+      <Txt v="h3">{t.profile.sessions}</Txt>
       {items.map((s) => (
         <SessionCardView key={s.id} s={s} />
       ))}
-      {items.length === 0 && !sessions.isPending ? <Txt v="small" muted>Nenhum treino visível.</Txt> : null}
-      {sessions.hasNextPage ? <Button title="Carregar mais" onPress={() => sessions.fetchNextPage()} /> : null}
+      {items.length === 0 && !sessions.isPending ? <Txt v="small" muted>{t.profile.noSessions}</Txt> : null}
+      {sessions.hasNextPage ? <Button title={t.common.loadMore} onPress={() => sessions.fetchNextPage()} /> : null}
     </>
   );
 }

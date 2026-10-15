@@ -6,12 +6,14 @@ import { useState } from "react";
 import { View } from "react-native";
 
 import { openScannedCheckin } from "@/lib/checkin";
+import { useT } from "@/lib/i18n";
 import { Button, Card, Empty, Loading, Txt } from "@/ui/kit";
 import { Header, Screen } from "@/ui/shell";
 import { radius, space, useTheme } from "@/ui/theme";
 
 /** In-app QR reader (web, or when the system scanner is unavailable): reading the code checks in at once. */
 export default function ReadQr() {
+  const t = useT();
   const { c } = useTheme();
   const { invalid } = useLocalSearchParams<{ invalid?: string }>();
   const [permission, requestPermission] = useCameraPermissions();
@@ -21,8 +23,8 @@ export default function ReadQr() {
   return (
     <>
       <Header
-        title="Check-in"
-        left={<Button kind="ghost" icon={ArrowLeft} accessibilityLabel="Voltar" onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))} />}
+        title={t.nav.checkin}
+        left={<Button kind="ghost" icon={ArrowLeft} accessibilityLabel={t.common.back} onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))} />}
       />
       <Screen>
         {!permission ? <Loading /> : null}
@@ -30,9 +32,9 @@ export default function ReadQr() {
           <Card>
             <Empty
               icon={Camera}
-              title="Aponte para o QR da aula"
-              text="O rolar usa a câmara só para ler o código. Nada é gravado."
-              action={<Button kind="primary" title={permission.canAskAgain ? "Abrir a câmara" : "Permitir nas configurações"} onPress={requestPermission} />}
+              title={t.checkin.pointTitle}
+              text={t.checkin.cameraText}
+              action={<Button kind="primary" title={permission.canAskAgain ? t.checkin.openCamera : t.checkin.allowInSettings} onPress={requestPermission} />}
             />
           </Card>
         ) : null}
@@ -53,12 +55,12 @@ export default function ReadQr() {
                 }
               />
             </View>
-            <Txt muted style={{ textAlign: "center" }}>Aponte para o QR que o professor mostra. O check-in acontece sozinho.</Txt>
+            <Txt muted style={{ textAlign: "center" }}>{t.checkin.pointHint}</Txt>
           </View>
         ) : null}
         {wrong ? (
           <Txt v="small" color={c.accent} style={{ textAlign: "center" }}>
-            Esse QR não é de check-in do rolar.
+            {t.checkin.wrongQr}
           </Txt>
         ) : null}
       </Screen>

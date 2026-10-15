@@ -3,7 +3,8 @@
 - Docs em português em `docs/` (comece por `05-desenvolvimento.md`); wireframes aprovados em `design/`.
 - Rode `npm run typecheck`, `npm run lint` e `npm test` antes de considerar algo pronto.
 - Regras de acesso ficam só em `server/policies.ts`; toda rota nova que lê conteúdo de usuário passa por elas, com teste.
-- Validação compartilhada em `src/shared/domain.ts` (zod), usada pelo app e pela API.
+- Validação compartilhada em `src/shared/domain.ts` (zod), usada pelo app e pela API; as mensagens dos schemas são chaves de `validation`.
+- Textos da interface (app e API) ficam em `src/shared/i18n/`: `pt.ts` é a fonte e `en.ts` tem o mesmo formato (o typecheck acusa chave faltando). Nada de texto solto em componente: `useT()` nos componentes, `msg()` fora deles, `fail(status, "chave")` na API.
 - Mudou `server/db/schema.ts`? `npm run db:generate` e commite a migração.
 - Ícones: importe um por arquivo (`lucide-react-native/icons/<nome>`), nunca do pacote raiz.
 
