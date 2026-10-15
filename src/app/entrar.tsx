@@ -1,11 +1,12 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, useWindowDimensions, View } from "react-native";
 
 import { authClient } from "@/lib/auth-client";
 import { msg, useLocale } from "@/lib/i18n";
 import { LOCALES } from "@/shared/i18n";
+import { AppShowcase } from "@/ui/app-showcase";
 import { Button, Card, Col, ErrorText, Input, Row, Txt } from "@/ui/kit";
 import { InstallHint } from "@/ui/install-hint";
 import { BrandMark } from "@/ui/shell";
@@ -57,6 +58,8 @@ export default function SignIn() {
   const { c } = useTheme();
   const { t, locale, setPref } = useLocale();
   const qc = useQueryClient();
+  // Room for the app preview beside the form.
+  const wide = useWindowDimensions().width >= 900;
   const [pending] = useState(loadPending);
   const [email, setEmail] = useState(pending ?? "");
   const [code, setCode] = useState("");
@@ -105,94 +108,100 @@ export default function SignIn() {
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1, backgroundColor: c.bg }}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: space.lg }} keyboardShouldPersistTaps="handled">
-        <Col gap={space.xl} style={{ width: "100%", maxWidth: 400, alignSelf: "center" }}>
-          <Row style={{ justifyContent: "center" }}>
-            <BrandMark />
-            <Txt v="h2" style={{ fontWeight: "800" }}>rolar</Txt>
-          </Row>
+        <Row gap={96} style={{ justifyContent: "center" }}>
+          <Col gap={space.xl} style={{ width: "100%", maxWidth: 400 }}>
+            <Row style={{ justifyContent: "center" }}>
+              <BrandMark />
+              <Txt v="h2" style={{ fontWeight: "800" }}>Rolar</Txt>
+            </Row>
 
-          <Card style={{ gap: space.lg, padding: space.xl }}>
-            {step === "email" ? (
-              <>
-                <Col gap={4} style={{ alignItems: "center" }}>
-                  <Txt v="h1" style={{ textAlign: "center" }}>{t.signIn.title}</Txt>
-                  <Txt muted style={{ textAlign: "center" }}>{GOOGLE_ENABLED ? t.signIn.subtitleGoogle : t.signIn.subtitle}</Txt>
-                </Col>
-                {GOOGLE_ENABLED ? (
-                  <>
-                    <Button
-                      size="lg"
-                      title={t.signIn.google}
-                      loading={busy}
-                      onPress={google}
-                    />
-                    <Txt v="small" muted style={{ textAlign: "center" }}>{t.signIn.or}</Txt>
-                  </>
-                ) : null}
-                <Input
-                  label={t.signIn.email}
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder={t.signIn.emailPlaceholder}
-                  autoCapitalize="none"
-                  autoComplete="email"
-                  keyboardType="email-address"
-                  inputMode="email"
-                  onSubmitEditing={sendCode}
-                />
-                <ErrorText error={error} />
-                <Button kind="primary" size="lg" title={t.signIn.sendCode} loading={busy} disabled={!email.includes("@")} onPress={sendCode} />
-                <Txt v="tiny" muted style={{ textAlign: "center" }}>
-                  {t.signIn.consentBefore}
-                    <Txt v="tiny" style={{ textDecorationLine: "underline" }} onPress={() => router.push("/termos")}>
-                      {t.legal.termsTitle}
-                    </Txt>
-                    {t.signIn.consentAnd}
-                    <Txt v="tiny" style={{ textDecorationLine: "underline" }} onPress={() => router.push("/privacidade")}>
-                      {t.legal.privacyTitle}
-                    </Txt>
-                    {t.signIn.consentAfter}
-                </Txt>
-              </>
-            ) : (
-              <>
-                <Col gap={4} style={{ alignItems: "center" }}>
-                  <Txt v="h1" style={{ textAlign: "center" }}>{t.signIn.checkEmail}</Txt>
-                  <Txt muted style={{ textAlign: "center" }}>
-                    {t.signIn.codeSentBefore}<Txt bold>{email.trim()}</Txt>{t.signIn.codeSentAfter}
+            {/* Narrow screens: the app preview above the form. Not while typing the code. */}
+            {!wide && step === "email" ? <AppShowcase compact /> : null}
+
+            <Card style={{ gap: space.lg, padding: space.xl }}>
+              {step === "email" ? (
+                <>
+                  <Col gap={4} style={{ alignItems: "center" }}>
+                    <Txt v="h1" style={{ textAlign: "center" }}>{t.signIn.title}</Txt>
+                    <Txt muted style={{ textAlign: "center" }}>{GOOGLE_ENABLED ? t.signIn.subtitleGoogle : t.signIn.subtitle}</Txt>
+                  </Col>
+                  {GOOGLE_ENABLED ? (
+                    <>
+                      <Button
+                        size="lg"
+                        title={t.signIn.google}
+                        loading={busy}
+                        onPress={google}
+                      />
+                      <Txt v="small" muted style={{ textAlign: "center" }}>{t.signIn.or}</Txt>
+                    </>
+                  ) : null}
+                  <Input
+                    label={t.signIn.email}
+                    value={email}
+                    onChangeText={setEmail}
+                    placeholder={t.signIn.emailPlaceholder}
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    keyboardType="email-address"
+                    inputMode="email"
+                    onSubmitEditing={sendCode}
+                  />
+                  <ErrorText error={error} />
+                  <Button kind="primary" size="lg" title={t.signIn.sendCode} loading={busy} disabled={!email.includes("@")} onPress={sendCode} />
+                  <Txt v="tiny" muted style={{ textAlign: "center" }}>
+                    {t.signIn.consentBefore}
+                      <Txt v="tiny" style={{ textDecorationLine: "underline" }} onPress={() => router.push("/termos")}>
+                        {t.legal.termsTitle}
+                      </Txt>
+                      {t.signIn.consentAnd}
+                      <Txt v="tiny" style={{ textDecorationLine: "underline" }} onPress={() => router.push("/privacidade")}>
+                        {t.legal.privacyTitle}
+                      </Txt>
+                      {t.signIn.consentAfter}
                   </Txt>
-                </Col>
-                <Input
-                  label={t.signIn.code}
-                  value={code}
-                  onChangeText={(v) => setCode(v.replace(/\D/g, "").slice(0, 6))}
-                  placeholder="000000"
-                  keyboardType="number-pad"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  textContentType="oneTimeCode"
-                  maxLength={6}
-                  autoFocus
-                  style={{ fontSize: 22, letterSpacing: 8, textAlign: "center", height: 52 }}
-                  onSubmitEditing={verify}
-                />
-                <ErrorText error={error} />
-                <Button kind="primary" size="lg" title={t.signIn.enter} loading={busy} disabled={code.length !== 6} onPress={verify} />
-                <Row style={{ justifyContent: "center" }}>
-                  <Button kind="ghost" size="sm" title={t.signIn.resend} onPress={sendCode} disabled={busy} />
-                  <Button kind="ghost" size="sm" title={t.signIn.otherEmail} onPress={() => { savePending(null); setStep("email"); }} />
-                </Row>
-              </>
-            )}
-          </Card>
-          {step === "email" ? <InstallHint /> : null}
-          <Row style={{ justifyContent: "center" }}>
-            {LOCALES.map((l) => (
-              <Button key={l} kind="ghost" size="sm" title={t.languageName[l]} disabled={l === locale} onPress={() => setPref(l)} />
-            ))}
-          </Row>
-          <View />
-        </Col>
+                </>
+              ) : (
+                <>
+                  <Col gap={4} style={{ alignItems: "center" }}>
+                    <Txt v="h1" style={{ textAlign: "center" }}>{t.signIn.checkEmail}</Txt>
+                    <Txt muted style={{ textAlign: "center" }}>
+                      {t.signIn.codeSentBefore}<Txt bold>{email.trim()}</Txt>{t.signIn.codeSentAfter}
+                    </Txt>
+                  </Col>
+                  <Input
+                    label={t.signIn.code}
+                    value={code}
+                    onChangeText={(v) => setCode(v.replace(/\D/g, "").slice(0, 6))}
+                    placeholder="000000"
+                    keyboardType="number-pad"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    textContentType="oneTimeCode"
+                    maxLength={6}
+                    autoFocus
+                    style={{ fontSize: 22, letterSpacing: 8, textAlign: "center", height: 52 }}
+                    onSubmitEditing={verify}
+                  />
+                  <ErrorText error={error} />
+                  <Button kind="primary" size="lg" title={t.signIn.enter} loading={busy} disabled={code.length !== 6} onPress={verify} />
+                  <Row style={{ justifyContent: "center" }}>
+                    <Button kind="ghost" size="sm" title={t.signIn.resend} onPress={sendCode} disabled={busy} />
+                    <Button kind="ghost" size="sm" title={t.signIn.otherEmail} onPress={() => { savePending(null); setStep("email"); }} />
+                  </Row>
+                </>
+              )}
+            </Card>
+            {step === "email" ? <InstallHint /> : null}
+            <Row style={{ justifyContent: "center" }}>
+              {LOCALES.map((l) => (
+                <Button key={l} kind="ghost" size="sm" title={t.languageName[l]} disabled={l === locale} onPress={() => setPref(l)} />
+              ))}
+            </Row>
+            <View />
+          </Col>
+          {wide ? <AppShowcase /> : null}
+        </Row>
       </ScrollView>
     </KeyboardAvoidingView>
   );

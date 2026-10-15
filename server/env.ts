@@ -19,7 +19,7 @@ const schema = z.object({
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),
-  EMAIL_FROM: z.string().default("rolar <login@mail.rolar.app>"),
+  EMAIL_FROM: z.string().default("Rolar <login@mail.rolar.app>"),
 });
 
 export type Env = z.infer<typeof schema>;

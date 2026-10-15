@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "rolar",
-  "short_name": "rolar",
+  "name": "Rolar",
+  "short_name": "Rolar",
   "description": "Diário de treino de jiu-jitsu: treinos, academia, chamada por QR, campeonatos. Grátis e open source.",
   "lang": "pt",
   "start_url": "/",

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "rolar",
+    "name": "Rolar",
     "slug": "rolar",
     "version": "0.1.0",
     "orientation": "portrait",
@@ -21,8 +21,8 @@
     "web": {
       "output": "single",
       "favicon": "./assets/images/favicon.png",
-      "name": "rolar",
-      "shortName": "rolar",
+      "name": "Rolar",
+      "shortName": "Rolar",
       "themeColor": "#09090b",
       "backgroundColor": "#ffffff",
       "description": "Diário de treino de jiu-jitsu: treinos, academia, chamada por QR, campeonatos. Grátis e open source."
@@ -41,7 +41,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "O rolar usa a câmara só para ler o QR de check-in da aula.",
+          "cameraPermission": "O Rolar usa a câmara só para ler o QR de check-in da aula.",
           "recordAudioAndroid": false,
           "barcodeScannerEnabled": true
         }

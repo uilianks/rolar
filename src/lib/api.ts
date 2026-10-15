@@ -1,4 +1,4 @@
-// Typed-enough fetch wrapper for the rolar API. The web sends cookies itself; Android attaches the
+// Typed-enough fetch wrapper for the Rolar API. The web sends cookies itself; Android attaches the
 // session cookie that the Better Auth Expo plugin keeps in SecureStore.
 import { Platform } from "react-native";
 

@@ -17,7 +17,7 @@ const PT: [string, string][] = [
   ],
   [
     "Academias",
-    "Quem cadastra uma academia declara representá-la, e o cadastro é verificado antes de ficar visível. O responsável é quem aprova os alunos e responde pelos dados que regista sobre eles, como presenças, graduações e mensalidades. O rolar não cobra mensalidades nem movimenta dinheiro; o registo de pagamentos é só um controlo da academia.",
+    "Quem cadastra uma academia declara representá-la, e o cadastro é verificado antes de ficar visível. O responsável é quem aprova os alunos e responde pelos dados que regista sobre eles, como presenças, graduações e mensalidades. O Rolar não cobra mensalidades nem movimenta dinheiro; o registo de pagamentos é só um controlo da academia.",
   ],
   [
     "O seu conteúdo",
@@ -57,7 +57,7 @@ const EN: [string, string][] = [
   ],
   [
     "Academies",
-    "Whoever registers an academy declares that they represent it, and the registration is checked before it becomes visible. The person in charge approves the students and is responsible for the data they record about them, such as attendance, promotions and membership fees. rolar does not charge fees or move money; the payment log is only a record kept by the academy.",
+    "Whoever registers an academy declares that they represent it, and the registration is checked before it becomes visible. The person in charge approves the students and is responsible for the data they record about them, such as attendance, promotions and membership fees. Rolar does not charge fees or move money; the payment log is only a record kept by the academy.",
   ],
   [
     "Your content",

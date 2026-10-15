@@ -1,4 +1,4 @@
-# rolar — diário de treino de jiu-jitsu
+# Rolar — diário de treino de jiu-jitsu
 
 App open source para registrar treinos de jiu-jitsu, acompanhar a evolução e se conectar com a
 academia.

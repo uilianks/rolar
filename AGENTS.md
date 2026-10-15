@@ -1,4 +1,4 @@
-# rolar — notas do projeto
+# Rolar — notas do projeto
 
 - Docs em português em `docs/` (comece por `05-desenvolvimento.md`); wireframes aprovados em `design/`.
 - Rode `npm run typecheck`, `npm run lint` e `npm test` antes de considerar algo pronto.

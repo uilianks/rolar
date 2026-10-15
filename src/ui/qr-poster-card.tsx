@@ -14,7 +14,7 @@ export function Poster({ academyId, name }: { academyId: string; name: string })
     <Card style={{ alignItems: "center", gap: space.lg, paddingVertical: space.xl }}>
       <Row>
         <BrandMark size={30} />
-        <Txt v="h2" style={{ fontWeight: "800", letterSpacing: -0.6 }}>rolar</Txt>
+        <Txt v="h2" style={{ fontWeight: "800", letterSpacing: -0.6 }}>Rolar</Txt>
       </Row>
       <Txt v="h1" style={{ textAlign: "center" }}>{name}</Txt>
       <AcademyQr academyId={academyId} size={300} />

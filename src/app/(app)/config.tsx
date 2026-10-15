@@ -193,7 +193,7 @@ export default function Settings() {
           </ListRow>
         </Card>
         <Row>
-          <Txt v="tiny" muted>{me?.user.email} · rolar v0.1 · open source (AGPL-3.0)</Txt>
+          <Txt v="tiny" muted>{me?.user.email} · Rolar v0.1 · open source (AGPL-3.0)</Txt>
         </Row>
       </Screen>
     </>

@@ -98,7 +98,7 @@ export const pt = {
     printQr: "QR para imprimir na entrada",
     checkIn: "Fazer check-in",
     posterTitle: "Chegou? Faça check-in.",
-    posterText: "Abra o rolar, toque em Check-in na barra de baixo e aponte para este código.",
+    posterText: "Abra o Rolar, toque em Check-in na barra de baixo e aponte para este código.",
     incompleteLink: "Este link de check-in está incompleto. Leia o QR de novo.",
     scanAgain: "Ler de novo",
     done: "Check-in feito!",
@@ -106,11 +106,11 @@ export const pt = {
     logThisClass: "Registrar o treino desta aula",
     seeAcademy: "Ver a academia",
     pointTitle: "Aponte para o QR da aula",
-    cameraText: "O rolar usa a câmara só para ler o código. Nada é gravado.",
+    cameraText: "O Rolar usa a câmara só para ler o código. Nada é gravado.",
     openCamera: "Abrir a câmara",
     allowInSettings: "Permitir nas configurações",
     pointHint: "Aponte para o QR que o professor mostra. O check-in acontece sozinho.",
-    wrongQr: "Esse QR não é de check-in do rolar.",
+    wrongQr: "Esse QR não é de check-in do Rolar.",
   },
 
   findAcademy: {
@@ -125,7 +125,7 @@ export const pt = {
   },
 
   install: {
-    title: "Instale o rolar no celular",
+    title: "Instale o Rolar no celular",
     text: "Abre em tela cheia, como um app, direto do ícone na tela inicial.",
     notNow: "Agora não",
     install: "Instalar app",
@@ -198,6 +198,17 @@ export const pt = {
     suspended: (reason: string) => `Conta suspensa: ${reason}. Se discordar, escreva para o contacto nos termos de uso.`,
     googleFailedRetry: "Não foi possível entrar com o Google. Tente de novo ou use o código por e-mail.",
     googleFailed: "Não foi possível entrar com o Google",
+    /** Captions for the app screens shown beside the form on wide screens (src/ui/app-showcase.tsx). */
+    showcase: {
+      label: "O que tem no Rolar",
+      feed: { title: "Treine junto, mesmo longe", body: "Veja os treinos dos colegas e da sua academia e mande um oss." },
+      log: { title: "Registre o treino em segundos", body: "Modalidade, rolas, intensidade e técnicas da aula, tudo num lugar." },
+      progress: { title: "Acompanhe a sua evolução", body: "Horas no tatame, sequência de treinos e carga semanal." },
+      academy: { title: "A sua academia no bolso", body: "Horários, mural de avisos, calendário e check-in com QR." },
+      teacher: { title: "Para professores", body: "Chamada da aula, pedidos de entrada e mensalidades dos alunos." },
+      timer: { title: "Timer de rounds", body: "Rola e descanso no tempo certo. No fim, o treino já vem preenchido." },
+      goTo: (n: number) => `Mostrar tela ${n}`,
+    },
     sendFailed: "Não foi possível enviar o código",
     failed: "Não foi possível entrar",
     title: "Entrar ou criar conta",
@@ -322,7 +333,7 @@ export const pt = {
       event_published: "publicou um evento na academia",
       announcement: "publicou um aviso na academia",
       payment_reminder: "lembrou que a sua mensalidade está em aberto",
-      report_resolved: "analisou a sua denúncia. Obrigado por ajudar a manter o rolar seguro",
+      report_resolved: "analisou a sua denúncia. Obrigado por ajudar a manter o Rolar seguro",
       content_removed: "removeu um conteúdo seu que viola os termos de uso. Toque para ler",
     },
   },
@@ -913,7 +924,7 @@ export const pt = {
 
   /** E-mail with the login code (server/auth.ts). */
   loginEmail: {
-    subject: (code: string) => `${code} é o seu código do rolar`,
+    subject: (code: string) => `${code} é o seu código do Rolar`,
     text: (code: string) => `Oss! O seu código para entrar é ${code}. Ele vale 10 minutos.\n\nSe não foi você, ignore este e-mail.`,
   },
 

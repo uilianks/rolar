@@ -102,7 +102,7 @@ export const en: Messages = {
     printQr: "QR to print for the entrance",
     checkIn: "Check in",
     posterTitle: "Here for class? Check in.",
-    posterText: "Open rolar, tap Check-in on the bottom bar and point at this code.",
+    posterText: "Open Rolar, tap Check-in on the bottom bar and point at this code.",
     incompleteLink: "This check-in link is incomplete. Scan the QR again.",
     scanAgain: "Scan again",
     done: "Checked in!",
@@ -110,11 +110,11 @@ export const en: Messages = {
     logThisClass: "Log this class",
     seeAcademy: "See the academy",
     pointTitle: "Point at the class QR",
-    cameraText: "rolar only uses the camera to read the code. Nothing is recorded.",
+    cameraText: "Rolar only uses the camera to read the code. Nothing is recorded.",
     openCamera: "Open the camera",
     allowInSettings: "Allow in settings",
     pointHint: "Point at the QR your coach shows. Check-in happens on its own.",
-    wrongQr: "This is not a rolar check-in QR.",
+    wrongQr: "This is not a Rolar check-in QR.",
   },
 
   findAcademy: {
@@ -129,7 +129,7 @@ export const en: Messages = {
   },
 
   install: {
-    title: "Install rolar on your phone",
+    title: "Install Rolar on your phone",
     text: "Opens full screen, like an app, straight from the icon on your home screen.",
     notNow: "Not now",
     install: "Install app",
@@ -201,6 +201,16 @@ export const en: Messages = {
     suspended: (reason: string) => `Account suspended: ${reason}. If you disagree, write to the contact in the terms of use.`,
     googleFailedRetry: "Could not sign in with Google. Try again or use the e-mail code.",
     googleFailed: "Could not sign in with Google",
+    showcase: {
+      label: "What's inside Rolar",
+      feed: { title: "Train together, even apart", body: "Follow your teammates' and your academy's sessions and send an oss." },
+      log: { title: "Log a session in seconds", body: "Style, rolls, intensity and the techniques of the class, all in one place." },
+      progress: { title: "Track your progress", body: "Mat hours, training streak and weekly load." },
+      academy: { title: "Your academy in your pocket", body: "Schedule, notice board, calendar and QR check-in." },
+      teacher: { title: "For instructors", body: "Class attendance, join requests and students' fees." },
+      timer: { title: "Round timer", body: "Rolls and rest on time. When it ends, the session is already filled in." },
+      goTo: (n: number) => `Show screen ${n}`,
+    },
     sendFailed: "Could not send the code",
     failed: "Could not sign in",
     title: "Sign in or create an account",
@@ -325,7 +335,7 @@ export const en: Messages = {
       event_published: "posted an event at the academy",
       announcement: "posted a notice at the academy",
       payment_reminder: "reminded you that your membership fee is due",
-      report_resolved: "reviewed your report. Thanks for helping keep rolar safe",
+      report_resolved: "reviewed your report. Thanks for helping keep Rolar safe",
       content_removed: "removed content of yours that breaks the terms of use. Tap to read",
     },
   },
@@ -913,7 +923,7 @@ export const en: Messages = {
   },
 
   loginEmail: {
-    subject: (code: string) => `${code} is your rolar code`,
+    subject: (code: string) => `${code} is your Rolar code`,
     text: (code: string) => `Oss! Your sign-in code is ${code}. It is valid for 10 minutes.\n\nIf this wasn't you, ignore this e-mail.`,
   },
 

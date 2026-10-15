@@ -101,7 +101,7 @@ function Sidebar({ path }: { path: string }) {
     <View style={{ width: 248, borderRightWidth: 1, borderColor: c.border, padding: space.md, paddingTop: space.lg, gap: 4 }}>
       <Row style={{ paddingHorizontal: 8, paddingBottom: 16 }}>
         <BrandMark />
-        <Txt v="h2" style={{ fontWeight: "800", letterSpacing: -0.6 }}>rolar</Txt>
+        <Txt v="h2" style={{ fontWeight: "800", letterSpacing: -0.6 }}>Rolar</Txt>
       </Row>
       <Button kind="primary" icon={Plus} title={t.nav.logSession} onPress={() => router.navigate("/registrar")} style={{ marginBottom: 12 }} />
       {MAIN.map((i) => (
