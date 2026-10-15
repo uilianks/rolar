@@ -8,6 +8,31 @@ import { Button, Card, Col, ErrorText, Input, Row, Txt } from "@/ui/kit";
 import { BrandMark } from "@/ui/shell";
 import { space, useTheme } from "@/ui/theme";
 
+// Web: phones may reload a backgrounded tab while the person copies the code from their e-mail, so the
+// pending e-mail survives in this tab's sessionStorage until the code expires.
+const PENDING_KEY = "rolar_login_pending";
+const CODE_TTL_MS = 10 * 60 * 1000;
+
+function loadPending(): string | null {
+  if (Platform.OS !== "web") return null;
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(PENDING_KEY) ?? "null") as { email: string; at: number } | null;
+    return saved && Date.now() - saved.at < CODE_TTL_MS ? saved.email : null;
+  } catch {
+    return null;
+  }
+}
+
+function savePending(email: string | null) {
+  if (Platform.OS !== "web") return;
+  try {
+    if (email) sessionStorage.setItem(PENDING_KEY, JSON.stringify({ email, at: Date.now() }));
+    else sessionStorage.removeItem(PENDING_KEY);
+  } catch {
+    // Storage can be unavailable (private mode); the form still works without it.
+  }
+}
+
 const GOOGLE_ENABLED = process.env.EXPO_PUBLIC_GOOGLE_LOGIN === "1";
 
 const AUTH_ERRORS: Record<string, string> = {
@@ -25,9 +50,10 @@ function authMessage(error: { code?: string; message?: string; status?: number }
 export default function SignIn() {
   const { c } = useTheme();
   const qc = useQueryClient();
-  const [email, setEmail] = useState("");
+  const [pending] = useState(loadPending);
+  const [email, setEmail] = useState(pending ?? "");
   const [code, setCode] = useState("");
-  const [step, setStep] = useState<"email" | "code">("email");
+  const [step, setStep] = useState<"email" | "code">(pending ? "code" : "email");
   const [busy, setBusy] = useState(false);
   // Google sends people back here with ?error=… when the sign-in did not go through.
   const { error: googleError } = useLocalSearchParams<{ error?: string }>();
@@ -55,6 +81,7 @@ export default function SignIn() {
     const { error } = await authClient.emailOtp.sendVerificationOtp({ email: email.trim(), type: "sign-in" });
     setBusy(false);
     if (error) return setError(authMessage(error, "Não foi possível enviar o código"));
+    savePending(email.trim());
     setStep("code");
   }
 
@@ -64,6 +91,7 @@ export default function SignIn() {
     const { error } = await authClient.signIn.emailOtp({ email: email.trim(), otp: code.trim() });
     setBusy(false);
     if (error) return setError(authMessage(error, "Não foi possível entrar"));
+    savePending(null);
     await qc.invalidateQueries();
   }
 
@@ -145,7 +173,7 @@ export default function SignIn() {
                 <Button kind="primary" size="lg" title="Entrar" loading={busy} disabled={code.length !== 6} onPress={verify} />
                 <Row style={{ justifyContent: "center" }}>
                   <Button kind="ghost" size="sm" title="Reenviar código" onPress={sendCode} disabled={busy} />
-                  <Button kind="ghost" size="sm" title="Usar outro e-mail" onPress={() => setStep("email")} />
+                  <Button kind="ghost" size="sm" title="Usar outro e-mail" onPress={() => { savePending(null); setStep("email"); }} />
                 </Row>
               </>
             )}
