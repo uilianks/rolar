@@ -7,7 +7,7 @@ Revisão feita antes de começar o código e atualizada ao final da primeira rod
 | Item | Por quê | Como |
 |---|---|---|
 | **Nome do app e domínio** | ✅ **rolar** / `rolar.app` (package Android `app.rolar`, esquema `rolar://`). Falta **comprar** o domínio | Cloudflare Registrar (~14 €/ano), renovação automática; depois ligar à Vercel |
-| **E-mail de contacto** | Política e termos indicam `contato@rolar.app` | Cloudflare Email Routing (grátis) reencaminhando para o seu e-mail |
+| **E-mail de contacto** | ✅ `contato@rolar.app` reencaminhado pelo ImprovMX (plano grátis; MX e SPF no DNS da Vercel) para o Gmail | — |
 | **Resend + domínio verificado** | ✅ `mail.rolar.app` verificado (UE, DKIM/SPF/DMARC no DNS da Vercel); chave só de envio `rolar-producao` em `RESEND_API_KEY` | — |
 | **Projeto Vercel + Neon** | ✅ No ar em https://rolar.app (Neon em Frankfurt; API em bundle ESM via Build Output API) | — |
 | **Conta Expo (EAS) + Google Play** | APK/AAB e loja | `npx eas-cli build -p android`; conta Play (25 US$) |
