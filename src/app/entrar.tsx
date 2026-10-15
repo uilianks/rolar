@@ -73,7 +73,7 @@ export default function SignIn() {
         <Col gap={space.xl} style={{ width: "100%", maxWidth: 400, alignSelf: "center" }}>
           <Row style={{ justifyContent: "center" }}>
             <BrandMark />
-            <Txt v="h2" style={{ fontWeight: "800" }}>tatame</Txt>
+            <Txt v="h2" style={{ fontWeight: "800" }}>rolar</Txt>
           </Row>
 
           <Card style={{ gap: space.lg, padding: space.xl }}>
@@ -108,11 +108,15 @@ export default function SignIn() {
                 <ErrorText error={error} />
                 <Button kind="primary" size="lg" title="Enviar código" loading={busy} disabled={!email.includes("@")} onPress={sendCode} />
                 <Txt v="tiny" muted style={{ textAlign: "center" }}>
-                  Ao continuar você aceita a{" "}
-                  <Txt v="tiny" style={{ textDecorationLine: "underline" }} onPress={() => router.push("/privacidade")}>
-                    Política de Privacidade
-                  </Txt>
-                  . É preciso ter 13 anos ou mais.
+                  Ao continuar você aceita os{" "}
+                    <Txt v="tiny" style={{ textDecorationLine: "underline" }} onPress={() => router.push("/termos")}>
+                      Termos de uso
+                    </Txt>{" "}
+                    e a{" "}
+                    <Txt v="tiny" style={{ textDecorationLine: "underline" }} onPress={() => router.push("/privacidade")}>
+                      Política de privacidade
+                    </Txt>
+                    . É preciso ter 13 anos ou mais.
                 </Txt>
               </>
             ) : (

@@ -1,19 +1,19 @@
 # Optional local Postgres that behaves like Neon in production (same driver, same WebSocket protocol).
 #   docker compose up -d
-#   DATABASE_URL=postgres://postgres:postgres@db.localtest.me:5432/tatame   (in .env.local)
+#   DATABASE_URL=postgres://postgres:postgres@db.localtest.me:5432/rolar   (in .env.local)
 services:
   postgres:
     image: postgres:17
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: tatame
+      POSTGRES_DB: rolar
     ports:
       - "5432:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d tatame"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d rolar"]
       interval: 2s
       timeout: 5s
       retries: 15
@@ -22,7 +22,7 @@ services:
   neon-proxy:
     image: ghcr.io/timowilhelm/local-neon-http-proxy:main
     environment:
-      PG_CONNECTION_STRING: postgres://postgres:postgres@postgres:5432/tatame
+      PG_CONNECTION_STRING: postgres://postgres:postgres@postgres:5432/rolar
     ports:
       - "4444:4444"
     depends_on:

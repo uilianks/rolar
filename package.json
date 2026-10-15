@@ -1,5 +1,5 @@
 {
-  "name": "tatame",
+  "name": "rolar",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
@@ -67,7 +67,7 @@
     "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down",
     "db:reset": "docker compose down -v && docker compose up -d --wait",
-    "dev:api:pg": "DATABASE_URL=postgres://postgres:postgres@db.localtest.me:5432/tatame tsx watch --env-file-if-exists=.env.local server/dev.ts",
+    "dev:api:pg": "DATABASE_URL=postgres://postgres:postgres@db.localtest.me:5432/rolar tsx watch --env-file-if-exists=.env.local server/dev.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",

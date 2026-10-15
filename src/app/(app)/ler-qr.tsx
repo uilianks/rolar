@@ -31,7 +31,7 @@ export default function ReadQr() {
             <Empty
               icon={Camera}
               title="Aponte para o QR da aula"
-              text="O tatame usa a câmara só para ler o código. Nada é gravado."
+              text="O rolar usa a câmara só para ler o código. Nada é gravado."
               action={<Button kind="primary" title={permission.canAskAgain ? "Abrir a câmara" : "Permitir nas configurações"} onPress={requestPermission} />}
             />
           </Card>
@@ -58,7 +58,7 @@ export default function ReadQr() {
         ) : null}
         {wrong ? (
           <Txt v="small" color={c.accent} style={{ textAlign: "center" }}>
-            Esse QR não é de check-in do tatame.
+            Esse QR não é de check-in do rolar.
           </Txt>
         ) : null}
       </Screen>

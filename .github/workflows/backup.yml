@@ -26,7 +26,7 @@ jobs:
         run: |
           set -euo pipefail
           /usr/lib/postgresql/17/bin/pg_dump "$DATABASE_URL" --format=custom --no-owner \
-            | age -r "$AGE_RECIPIENT" > "tatame-$(date -u +%F).dump.age"
+            | age -r "$AGE_RECIPIENT" > "rolar-$(date -u +%F).dump.age"
       - uses: actions/upload-artifact@v7
         with:
           name: db-backup

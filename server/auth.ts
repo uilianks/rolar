@@ -25,7 +25,7 @@ export function defaultLoginCodeSender(env: Env): LoginCodeSender {
       body: JSON.stringify({
         from: env.EMAIL_FROM,
         to: email,
-        subject: `${code} é o seu código do tatame`,
+        subject: `${code} é o seu código do rolar`,
         text: `Oss! O seu código para entrar é ${code}. Ele vale 10 minutos.\n\nSe não foi você, ignore este e-mail.`,
       }),
     });

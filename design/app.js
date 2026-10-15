@@ -1,4 +1,4 @@
-// tatame — comportamento compartilhado dos wireframes (sem framework).
+// rolar — comportamento compartilhado dos wireframes (sem framework).
 // Cada página declara <body data-page="feed" data-shell="app"> e o shell (sidebar + dock) é montado aqui.
 
 const NAV = [
@@ -25,7 +25,7 @@ function storage(op, key, value) {
 function applyTheme(theme) {
   if (theme) document.documentElement.dataset.theme = theme;
 }
-applyTheme(storage("get", "tatame-theme"));
+applyTheme(storage("get", "rolar-theme"));
 
 function toggleTheme() {
   const dark = document.documentElement.dataset.theme
@@ -33,7 +33,7 @@ function toggleTheme() {
     : matchMedia("(prefers-color-scheme: dark)").matches;
   const next = dark ? "light" : "dark";
   applyTheme(next);
-  storage("set", "tatame-theme", next);
+  storage("set", "rolar-theme", next);
 }
 
 function navLink(item, page) {
@@ -49,7 +49,7 @@ function buildShell() {
   const sidebar = document.createElement("aside");
   sidebar.className = "sidebar";
   sidebar.innerHTML = `
-    <a class="brand" href="index.html"><span class="brand-mark">t</span>tatame</a>
+    <a class="brand" href="index.html"><span class="brand-mark">r</span>rolar</a>
     <a class="btn btn-primary btn-block" href="registrar.html" style="margin-bottom:12px"><i data-lucide="plus"></i>Registrar treino</a>
     ${NAV.filter((n) => !n.cta).map((n) => navLink(n, page)).join("")}
     <div class="nav-label">Ferramentas</div>

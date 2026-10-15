@@ -23,4 +23,4 @@ it("sends people to Google with the API callback, and back to the web app afterw
 
 // Better Auth also refuses callback URLs outside TRUSTED_ORIGINS (no open redirect after Google), but it
 // skips that check when NODE_ENV=test, so it cannot be asserted here. Checked by hand with
-// NODE_ENV=development (15/10/2026): http://localhost:8081/ → 200, tatame:// → 200, https://evil.example/ → 403.
+// NODE_ENV=development (15/10/2026): http://localhost:8081/ → 200, rolar:// → 200, https://evil.example/ → 403.

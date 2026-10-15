@@ -26,11 +26,11 @@ npm run db:reset      # apaga os dados e recomeça; db:down para desligar
 ```
 
 Ou coloque no `.env.local`:
-`DATABASE_URL=postgres://postgres:postgres@db.localtest.me:5432/tatame`.
+`DATABASE_URL=postgres://postgres:postgres@db.localtest.me:5432/rolar`.
 
 - `db.localtest.me` resolve para a sua máquina, mas precisa de DNS. Offline, acrescente
   `127.0.0.1 db.localtest.me` ao `/etc/hosts`.
-- Para inspecionar o banco: `docker compose exec postgres psql -U postgres -d tatame`.
+- Para inspecionar o banco: `docker compose exec postgres psql -U postgres -d rolar`.
 - Os testes automáticos continuam no PGlite em memória (rápidos e isolados).
 
 ### Dados de demonstração
@@ -48,7 +48,7 @@ Ou coloque no `.env.local`:
 - dois alunos sem aparecer há 3 semanas ("Alunos sumidos").
 
 Rodar de novo apaga e recria só os dados demo (`demo.*@example.com`). Usa o `DATABASE_URL` do
-ambiente; com Docker: `DATABASE_URL=postgres://postgres:postgres@db.localtest.me:5432/tatame npm run db:seed`.
+ambiente; com Docker: `DATABASE_URL=postgres://postgres:postgres@db.localtest.me:5432/rolar npm run db:seed`.
 Recusa rodar em produção ou num banco do Neon.
 
 ### Vídeo de apresentação

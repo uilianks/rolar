@@ -6,12 +6,13 @@ Revisão feita antes de começar o código e atualizada ao final da primeira rod
 
 | Item | Por quê | Como |
 |---|---|---|
-| **Nome do app e domínio** | Remetente do e-mail, `package` Android (`app.tatame` provisório), links | Escolher; registrar domínio (~10–15 €/ano) |
+| **Nome do app e domínio** | ✅ **rolar** / `rolar.app` (package Android `app.rolar`, esquema `rolar://`). Falta **comprar** o domínio | Cloudflare Registrar (~14 €/ano), renovação automática; depois ligar à Vercel |
+| **E-mail de contacto** | Política e termos indicam `contato@rolar.app` | Cloudflare Email Routing (grátis) reencaminhando para o seu e-mail |
 | **Resend + domínio verificado** | Sem domínio, a Resend só envia para o seu próprio e-mail: ninguém mais consegue entrar | Conta grátis; DNS (SPF/DKIM) do domínio; `RESEND_API_KEY`, `EMAIL_FROM` |
 | **Projeto Vercel + Neon** | Deploy | Importar o repo na Vercel, adicionar Neon pelo Marketplace (**região UE**: `aws-eu-central-1`), `BETTER_AUTH_SECRET`, `ADMIN_EMAILS` (o seu e-mail) |
 | **Conta Expo (EAS) + Google Play** | APK/AAB e loja | `npx eas-cli build -p android`; conta Play (25 US$) |
-| **Responsável e contacto na política de privacidade** | RGPD art. 13 exige identidade e contacto | Preencher `src/app/privacidade.tsx` |
-| **Termos de uso** | Regras de conduta e base para moderar | Redigir (curto) |
+| **Responsável e contacto na política de privacidade** | ✅ Preenchido (Uilian Kidricki, `contato@rolar.app`) | Confirmar o nome legal |
+| **Termos de uso** | ✅ `/termos` (conduta, academias, moderação, doações, lei portuguesa) | Rever antes do lançamento |
 | **Contas de doação** | ✅ GitHub Sponsors (`uilianks`) e Ko-fi (`uiliankidricki`) no `.env.local` e em `.github/FUNDING.yml` | Na Vercel: copiar `EXPO_PUBLIC_DONATE_GITHUB` e `EXPO_PUBLIC_DONATE_KOFI`; `EXPO_PUBLIC_DONATE_PAGE` depois do domínio. Liberapay ficou de fora (botão escondido) |
 | **Login com Google** (opcional) | Menos atrito | Cliente OAuth no Google Cloud; `GOOGLE_CLIENT_*`, `EXPO_PUBLIC_GOOGLE_LOGIN=1` |
 | **Repositório no GitHub** | CI, backup, contribuições | Criar e dar push. O commit está pendente porque falta configurar `git user.name`/`user.email` |

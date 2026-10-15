@@ -9,7 +9,7 @@ const schema = z.object({
   /** Comma-separated origins allowed to call the API with credentials (web app, app scheme). */
   TRUSTED_ORIGINS: z
     .string()
-    .default("http://localhost:8081,tatame://")
+    .default("http://localhost:8081,rolar://")
     .transform((s) => s.split(",").map((o) => o.trim()).filter(Boolean)),
   /** Comma-separated e-mails with access to the admin panel (academy verification). */
   ADMIN_EMAILS: z
@@ -19,7 +19,7 @@ const schema = z.object({
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),
-  EMAIL_FROM: z.string().default("tatame <login@tatame.app>"),
+  EMAIL_FROM: z.string().default("rolar <login@mail.rolar.app>"),
 });
 
 export type Env = z.infer<typeof schema>;

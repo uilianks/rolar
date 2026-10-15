@@ -49,11 +49,13 @@ export function useWide() {
   return useWindowDimensions().width >= WIDE;
 }
 
+/** The app icon in small: "r" over a red bar (the black belt's red tip). */
 export function BrandMark({ size = 26 }: { size?: number }) {
   const { c } = useTheme();
   return (
     <View style={{ width: size, height: size, borderRadius: size * 0.27, backgroundColor: c.primary, alignItems: "center", justifyContent: "center" }}>
-      <Text style={{ color: c.primaryFg, fontWeight: "800", fontSize: size * 0.5 }}>t</Text>
+      <Text style={{ color: c.primaryFg, fontWeight: "800", fontSize: size * 0.56, lineHeight: size * 0.6, marginTop: -size * 0.06 }}>r</Text>
+      <View style={{ width: size * 0.34, height: Math.max(2, size * 0.08), borderRadius: size * 0.03, backgroundColor: c.accent, marginTop: size * 0.02 }} />
     </View>
   );
 }
@@ -95,7 +97,7 @@ function Sidebar({ path }: { path: string }) {
     <View style={{ width: 248, borderRightWidth: 1, borderColor: c.border, padding: space.md, paddingTop: space.lg, gap: 4 }}>
       <Row style={{ paddingHorizontal: 8, paddingBottom: 16 }}>
         <BrandMark />
-        <Txt v="h2" style={{ fontWeight: "800", letterSpacing: -0.6 }}>tatame</Txt>
+        <Txt v="h2" style={{ fontWeight: "800", letterSpacing: -0.6 }}>rolar</Txt>
       </Row>
       <Button kind="primary" icon={Plus} title="Registrar treino" onPress={() => router.navigate("/registrar")} style={{ marginBottom: 12 }} />
       {MAIN.map((i) => (

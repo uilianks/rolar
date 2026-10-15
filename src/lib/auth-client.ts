@@ -17,6 +17,6 @@ export const authClient = createAuthClient({
   basePath: "/api/auth",
   plugins: [
     emailOTPClient(),
-    expoClient({ scheme: "tatame", storagePrefix: "tatame", storage: SecureStore }),
+    expoClient({ scheme: "rolar", storagePrefix: "rolar", storage: SecureStore }),
   ],
 });

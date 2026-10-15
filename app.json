@@ -1,32 +1,31 @@
 {
   "expo": {
-    "name": "tatame",
-    "slug": "tatame",
+    "name": "rolar",
+    "slug": "rolar",
     "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "tatame",
+    "scheme": "rolar",
     "userInterfaceStyle": "automatic",
-    "ios": {
-      "icon": "./assets/expo.icon"
-    },
+    "ios": {},
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#18181B",
+        "backgroundColor": "#18181b",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "app.tatame"
+      "package": "app.rolar"
     },
     "web": {
       "output": "single",
       "favicon": "./assets/images/favicon.png",
-      "name": "tatame",
-      "shortName": "tatame",
+      "name": "rolar",
+      "shortName": "rolar",
       "themeColor": "#09090b",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#ffffff",
+      "description": "Diário de treino de jiu-jitsu: treinos, academia, chamada por QR, campeonatos. Grátis e open source."
     },
     "plugins": [
       "expo-router",
@@ -42,7 +41,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "O tatame usa a câmara só para ler o QR de check-in da aula.",
+          "cameraPermission": "O rolar usa a câmara só para ler o QR de check-in da aula.",
           "recordAudioAndroid": false,
           "barcodeScannerEnabled": true
         }

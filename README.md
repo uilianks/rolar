@@ -1,4 +1,4 @@
-# tatame (nome provisório) — o "Strava do jiu-jitsu"
+# rolar — diário de treino de jiu-jitsu
 
 App open source para registrar treinos de jiu-jitsu, acompanhar a evolução e se conectar com a
 academia.
@@ -7,7 +7,7 @@ academia.
 - **Infraestrutura**: Vercel (Hobby) + Neon Postgres.
 - **Mantido por doações**, com licença **AGPL-3.0**.
 
-Status: **MVP implementado** (15/10/2026); ainda sem deploy. Inspirado no Strava, adaptado ao tatame.
+Status: **MVP implementado** (15/10/2026); ainda sem deploy. Inspirado no Strava, adaptado ao tatame. Site: [rolar.app](https://rolar.app).
 
 ```bash
 npm install && cp .env.example .env.local

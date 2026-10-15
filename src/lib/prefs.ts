@@ -2,7 +2,7 @@
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 
-const PREFIX = "tatame_pref_";
+const PREFIX = "rolar_pref_";
 
 export const prefs = {
   async get(key: string): Promise<string | null> {

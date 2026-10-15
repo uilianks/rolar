@@ -70,7 +70,7 @@ export default function Settings() {
       const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
       const a = document.createElement("a");
       a.href = url;
-      a.download = "tatame-dados.json";
+      a.download = "rolar-dados.json";
       a.click();
       URL.revokeObjectURL(url);
     } else {
@@ -158,6 +158,9 @@ export default function Settings() {
           <ListRow onPress={() => router.push("/privacidade")}>
             <Txt style={{ flex: 1 }}>Política de privacidade</Txt>
           </ListRow>
+          <ListRow onPress={() => router.push("/termos")}>
+            <Txt style={{ flex: 1 }}>Termos de uso</Txt>
+          </ListRow>
           <ListRow onPress={signOut}>
             <LogOut size={18} color={c.fg} />
             <Txt style={{ flex: 1 }}>Sair</Txt>
@@ -168,7 +171,7 @@ export default function Settings() {
           </ListRow>
         </Card>
         <Row>
-          <Txt v="tiny" muted>{me?.user.email} · tatame v0.1 · open source (AGPL-3.0)</Txt>
+          <Txt v="tiny" muted>{me?.user.email} · rolar v0.1 · open source (AGPL-3.0)</Txt>
         </Row>
       </Screen>
     </>

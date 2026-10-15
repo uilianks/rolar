@@ -204,7 +204,7 @@ me.get("/export", async (c) => {
     payments: await db.select().from(s.payments).where(eq(s.payments.userId, userId)),
     avatar: (await db.select({ mime: s.avatars.mime, data: s.avatars.data }).from(s.avatars).where(eq(s.avatars.userId, userId)))[0] ?? null,
   };
-  c.header("Content-Disposition", 'attachment; filename="tatame-dados.json"');
+  c.header("Content-Disposition", 'attachment; filename="rolar-dados.json"');
   return c.json(data);
 });
 
