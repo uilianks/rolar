@@ -39,6 +39,20 @@ export function createApp({
     }),
   );
 
+  // CSRF, second layer behind the SameSite=Lax session cookie: browsers always say where a cross-site
+  // request comes from (Origin, Sec-Fetch-Site), so a change sent from another site is refused. The
+  // Android app sends neither header and is not affected.
+  app.use("*", async (c, next) => {
+    if (!["GET", "HEAD", "OPTIONS"].includes(c.req.method)) {
+      const origin = c.req.header("origin");
+      const crossSite = c.req.header("sec-fetch-site") === "cross-site";
+      if ((origin && !trustedOrigins.includes(origin)) || (crossSite && !origin)) {
+        return c.json({ error: "Origem não permitida" }, 403);
+      }
+    }
+    await next();
+  });
+
   app.on(["GET", "POST"], "/auth/*", (c) => auth.handler(c.req.raw));
 
   app.use("*", async (c, next) => {

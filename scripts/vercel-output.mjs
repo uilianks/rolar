@@ -1,7 +1,7 @@
 // Assembles the deployment in Vercel's Build Output API format (.vercel/output):
 //   static/            the Expo web export (dist/)
 //   functions/api.func one ESM bundle of the API, so ESM-only packages (better-auth) load as ESM
-//   config.json        /api/* → the function, files as they are, everything else → the SPA
+//   config.json        security headers; /api/* → the function, files as they are, everything else → the SPA
 // Vercel's own TypeScript compile emitted CommonJS for the API, which cannot require() better-auth.
 import { build } from "esbuild";
 import { cpSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
@@ -39,6 +39,19 @@ writeFileSync(
     {
       version: 3,
       routes: [
+        // Security headers on everything: no framing (clickjacking), no MIME sniffing, no full URLs
+        // leaked to other sites; the camera only for this site's own QR reader.
+        {
+          src: "^/.*$",
+          headers: {
+            "Content-Security-Policy": "frame-ancestors 'none'; object-src 'none'; base-uri 'self'",
+            "X-Frame-Options": "DENY",
+            "X-Content-Type-Options": "nosniff",
+            "Referrer-Policy": "strict-origin-when-cross-origin",
+            "Permissions-Policy": "camera=(self), microphone=(), geolocation=(), payment=()",
+          },
+          continue: true,
+        },
         { src: "^/api(/.*)?$", dest: "/api" },
         { handle: "filesystem" },
         { src: "^/.*$", dest: "/index.html" },

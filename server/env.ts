@@ -7,9 +7,9 @@ const schema = z.object({
   BETTER_AUTH_URL: z.url().default("http://localhost:8799"),
   BETTER_AUTH_SECRET: z.string().min(32).default("dev-secret-dev-secret-dev-secret-0000"),
   /** Comma-separated origins allowed to call the API with credentials (web app, app scheme). */
+  /** Default: the app's own origin (added below) and the Android scheme; development adds Expo's web port. */
   TRUSTED_ORIGINS: z
     .string()
-    .default("http://localhost:8081,rolar://")
     .transform((s) => s.split(",").map((o) => o.trim()).filter(Boolean)),
   /** Comma-separated e-mails with access to the admin panel (academy verification). */
   ADMIN_EMAILS: z
@@ -31,6 +31,7 @@ export function loadEnv(source: Record<string, string | undefined> = process.env
   const env = schema.parse({
     ...source,
     BETTER_AUTH_URL: source.BETTER_AUTH_URL ?? (vercelHost ? `https://${vercelHost}` : undefined),
+    TRUSTED_ORIGINS: source.TRUSTED_ORIGINS ?? (source.NODE_ENV === "production" ? "rolar://" : "http://localhost:8081,rolar://"),
   });
   // The web app is served from the API's own origin.
   const own = new URL(env.BETTER_AUTH_URL).origin;

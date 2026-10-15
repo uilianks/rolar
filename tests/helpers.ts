@@ -69,7 +69,10 @@ export async function testApi(overrides: Record<string, string> = {}) {
     return a.data as { id: string; slug: string; country: string };
   }
 
-  return { call, signIn, user, approvedAcademy, db: handle.db, close: () => handle.close() };
+  /** A request with exactly these headers (call() always adds the web app's Origin). */
+  const request = (path: string, init: RequestInit) => app.request(`http://localhost:8799/api${path}`, init);
+
+  return { call, request, signIn, user, approvedAcademy, db: handle.db, close: () => handle.close() };
 }
 
 export function sessionBody(extra: Record<string, unknown> = {}) {

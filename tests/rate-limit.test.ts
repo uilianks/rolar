@@ -5,7 +5,7 @@ import { testApi } from "./helpers";
 let api: Awaited<ReturnType<typeof testApi>>;
 
 beforeAll(async () => {
-  api = await testApi({ NODE_ENV: "production", BETTER_AUTH_SECRET: "test-secret-test-secret-test-secret-0123" });
+  api = await testApi({ NODE_ENV: "production", BETTER_AUTH_SECRET: "test-secret-test-secret-test-secret-0123", TRUSTED_ORIGINS: "http://localhost:8081" });
 });
 afterAll(() => api.close());
 

@@ -28,15 +28,12 @@ const queryClient = new QueryClient({
 /** Three states: signed out → entrar; signed in without profile → onboarding; ready → the app. */
 function Gate() {
   const { c, scheme } = useTheme();
-  // Better Auth re-checks the session when the tab regains focus, and while it does a signed-out
-  // session reports isPending again. Only the first check may cover the screen, or switching to the
-  // e-mail app to copy the code would reset the login form.
-  const { data: session, isPending, isRefetching } = authClient.useSession();
+  const { data: session, isPending } = authClient.useSession();
   const me = useMe();
   const unauthorized = me.error instanceof ApiError && me.error.status === 401;
   const signedIn = !!session && !unauthorized;
 
-  if ((isPending && !isRefetching) || (signedIn && me.isPending)) {
+  if (isPending || (signedIn && me.isPending)) {
     return (
       <View style={{ flex: 1, backgroundColor: c.bg, justifyContent: "center" }}>
         <Loading />

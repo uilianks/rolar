@@ -8,28 +8,35 @@ import { Button, Card, Col, ErrorText, Input, Row, Txt } from "@/ui/kit";
 import { BrandMark } from "@/ui/shell";
 import { space, useTheme } from "@/ui/theme";
 
-// Web: phones may reload a backgrounded tab while the person copies the code from their e-mail, so the
-// pending e-mail survives in this tab's sessionStorage until the code expires.
+// The e-mail waiting for its code outlives this screen: when the person switches to their e-mail app,
+// the session is re-checked on return and the screen is mounted again, and phones may even reload a
+// backgrounded browser tab. Kept in memory, and on the web in this tab's sessionStorage, until the code
+// expires.
 const PENDING_KEY = "rolar_login_pending";
 const CODE_TTL_MS = 10 * 60 * 1000;
+type Pending = { email: string; at: number };
+let memoryPending: Pending | null = null;
 
 function loadPending(): string | null {
-  if (Platform.OS !== "web") return null;
-  try {
-    const saved = JSON.parse(sessionStorage.getItem(PENDING_KEY) ?? "null") as { email: string; at: number } | null;
-    return saved && Date.now() - saved.at < CODE_TTL_MS ? saved.email : null;
-  } catch {
-    return null;
+  let saved = memoryPending;
+  if (!saved && Platform.OS === "web") {
+    try {
+      saved = JSON.parse(sessionStorage.getItem(PENDING_KEY) ?? "null") as Pending | null;
+    } catch {
+      saved = null;
+    }
   }
+  return saved && Date.now() - saved.at < CODE_TTL_MS ? saved.email : null;
 }
 
 function savePending(email: string | null) {
+  memoryPending = email ? { email, at: Date.now() } : null;
   if (Platform.OS !== "web") return;
   try {
-    if (email) sessionStorage.setItem(PENDING_KEY, JSON.stringify({ email, at: Date.now() }));
+    if (memoryPending) sessionStorage.setItem(PENDING_KEY, JSON.stringify(memoryPending));
     else sessionStorage.removeItem(PENDING_KEY);
   } catch {
-    // Storage can be unavailable (private mode); the form still works without it.
+    // Storage can be unavailable (private mode); memory still covers the remount.
   }
 }
 
