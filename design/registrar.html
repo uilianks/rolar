@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Registrar treino · tatame</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body data-page="registrar" data-shell="app">
+<div class="app">
+  <header class="topbar">
+    <a class="btn btn-ghost btn-icon" href="feed.html" aria-label="Cancelar"><i data-lucide="x"></i></a>
+    <h1 class="grow">Registrar treino</h1>
+    <button class="btn btn-primary btn-sm" form="f">Salvar</button>
+  </header>
+
+  <main class="main">
+    <form id="f" class="stack-lg" onsubmit="event.preventDefault();location.href='treino.html'">
+      <a class="card card-pad row" href="timer.html" style="gap:12px">
+        <span class="avatar" style="border-radius:10px"><i data-lucide="timer"></i></span>
+        <div class="grow"><b>Usar o timer de rounds</b><div class="small muted">O treino é preenchido sozinho ao terminar</div></div>
+        <i data-lucide="chevron-right"></i>
+      </a>
+
+      <fieldset class="stack" style="border:0;padding:0;margin:0">
+        <legend class="small" style="font-weight:600;margin-bottom:8px">Modalidade</legend>
+        <div class="seg">
+          <label><input type="radio" name="kind" checked><span>Gi</span></label>
+          <label><input type="radio" name="kind"><span>No-gi</span></label>
+          <label><input type="radio" name="kind"><span>Open mat</span></label>
+          <label><input type="radio" name="kind"><span>Drill</span></label>
+          <label><input type="radio" name="kind"><span>Particular</span></label>
+          <label><input type="radio" name="kind"><span>Competição</span></label>
+          <label><input type="radio" name="kind"><span>Dando aula</span></label>
+        </div>
+      </fieldset>
+
+      <div class="grid-2">
+        <label class="field">Data<input class="input" type="date" value="2026-10-15"></label>
+        <label class="field">Início<input class="input" type="time" value="19:30"></label>
+      </div>
+
+      <div class="grid-2">
+        <div class="field small" style="display:flex;flex-direction:column;gap:6px;font-weight:500">Duração (min)
+          <div class="stepper"><button type="button" data-step="-15">−</button><output data-min="15">90</output><button type="button" data-step="15">+</button></div>
+        </div>
+        <div class="field small" style="display:flex;flex-direction:column;gap:6px;font-weight:500">Rolas
+          <div class="stepper"><button type="button" data-step="-1">−</button><output>6</output><button type="button" data-step="1">+</button></div>
+        </div>
+      </div>
+
+      <div class="field rpe stack" style="gap:6px">
+        <div class="row between"><span style="font-weight:600">Intensidade (esforço percebido)</span><b id="rpe-out" class="num"></b></div>
+        <input type="range" min="1" max="10" value="8" data-rpe="#rpe-out" aria-label="Intensidade de 1 a 10">
+        <div class="rpe-scale"><span>Leve</span><span>Moderado</span><span>Puxado</span><span>Máximo</span></div>
+        <p class="hint">Usado para calcular a sua carga semanal. Não precisa de relógio nem de cinta cardíaca.</p>
+      </div>
+
+      <label class="field">Academia
+        <select class="input"><option>Equipe Tatame Centro</option><option>Outra academia…</option><option>Sem academia (em casa, viagem)</option></select>
+      </label>
+
+      <label class="field">Título<input class="input" placeholder="Aula de guarda + 6 rolas"></label>
+
+      <div class="field stack" style="gap:6px">
+        <span style="font-weight:600">Técnicas da aula</span>
+        <div class="chips">
+          <span class="chip">Armlock da guarda ✕</span><span class="chip">Raspagem de tesoura ✕</span>
+          <button type="button" class="btn btn-sm" style="height:26px"><i data-lucide="plus"></i>Adicionar</button>
+        </div>
+      </div>
+
+      <label class="field">Notas
+        <textarea class="input" placeholder="O que funcionou, o que travou, o que estudar…"></textarea>
+      </label>
+
+      <details class="card">
+        <summary class="card-pad row between" style="cursor:pointer;list-style:none">
+          <span class="row"><i data-lucide="swords"></i><b>Rolas em detalhe</b><span class="badge">opcional</span></span>
+          <i data-lucide="chevron-down"></i>
+        </summary>
+        <hr class="divider">
+        <div class="list">
+          <div><span class="avatar avatar-sm">RL</span><div class="grow"><b>Rafael Lima</b><div class="tiny muted">Azul · finalizei com armlock</div></div><span class="badge" style="color:var(--success)">vitória</span></div>
+          <div><span class="avatar avatar-sm">CF</span><div class="grow"><b>Carla Freitas</b><div class="tiny muted">Marrom · fui finalizado no triângulo</div></div><span class="badge badge-accent">finalizado</span></div>
+          <div><button type="button" class="btn btn-sm btn-block"><i data-lucide="plus"></i>Adicionar rola</button></div>
+        </div>
+      </details>
+
+      <fieldset class="stack" style="border:0;padding:0;margin:0">
+        <legend class="small" style="font-weight:600;margin-bottom:8px">Quem pode ver</legend>
+        <div class="seg">
+          <label><input type="radio" name="vis"><span><i data-lucide="globe"></i>Todos</span></label>
+          <label><input type="radio" name="vis" checked><span><i data-lucide="users"></i>Seguidores</span></label>
+          <label><input type="radio" name="vis"><span><i data-lucide="lock"></i>Só eu</span></label>
+        </div>
+      </fieldset>
+
+      <button class="btn btn-primary btn-lg btn-block">Salvar treino</button>
+    </form>
+  </main>
+</div>
+</body>
+</html>

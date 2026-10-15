@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Configurações · tatame</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body data-page="config" data-shell="app">
+<div class="app">
+  <header class="topbar">
+    <a class="btn btn-ghost btn-icon hidden-desktop" href="perfil.html" aria-label="Voltar"><i data-lucide="arrow-left"></i></a>
+    <h1 class="grow">Configurações</h1>
+  </header>
+
+  <main class="main stack-lg">
+    <section class="stack" style="gap:8px">
+      <h3 class="small muted">Conta</h3>
+      <div class="card list">
+        <a href="#"><i data-lucide="user"></i><span class="grow">Perfil, faixa e academia</span><i data-lucide="chevron-right"></i></a>
+        <a href="#"><i data-lucide="mail"></i><span class="grow">E-mail <span class="muted small">ana@…</span></span><i data-lucide="chevron-right"></i></a>
+        <a href="#"><i data-lucide="link"></i><span class="grow">Contas conectadas <span class="muted small">Google</span></span><i data-lucide="chevron-right"></i></a>
+      </div>
+    </section>
+
+    <section class="stack" style="gap:8px">
+      <h3 class="small muted">Privacidade</h3>
+      <div class="card list">
+        <div><div class="grow"><b>Visibilidade padrão dos treinos</b></div><select class="input" style="width:auto;height:32px"><option>Seguidores</option><option>Todos</option><option>Só eu</option></select></div>
+        <div><div class="grow"><b>Aprovar novos seguidores</b><div class="tiny muted">Perfil fechado</div></div><label class="switch"><input type="checkbox"><span></span></label></div>
+        <div><div class="grow"><b>Aparecer na busca e nas sugestões</b></div><label class="switch"><input type="checkbox" checked><span></span></label></div>
+        <div><div class="grow"><b>Aparecer no ranking da academia</b></div><label class="switch"><input type="checkbox" checked><span></span></label></div>
+        <a href="#"><div class="grow"><b>Mudar visibilidade de treinos antigos</b><div class="tiny muted">Aplicar uma regra a todos os treinos já registrados</div></div><i data-lucide="chevron-right"></i></a>
+        <a href="#"><div class="grow"><b>Pessoas bloqueadas</b></div><span class="small muted">0</span><i data-lucide="chevron-right"></i></a>
+      </div>
+    </section>
+
+    <section class="stack" style="gap:8px">
+      <h3 class="small muted">Notificações</h3>
+      <div class="card list">
+        <div><span class="grow">Oss e comentários</span><label class="switch"><input type="checkbox" checked><span></span></label></div>
+        <div><span class="grow">Novos seguidores</span><label class="switch"><input type="checkbox" checked><span></span></label></div>
+        <div><span class="grow">Avisos da academia</span><label class="switch"><input type="checkbox" checked><span></span></label></div>
+        <div><span class="grow">Lembrete se não treinar há 5 dias</span><label class="switch"><input type="checkbox"><span></span></label></div>
+      </div>
+    </section>
+
+    <section class="stack" style="gap:8px">
+      <h3 class="small muted">Preferências</h3>
+      <div class="card list">
+        <div><span class="grow">Tema</span><div class="tabs" style="width:210px"><a href="#">Claro</a><a href="#">Escuro</a><a href="#" aria-selected="true">Sistema</a></div></div>
+        <div><span class="grow">Unidade de peso</span><div class="tabs" style="width:120px"><a href="#" aria-selected="true">kg</a><a href="#">lb</a></div></div>
+        <div><span class="grow">Idioma</span><select class="input" style="width:auto;height:32px"><option>Português</option><option>English</option><option>Español</option></select></div>
+      </div>
+    </section>
+
+    <section class="stack" style="gap:8px">
+      <h3 class="small muted">Seus dados</h3>
+      <div class="card list">
+        <a href="#"><i data-lucide="download"></i><span class="grow">Baixar meus dados (JSON/CSV)</span><i data-lucide="chevron-right"></i></a>
+        <a href="#"><i data-lucide="log-out"></i><span class="grow">Sair</span></a>
+        <a href="#" style="color:var(--accent)"><i data-lucide="trash-2"></i><span class="grow">Apagar conta e todos os dados</span></a>
+      </div>
+      <p class="tiny muted">tatame v0.1 · open source (AGPL-3.0) · <a href="apoie.html" style="text-decoration:underline">apoie o projeto</a></p>
+    </section>
+  </main>
+</div>
+</body>
+</html>

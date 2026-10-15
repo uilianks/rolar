@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Timer de rounds · tatame</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js" defer></script>
+<script src="app.js" defer></script>
+<style>
+  .ring { position: relative; width: min(78vw, 320px); aspect-ratio: 1; margin: 8px auto; }
+  .ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .ring circle { fill: none; stroke-width: 10; }
+  .ring .track { stroke: var(--muted); }
+  .ring .bar { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset .3s linear; }
+  .ring.rest .bar { stroke: var(--success); }
+  .ring-center { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 4px; }
+  .clock { font-size: clamp(48px, 16vw, 72px); font-weight: 700; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+  .round-dots { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
+  .round-dots i { width: 22px; height: 6px; border-radius: 999px; background: var(--border); }
+  .round-dots i.done { background: var(--fg); }
+  .round-dots i.now { background: var(--accent); }
+</style>
+</head>
+<body data-page="timer" data-shell="app">
+<div class="app">
+  <header class="topbar">
+    <a class="btn btn-ghost btn-icon" href="feed.html" aria-label="Voltar"><i data-lucide="arrow-left"></i></a>
+    <h1 class="grow">Timer de rounds</h1>
+    <button class="btn btn-ghost btn-icon" aria-label="Som"><i data-lucide="volume-2"></i></button>
+  </header>
+
+  <main class="main stack-lg" style="max-width:480px">
+    <div class="seg" style="justify-content:center">
+      <label><input type="radio" name="p" checked><span>5 min / 1 min</span></label>
+      <label><input type="radio" name="p"><span>6 / 1</span></label>
+      <label><input type="radio" name="p"><span>10 / 2</span></label>
+      <label><input type="radio" name="p"><span><i data-lucide="sliders-horizontal"></i>Personalizar</span></label>
+    </div>
+
+    <div class="ring" id="ring">
+      <svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="52"/><circle class="bar" id="bar" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="0"/></svg>
+      <div class="ring-center">
+        <span class="badge badge-accent badge-dot" id="phase" style="justify-self:center">ROLA</span>
+        <span class="clock" id="clock">05:00</span>
+        <span class="muted" id="round">Round 3 de 6</span>
+      </div>
+    </div>
+
+    <div class="round-dots"><i class="done"></i><i class="done"></i><i class="now"></i><i></i><i></i><i></i></div>
+
+    <div class="row" style="justify-content:center;gap:12px">
+      <button class="btn btn-lg btn-icon" aria-label="Reiniciar round" style="width:52px;height:52px;border-radius:50%"><i data-lucide="rotate-ccw"></i></button>
+      <button class="btn btn-primary btn-lg" id="play" style="width:120px;height:64px;border-radius:999px"><i data-lucide="play"></i>Iniciar</button>
+      <button class="btn btn-lg btn-icon" aria-label="Pular" style="width:52px;height:52px;border-radius:50%"><i data-lucide="skip-forward"></i></button>
+    </div>
+
+    <div class="grid-2">
+      <div class="card kpi"><div class="label"><i data-lucide="clock"></i>Tempo total</div><div class="value num">17:42</div></div>
+      <div class="card kpi"><div class="label"><i data-lucide="swords"></i>Rolas</div><div class="value num">2</div></div>
+    </div>
+
+    <a class="btn btn-block btn-lg" href="registrar.html"><i data-lucide="flag"></i>Encerrar e registrar treino</a>
+    <p class="wf-note">Ao encerrar, abre "Registrar treino" já preenchido com duração, nº de rolas e modalidade. No app: tela sempre acesa, vibração e apito no fim de cada round, funciona com a tela bloqueada (notificação persistente).</p>
+  </main>
+</div>
+<script>
+  // Demonstração: contagem regressiva do round (5:00) e descanso (1:00).
+  const ROUND = 300, REST = 60, C = 326.7;
+  let left = ROUND, resting = false, timer = null;
+  const $ = (id) => document.getElementById(id);
+  function draw() {
+    const total = resting ? REST : ROUND;
+    $("clock").textContent = `${String(Math.floor(left / 60)).padStart(2, "0")}:${String(left % 60).padStart(2, "0")}`;
+    $("bar").style.strokeDashoffset = C * (1 - left / total);
+    $("phase").textContent = resting ? "DESCANSO" : "ROLA";
+    $("ring").classList.toggle("rest", resting);
+  }
+  $("play").addEventListener("click", () => {
+    if (timer) { clearInterval(timer); timer = null; $("play").innerHTML = "Retomar"; return; }
+    $("play").innerHTML = "Pausar";
+    timer = setInterval(() => {
+      left -= 1;
+      if (left < 0) { resting = !resting; left = resting ? REST : ROUND; }
+      draw();
+    }, 1000);
+  });
+  draw();
+</script>
+</body>
+</html>

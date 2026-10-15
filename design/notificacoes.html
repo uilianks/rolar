@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Notificações · tatame</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body data-page="notificacoes" data-shell="app">
+<div class="app">
+  <header class="topbar">
+    <h1 class="grow">Notificações</h1>
+    <button class="btn btn-ghost btn-sm">Marcar todas como lidas</button>
+  </header>
+
+  <main class="main stack-lg">
+    <div class="tabs"><a href="#" aria-selected="true">Todas</a><a href="#">Menções</a><a href="#">Academia</a></div>
+
+    <section class="card">
+      <div class="card-head"><span class="small muted">Hoje</span></div>
+      <div class="list">
+        <div style="background:color-mix(in srgb,var(--accent) 6%,transparent)"><span class="avatar-stack"><span class="avatar avatar-sm">RL</span><span class="avatar avatar-sm">JM</span></span><div class="grow"><b>Rafael Lima</b> e mais 11 deram <b>Oss</b> no seu treino "Aula de guarda + 6 rolas"<div class="tiny muted">20 min</div></div><span class="badge-dot" style="color:var(--accent)"></span></div>
+        <div style="background:color-mix(in srgb,var(--accent) 6%,transparent)"><span class="avatar avatar-sm">MR</span><div class="grow"><b>Prof. Marcos Ribeiro</b> comentou: "Na passagem, cotovelo colado no joelho…"<div class="tiny muted">1 h</div></div><span class="badge-dot" style="color:var(--accent)"></span></div>
+        <div style="background:color-mix(in srgb,var(--accent) 6%,transparent)"><span class="avatar avatar-sm" style="border-radius:8px"><i data-lucide="badge-check"></i></span><div class="grow">Sua graduação <b>Roxa · 2º grau</b> foi confirmada<div class="tiny muted">3 h</div></div><span class="badge-dot" style="color:var(--accent)"></span></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><span class="small muted">Esta semana</span></div>
+      <div class="list">
+        <div><span class="avatar avatar-sm">PT</span><div class="grow"><b>Pedro Tavares</b> começou a te seguir<div class="tiny muted">2 dias</div></div><button class="btn btn-sm">Seguir de volta</button></div>
+        <div><span class="avatar avatar-sm" style="border-radius:8px">ETC</span><div class="grow"><b>Equipe Tatame Centro</b> publicou um aviso: "Graduação dia 30/11"<div class="tiny muted">2 dias</div></div></div>
+        <div><span class="avatar avatar-sm" style="border-radius:8px"><i data-lucide="flame"></i></span><div class="grow">Você completou <b>6 semanas seguidas</b> batendo a meta. Oss!<div class="tiny muted">4 dias</div></div></div>
+      </div>
+    </section>
+
+    <!-- Empty State (como aparece para conta nova) -->
+    <section class="card empty">
+      <div class="icon"><i data-lucide="bell-off"></i></div>
+      <h3>Nada por aqui ainda</h3>
+      <p class="small muted" style="max-width:320px">Quando alguém der Oss, comentar ou a sua academia publicar um aviso, aparece aqui.</p>
+      <a class="btn btn-sm" href="academia.html" style="margin-top:6px">Encontrar minha academia</a>
+      <span class="tiny muted">[estado vazio — conta nova]</span>
+    </section>
+  </main>
+  <div class="toast" role="status"><i data-lucide="check-circle-2"></i>Treino salvo. Oss! <a href="treino.html" style="text-decoration:underline;margin-left:4px">Ver</a></div>
+</div>
+</body>
+</html>

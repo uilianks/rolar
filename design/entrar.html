@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Entrar · tatame</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js" defer></script>
+<script src="app.js" defer></script>
+<style>
+  .auth { min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; }
+  .auth .card { width: 100%; max-width: 400px; padding: 28px 24px; }
+  .or { display: flex; align-items: center; gap: 10px; color: var(--muted-fg); font-size: 12px; }
+  .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+</style>
+</head>
+<body data-page="entrar">
+<main class="auth">
+  <div class="stack-lg" style="width:100%;max-width:400px">
+    <a class="brand" href="landing.html" style="justify-content:center;padding:0"><span class="brand-mark">t</span>tatame</a>
+
+    <!-- Estado 1: pedir e-mail -->
+    <section class="card stack-lg">
+      <div class="stack" style="gap:4px;text-align:center">
+        <h1>Entrar ou criar conta</h1>
+        <p class="muted">Sem senha: enviamos um link para o seu e-mail.</p>
+      </div>
+      <button class="btn btn-lg btn-block"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.2-2.1 3.5-5.1 3.5-8.7z"/><path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-2.9l-3.9-3c-1.1.7-2.5 1.2-4.1 1.2-3.1 0-5.8-2.1-6.7-5H1.3v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.3 14.3a7.2 7.2 0 0 1 0-4.6V6.6H1.3a12 12 0 0 0 0 10.8l4-3.1z"/><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.3 6.6l4 3.1c.9-2.9 3.6-4.9 6.7-4.9z"/></svg>Continuar com Google</button>
+      <div class="or">ou</div>
+      <form class="stack" onsubmit="event.preventDefault();document.getElementById('sent').hidden=false;this.closest('section').hidden=true">
+        <label class="field">E-mail<input class="input" type="email" placeholder="voce@email.com" required autocomplete="email"></label>
+        <button class="btn btn-primary btn-lg btn-block">Enviar link de acesso</button>
+      </form>
+      <p class="tiny muted" style="text-align:center">Ao continuar você aceita os <a href="#" style="text-decoration:underline">Termos</a> e a <a href="#" style="text-decoration:underline">Política de Privacidade</a>.</p>
+    </section>
+
+    <!-- Estado 2: link enviado -->
+    <section class="card empty" id="sent" hidden>
+      <div class="icon"><i data-lucide="mail-check"></i></div>
+      <h2>Confira seu e-mail</h2>
+      <p class="muted">Enviamos um link para <b style="color:var(--fg)">voce@email.com</b>. Ele vale por 10 minutos.</p>
+      <div class="row" style="margin-top:8px"><button class="btn btn-sm">Reenviar (0:45)</button><a class="btn btn-sm btn-ghost" href="entrar.html">Usar outro e-mail</a></div>
+      <a class="btn btn-primary btn-sm" href="onboarding.html" style="margin-top:12px">[wireframe] simular clique no link →</a>
+    </section>
+  </div>
+</main>
+</body>
+</html>

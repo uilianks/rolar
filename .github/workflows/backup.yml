@@ -1,0 +1,32 @@
+# Daily encrypted database backup (the Neon free plan keeps only hours of history).
+# Secrets: DATABASE_URL (Neon, read access is enough) and AGE_RECIPIENT (public key from `age-keygen`).
+# The dump is encrypted before upload because artifacts of a public repository are downloadable.
+name: Backup
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install pg_dump 17 and age
+        run: |
+          sudo apt-get install -y postgresql-common age
+          yes '' | sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
+          sudo apt-get install -y postgresql-client-17
+      - name: Dump and encrypt
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          AGE_RECIPIENT: ${{ secrets.AGE_RECIPIENT }}
+        run: |
+          set -euo pipefail
+          /usr/lib/postgresql/17/bin/pg_dump "$DATABASE_URL" --format=custom --no-owner \
+            | age -r "$AGE_RECIPIENT" > "tatame-$(date -u +%F).dump.age"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: db-backup
+          path: "*.dump.age"
+          retention-days: 30

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Progresso · tatame</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body data-page="progresso" data-shell="app">
+<div class="app">
+  <header class="topbar">
+    <h1 class="grow">Progresso</h1>
+    <div class="tabs" style="width:220px"><a href="#">Mês</a><a href="#" aria-selected="true">Ano</a><a href="#">Tudo</a></div>
+  </header>
+
+  <main class="main wide stack-lg">
+    <section class="grid-4">
+      <div class="card kpi"><div class="label"><i data-lucide="calendar-check"></i>Treinos</div><div class="value num">142</div><div class="delta">+18% vs 2025</div></div>
+      <div class="card kpi"><div class="label"><i data-lucide="clock"></i>Horas no tatame</div><div class="value num">198h</div><div class="delta">+22h</div></div>
+      <div class="card kpi"><div class="label"><i data-lucide="flame"></i>Sequência</div><div class="value num">6 sem</div><div class="small muted">recorde: 11</div></div>
+      <div class="card kpi"><div class="label"><i data-lucide="swords"></i>Rolas</div><div class="value num">811</div><div class="delta down">−4% vs 2025</div></div>
+    </section>
+
+    <!-- Calendário (Calendars / heatmap de contribuições) -->
+    <section class="card">
+      <div class="card-head"><h3>Dias no tatame</h3><span class="small muted">últimos 6 meses</span></div>
+      <div class="card-pad stack">
+        <div class="heatmap" data-heatmap="26" aria-label="Calendário de treinos"></div>
+        <div class="row between">
+          <span class="small muted">Mais treinos às terças e quintas</span>
+          <div class="legend">menos<i style="background:var(--heat-0)"></i><i style="background:var(--heat-1)"></i><i style="background:var(--heat-2)"></i><i style="background:var(--heat-3)"></i><i style="background:var(--heat-4)"></i>mais</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="grid-2" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
+      <!-- Carga semanal (Relative Effort grátis) -->
+      <section class="card">
+        <div class="card-head">
+          <h3>Carga semanal</h3>
+          <span class="badge" style="color:var(--success)"><span class="badge-dot"></span>Ideal</span>
+        </div>
+        <div class="card-pad stack">
+          <div class="bars">
+            <div><span style="height:42%"></span><small>01/9</small></div>
+            <div><span style="height:58%"></span><small>08/9</small></div>
+            <div><span style="height:35%"></span><small>15/9</small></div>
+            <div><span style="height:66%"></span><small>22/9</small></div>
+            <div><span style="height:61%"></span><small>29/9</small></div>
+            <div><span style="height:74%"></span><small>06/10</small></div>
+            <div><span class="hi" style="height:70%"></span><small>esta</small></div>
+          </div>
+          <p class="small muted">Duração × intensidade. Esta semana: <b style="color:var(--fg)">640</b> — dentro da faixa das suas últimas 4 semanas (520–760). Bom momento para manter o ritmo.</p>
+        </div>
+      </section>
+
+      <!-- Distribuição -->
+      <section class="card">
+        <div class="card-head"><h3>Como você treina</h3></div>
+        <div class="card-pad stack">
+          <div class="zone"><span style="width:58%;background:var(--fg)"></span><span style="width:24%;background:var(--accent)"></span><span style="width:12%;background:var(--ring)"></span><span style="width:6%;background:var(--warn)"></span></div>
+          <div class="list" style="margin:0 -16px">
+            <div><span style="width:10px;height:10px;border-radius:3px;background:var(--fg)"></span><span class="grow">Gi</span><b class="num">58%</b></div>
+            <div><span style="width:10px;height:10px;border-radius:3px;background:var(--accent)"></span><span class="grow">No-gi</span><b class="num">24%</b></div>
+            <div><span style="width:10px;height:10px;border-radius:3px;background:var(--ring)"></span><span class="grow">Open mat</span><b class="num">12%</b></div>
+            <div><span style="width:10px;height:10px;border-radius:3px;background:var(--warn)"></span><span class="grow">Competição</span><b class="num">6%</b></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Finalizações (fase 2) -->
+      <section class="card">
+        <div class="card-head"><h3>Finalizações</h3><span class="badge">fase 2</span></div>
+        <div class="card-pad stack">
+          <div class="row between"><span class="small muted">Aplicadas</span><b class="num">64</b></div>
+          <div class="row"><span class="grow small">Armlock</span><div class="progress grow"><span style="width:80%;background:var(--success)"></span></div><b class="num small">22</b></div>
+          <div class="row"><span class="grow small">Mata-leão</span><div class="progress grow"><span style="width:55%;background:var(--success)"></span></div><b class="num small">15</b></div>
+          <div class="row"><span class="grow small">Triângulo</span><div class="progress grow"><span style="width:35%;background:var(--success)"></span></div><b class="num small">10</b></div>
+          <hr class="divider">
+          <div class="row between"><span class="small muted">Sofridas</span><b class="num">41</b></div>
+          <div class="row"><span class="grow small">Estrangulamento de gola</span><div class="progress grow"><span style="width:60%;background:var(--accent)"></span></div><b class="num small">13</b></div>
+        </div>
+      </section>
+
+      <!-- Metas -->
+      <section class="card">
+        <div class="card-head"><h3>Metas</h3><button class="btn btn-sm"><i data-lucide="plus"></i>Nova</button></div>
+        <div class="card-pad stack-lg">
+          <div class="stack" style="gap:6px"><div class="row between"><b>4 treinos por semana</b><span class="small muted">2/4</span></div><div class="progress"><span style="width:50%"></span></div></div>
+          <div class="stack" style="gap:6px"><div class="row between"><b>20h em outubro</b><span class="small muted">11h/20h</span></div><div class="progress"><span style="width:55%"></span></div></div>
+          <div class="stack" style="gap:6px"><div class="row between"><b>200 treinos em 2026</b><span class="small muted">142/200</span></div><div class="progress"><span style="width:71%"></span></div></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Diário (lista) -->
+    <section class="card">
+      <div class="card-head"><h3>Diário</h3><a class="small muted" href="#">Exportar CSV</a></div>
+      <div class="list">
+        <a href="treino.html"><span class="badge" style="width:54px;justify-content:center">Gi</span><div class="grow"><b>Aula de guarda + 6 rolas</b><div class="tiny muted">Hoje · 1h 30min · intensidade 8</div></div><i data-lucide="chevron-right"></i></a>
+        <a href="treino.html"><span class="badge" style="width:54px;justify-content:center">No-gi</span><div class="grow"><b>Leglocks</b><div class="tiny muted">Seg, 13/10 · 1h · intensidade 6</div></div><i data-lucide="chevron-right"></i></a>
+        <a href="treino.html"><span class="badge" style="width:54px;justify-content:center">Open</span><div class="grow"><b>Open mat de sábado</b><div class="tiny muted">Sáb, 11/10 · 2h · intensidade 7</div></div><i data-lucide="chevron-right"></i></a>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

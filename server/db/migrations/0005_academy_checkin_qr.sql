@@ -1,0 +1,1 @@
+ALTER TABLE "academies" ADD COLUMN "checkin_token" text DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL;

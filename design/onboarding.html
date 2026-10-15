@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Boas-vindas · tatame</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js" defer></script>
+<script src="app.js" defer></script>
+<style>
+  .onb { max-width: 460px; margin: 0 auto; padding: 24px 16px 40px; min-height: 100dvh; display: flex; flex-direction: column; gap: 24px; }
+  .step[hidden] { display: none; }
+  .belt-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+  .belt-pick label { position: relative; }
+  .belt-pick input { position: absolute; opacity: 0; }
+  .belt-pick span { display: flex; flex-direction: column; gap: 10px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; cursor: pointer; font-weight: 500; }
+  .belt-pick input:checked + span { border-color: var(--fg); box-shadow: 0 0 0 1px var(--fg); }
+</style>
+</head>
+<body data-page="onboarding">
+<main class="onb">
+  <div class="stack" style="gap:8px">
+    <div class="steps" id="bar"><i class="on"></i><i></i><i></i><i></i></div>
+    <span class="tiny muted" id="count">Passo 1 de 4</span>
+  </div>
+
+  <!-- 1. Nome e idade -->
+  <section class="step stack-lg" data-n="1">
+    <div class="stack" style="gap:4px"><h1>Oss! Como te chamam no tatame?</h1><p class="muted">Isso aparece no seu perfil.</p></div>
+    <label class="field">Nome<input class="input" value="Ana Souza"></label>
+    <label class="field">Nome de usuário<input class="input" value="anasouza"><span class="hint">tatame.app/@anasouza</span></label>
+    <label class="field">Ano de nascimento<input class="input" type="number" inputmode="numeric" placeholder="1995"><span class="hint">Não aparece para ninguém. É preciso ter 13 anos ou mais. Menores de 18 ficam com perfil privado.</span></label>
+  </section>
+
+  <!-- 2. Faixa -->
+  <section class="step stack-lg" data-n="2" hidden>
+    <div class="stack" style="gap:4px"><h1>Qual é a sua faixa?</h1><p class="muted">Você pode registrar o histórico de graduações depois.</p></div>
+    <div class="belt-pick">
+      <label><input type="radio" name="b"><span><span class="belt"><span class="tip"></span></span>Branca</span></label>
+      <label><input type="radio" name="b"><span><span class="belt blue"><span class="tip"></span></span>Azul</span></label>
+      <label><input type="radio" name="b" checked><span><span class="belt purple"><span class="tip"></span></span>Roxa</span></label>
+      <label><input type="radio" name="b"><span><span class="belt brown"><span class="tip"></span></span>Marrom</span></label>
+      <label><input type="radio" name="b"><span><span class="belt black"><span class="tip"></span></span>Preta</span></label>
+      <label><input type="radio" name="b"><span><span class="belt" style="--c:#a3e635"><span class="tip"></span></span>Kids / outra</span></label>
+    </div>
+    <div class="field small" style="display:flex;flex-direction:column;gap:6px;font-weight:500">Graus
+      <div class="seg"><label><input type="radio" name="g"><span>0</span></label><label><input type="radio" name="g"><span>1</span></label><label><input type="radio" name="g" checked><span>2</span></label><label><input type="radio" name="g"><span>3</span></label><label><input type="radio" name="g"><span>4</span></label></div>
+    </div>
+    <label class="field">Treina desde<input class="input" type="month" value="2020-02"></label>
+  </section>
+
+  <!-- 3. Academia -->
+  <section class="step stack-lg" data-n="3" hidden>
+    <div class="stack" style="gap:4px"><h1>Onde você treina?</h1><p class="muted">O professor aprova a sua entrada.</p></div>
+    <div class="row"><input class="input grow" placeholder="Buscar academia ou cidade" value="tatame centro"><button class="btn btn-icon" aria-label="Ler QR code da academia"><i data-lucide="scan-qr-code"></i></button></div>
+    <div class="card list">
+      <label style="cursor:pointer"><span class="avatar avatar-sm" style="border-radius:8px">ETC</span><div class="grow"><b>Equipe Tatame Centro</b><div class="tiny muted">São Paulo, SP · 84 membros</div></div><input type="radio" name="a" checked></label>
+      <label style="cursor:pointer"><span class="avatar avatar-sm" style="border-radius:8px">TC</span><div class="grow"><b>Tatame Centro Norte</b><div class="tiny muted">São Paulo, SP · 12 membros</div></div><input type="radio" name="a"></label>
+    </div>
+    <div class="row between"><a class="small" href="#" style="text-decoration:underline">Criar uma academia</a><a class="small muted" href="#">Pular por enquanto</a></div>
+  </section>
+
+  <!-- 4. Privacidade e meta -->
+  <section class="step stack-lg" data-n="4" hidden>
+    <div class="stack" style="gap:4px"><h1>Últimos ajustes</h1><p class="muted">Dá para mudar tudo depois nas configurações.</p></div>
+    <div class="card list">
+      <div><div class="grow"><b>Quem vê seus treinos por padrão</b><div class="tiny muted">Cada treino pode ter a sua própria regra</div></div><select class="input" style="width:auto;height:32px"><option>Seguidores</option><option>Todos</option><option>Só eu</option></select></div>
+      <div><div class="grow"><b>Aparecer na busca</b><div class="tiny muted">Outras pessoas podem te encontrar</div></div><label class="switch"><input type="checkbox" checked><span></span></label></div>
+    </div>
+    <div class="field small" style="display:flex;flex-direction:column;gap:6px;font-weight:500">Meta de treinos por semana
+      <div class="seg"><label><input type="radio" name="m"><span>2</span></label><label><input type="radio" name="m"><span>3</span></label><label><input type="radio" name="m" checked><span>4</span></label><label><input type="radio" name="m"><span>5+</span></label><label><input type="radio" name="m"><span>Sem meta</span></label></div>
+    </div>
+  </section>
+
+  <div class="row" style="margin-top:auto">
+    <button class="btn btn-lg" id="back" hidden>Voltar</button>
+    <button class="btn btn-primary btn-lg grow" id="next">Continuar</button>
+  </div>
+</main>
+<script>
+  let n = 1;
+  const steps = document.querySelectorAll(".step");
+  function show() {
+    steps.forEach((s) => (s.hidden = Number(s.dataset.n) !== n));
+    document.querySelectorAll("#bar i").forEach((b, i) => b.classList.toggle("on", i < n));
+    document.getElementById("count").textContent = `Passo ${n} de ${steps.length}`;
+    document.getElementById("back").hidden = n === 1;
+    document.getElementById("next").textContent = n === steps.length ? "Começar a treinar" : "Continuar";
+  }
+  document.getElementById("next").onclick = () => (n === steps.length ? (location.href = "feed.html") : (n++, show()));
+  document.getElementById("back").onclick = () => { n--; show(); };
+</script>
+</body>
+</html>

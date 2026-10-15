@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Feed · tatame</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body data-page="feed" data-shell="app">
+<div class="app">
+  <header class="topbar">
+    <span class="brand hidden-desktop" style="padding:0"><span class="brand-mark">t</span></span>
+    <h1 class="grow">Feed</h1>
+    <a class="btn btn-ghost btn-icon" href="timer.html" aria-label="Timer de rounds"><i data-lucide="timer"></i></a>
+    <a class="btn btn-ghost btn-icon" href="notificacoes.html" aria-label="Notificações"><i data-lucide="bell"></i></a>
+  </header>
+
+  <main class="main stack">
+    <!-- Resumo da semana (Stats & KPIs) -->
+    <section class="card card-pad stack" style="gap:10px">
+      <div class="row between">
+        <h3>Sua semana</h3>
+        <a class="small muted" href="progresso.html">Ver progresso →</a>
+      </div>
+      <div class="row" style="gap:6px">
+        <div class="grow stack" style="gap:4px;align-items:center"><span class="tiny muted">S</span><span class="avatar avatar-sm" style="background:var(--accent);color:#fff;border:0">✓</span></div>
+        <div class="grow stack" style="gap:4px;align-items:center"><span class="tiny muted">T</span><span class="avatar avatar-sm"></span></div>
+        <div class="grow stack" style="gap:4px;align-items:center"><span class="tiny muted">Q</span><span class="avatar avatar-sm" style="background:var(--accent);color:#fff;border:0">✓</span></div>
+        <div class="grow stack" style="gap:4px;align-items:center"><span class="tiny muted">Q</span><span class="avatar avatar-sm" style="border:2px solid var(--fg)" aria-label="hoje"></span></div>
+        <div class="grow stack" style="gap:4px;align-items:center"><span class="tiny muted">S</span><span class="avatar avatar-sm"></span></div>
+        <div class="grow stack" style="gap:4px;align-items:center"><span class="tiny muted">S</span><span class="avatar avatar-sm"></span></div>
+        <div class="grow stack" style="gap:4px;align-items:center"><span class="tiny muted">D</span><span class="avatar avatar-sm"></span></div>
+      </div>
+      <div class="row between small">
+        <span><b>2</b> de <b>4</b> treinos da meta</span>
+        <span class="muted">3h 10min no tatame · sequência de 6 semanas 🔥</span>
+      </div>
+      <div class="progress"><span style="width:50%"></span></div>
+    </section>
+
+    <div class="tabs" role="tablist">
+      <a href="#" aria-selected="true">Seguindo</a>
+      <a href="#">Minha academia</a>
+      <a href="#">Eu</a>
+    </div>
+
+    <!-- Post de treino -->
+    <article class="card">
+      <div class="post-head">
+        <span class="avatar">AS</span>
+        <div class="grow">
+          <div class="row"><b>Ana Souza</b><span class="belt purple"><span class="tip"><i></i><i></i></span></span></div>
+          <div class="small muted">Hoje, 19:30 · Equipe Tatame Centro</div>
+        </div>
+        <button class="btn btn-ghost btn-icon btn-sm" aria-label="Mais opções"><i data-lucide="ellipsis"></i></button>
+      </div>
+      <div class="post-body">
+        <a href="treino.html" class="post-title">Aula de guarda + 6 rolas</a>
+        <p class="muted">Finalmente encaixei o armlock da guarda fechada no rola com o pessoal da azul. Ainda preciso melhorar a postura na passagem.</p>
+        <div class="post-stats">
+          <div><span class="tiny">Modalidade</span><b>Gi</b></div>
+          <div><span class="tiny">Duração</span><b class="num">1h 30min</b></div>
+          <div><span class="tiny">Rolas</span><b class="num">6</b></div>
+          <div><span class="tiny">Intensidade</span><b class="num">8/10</b></div>
+        </div>
+        <div class="chips" style="margin-top:10px">
+          <span class="chip">Armlock da guarda</span><span class="chip">Raspagem de tesoura</span><span class="chip">+2</span>
+        </div>
+      </div>
+      <div class="post-actions">
+        <button class="btn btn-ghost btn-sm oss" aria-pressed="true"><i data-lucide="hand-heart"></i>Oss · <span data-count>12</span></button>
+        <a class="btn btn-ghost btn-sm" href="treino.html#comentarios"><i data-lucide="message-circle"></i>3</a>
+        <span class="grow"></span>
+        <button class="btn btn-ghost btn-sm" aria-label="Compartilhar"><i data-lucide="share-2"></i></button>
+      </div>
+    </article>
+
+    <!-- Graduação (marco) -->
+    <article class="card">
+      <div class="post-head">
+        <span class="avatar">RL</span>
+        <div class="grow">
+          <div class="row"><b>Rafael Lima</b></div>
+          <div class="small muted">Ontem · Equipe Tatame Centro</div>
+        </div>
+      </div>
+      <div class="post-body stack" style="gap:12px">
+        <div class="post-title">Graduado para a faixa azul 🎉</div>
+        <div class="card card-pad row" style="gap:16px;box-shadow:none;background:var(--muted)">
+          <span class="belt belt-lg"><span class="tip"><i></i><i></i><i></i><i></i></span></span>
+          <i data-lucide="arrow-right"></i>
+          <span class="belt belt-lg blue"><span class="tip"></span></span>
+        </div>
+        <div class="row small muted"><i data-lucide="badge-check"></i>Confirmado pelo prof. Marcos Ribeiro · 2 anos e 3 meses de branca · 312 treinos</div>
+      </div>
+      <div class="post-actions">
+        <button class="btn btn-ghost btn-sm oss" aria-pressed="false"><i data-lucide="hand-heart"></i>Oss · <span data-count>48</span></button>
+        <a class="btn btn-ghost btn-sm" href="#"><i data-lucide="message-circle"></i>15</a>
+      </div>
+    </article>
+
+    <!-- Treino sem descrição: post compacto -->
+    <article class="card">
+      <div class="post-head">
+        <span class="avatar">JM</span>
+        <div class="grow">
+          <div class="row"><b>João Mendes</b><span class="belt black"><span class="tip"><i></i></span></span></div>
+          <div class="small muted">Ontem, 07:00 · Open mat</div>
+        </div>
+      </div>
+      <div class="post-body">
+        <div class="post-stats" style="padding-top:0">
+          <div><span class="tiny">Modalidade</span><b>No-gi</b></div>
+          <div><span class="tiny">Duração</span><b class="num">1h</b></div>
+          <div><span class="tiny">Rolas</span><b class="num">8</b></div>
+          <div><span class="tiny">Intensidade</span><b class="num">6/10</b></div>
+        </div>
+      </div>
+      <div class="post-actions">
+        <button class="btn btn-ghost btn-sm oss" aria-pressed="false"><i data-lucide="hand-heart"></i>Oss · <span data-count>5</span></button>
+        <a class="btn btn-ghost btn-sm" href="#"><i data-lucide="message-circle"></i>0</a>
+      </div>
+    </article>
+
+    <!-- Sugestão (Onboarding / Empty-ish) -->
+    <section class="card">
+      <div class="card-head"><h3>Treinam na sua academia</h3><a class="small muted" href="academia.html">Ver todos</a></div>
+      <div class="list">
+        <div><span class="avatar avatar-sm">CF</span><div class="grow"><b>Carla Freitas</b><div class="tiny muted">Faixa marrom · 4 treinos esta semana</div></div><button class="btn btn-sm">Seguir</button></div>
+        <div><span class="avatar avatar-sm">PT</span><div class="grow"><b>Pedro Tavares</b><div class="tiny muted">Faixa branca · novo na academia</div></div><button class="btn btn-sm">Seguir</button></div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>tatame — seu diário de jiu-jitsu</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js" defer></script>
+<script src="app.js" defer></script>
+<style>
+  .site { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+  .site-nav { display: flex; align-items: center; gap: 8px; height: 64px; }
+  .hero { text-align: center; padding: 56px 0 40px; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+  .hero h1 { font-size: clamp(36px, 7vw, 64px); font-weight: 800; letter-spacing: -.045em; line-height: 1.02; max-width: 820px; }
+  .hero p { font-size: 17px; color: var(--muted-fg); max-width: 560px; }
+  .hero-bg { position: relative; overflow: hidden; }
+  .hero-bg::before { content: ""; position: absolute; inset: -40% -10% auto; height: 520px; background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 18%, transparent), transparent); z-index: -1; }
+  .mock { border: 1px solid var(--border); border-radius: 20px; padding: 12px; background: var(--muted); box-shadow: 0 30px 80px rgb(0 0 0 / .12); max-width: 900px; margin: 0 auto; }
+  .bento { display: grid; gap: 12px; grid-template-columns: 1fr; }
+  @media (min-width: 820px) { .bento { grid-template-columns: repeat(3, 1fr); } .bento .span2 { grid-column: span 2; } }
+  .bento .card { padding: 20px; display: flex; flex-direction: column; gap: 10px; min-height: 180px; }
+  .section { padding: 56px 0; }
+  .section-title { text-align: center; margin-bottom: 28px; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+  .section-title h2 { font-size: clamp(24px, 4vw, 34px); font-weight: 700; letter-spacing: -.035em; }
+  details.faq { border-bottom: 1px solid var(--border); padding: 14px 0; }
+  details.faq summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; justify-content: space-between; }
+  details.faq p { margin-top: 8px; color: var(--muted-fg); }
+  footer { border-top: 1px solid var(--border); padding: 28px 0 40px; }
+</style>
+</head>
+<body data-page="landing">
+<div class="site">
+  <nav class="site-nav">
+    <a class="brand grow" href="#" style="padding:0"><span class="brand-mark">t</span>tatame</a>
+    <a class="btn btn-ghost btn-sm hidden-mobile" href="#recursos">Recursos</a>
+    <a class="btn btn-ghost btn-sm hidden-mobile" href="apoie.html">Apoie</a>
+    <a class="btn btn-ghost btn-sm hidden-mobile" href="https://github.com/">GitHub</a>
+    <button class="btn btn-ghost btn-icon btn-sm" data-theme-toggle aria-label="Alternar tema"><i data-lucide="sun-moon"></i></button>
+    <a class="btn btn-primary btn-sm" href="entrar.html">Entrar</a>
+  </nav>
+</div>
+
+<header class="hero-bg">
+  <div class="site hero">
+    <a class="badge" href="apoie.html"><span class="badge-dot" style="color:var(--success)"></span>Grátis, open source e sem anúncios</a>
+    <h1>Cada treino conta. Agora você vê a sua evolução.</h1>
+    <p>Registre seus treinos de jiu-jitsu em segundos, acompanhe horas de tatame, rolas e graduações, e treine junto com a sua academia.</p>
+    <div class="row wrap" style="justify-content:center">
+      <a class="btn btn-primary btn-lg" href="entrar.html">Começar agora</a>
+      <a class="btn btn-lg" href="#"><i data-lucide="smartphone"></i>Baixar para Android</a>
+    </div>
+    <p class="small muted" style="font-size:12px">Funciona no navegador e no Android. iPhone em breve.</p>
+  </div>
+  <div class="site" style="padding-bottom:24px">
+    <div class="mock">
+      <div class="grid-4">
+        <div class="card kpi"><div class="label">Treinos em 2026</div><div class="value num">142</div></div>
+        <div class="card kpi"><div class="label">Horas no tatame</div><div class="value num">198h</div></div>
+        <div class="card kpi"><div class="label">Sequência</div><div class="value num">6 sem</div></div>
+        <div class="card kpi"><div class="label">Faixa</div><div style="margin-top:12px"><span class="belt belt-lg purple"><span class="tip"><i></i><i></i></span></span></div></div>
+      </div>
+      <div class="card card-pad" style="margin-top:12px"><div class="heatmap" data-heatmap="40"></div></div>
+    </div>
+  </div>
+</header>
+
+<main class="site">
+  <!-- Features (bento) -->
+  <section class="section" id="recursos">
+    <div class="section-title"><span class="badge">Recursos</span><h2>Feito para quem vive o tatame</h2></div>
+    <div class="bento">
+      <div class="card span2"><i data-lucide="calendar-check"></i><h3>Diário de treinos em 15 segundos</h3><p class="muted">Modalidade, duração, rolas e intensidade. Sem relógio, sem GPS — só o que importa no jiu-jitsu.</p><div class="seg" style="margin-top:auto"><label><input type="radio" checked><span>Gi</span></label><label><input type="radio"><span>No-gi</span></label><label><input type="radio"><span>Open mat</span></label></div></div>
+      <div class="card"><i data-lucide="timer"></i><h3>Timer de rounds</h3><p class="muted">5/1, 6/1 ou do seu jeito. Ao terminar, o treino já está registrado.</p><div class="value num" style="font-size:36px;font-weight:700;margin-top:auto">04:12</div></div>
+      <div class="card"><i data-lucide="award"></i><h3>Graduações confirmadas</h3><p class="muted">Seu histórico de faixas e graus, validado pelo professor.</p><div class="row" style="margin-top:auto"><span class="belt"><span class="tip"></span></span><span class="belt blue"><span class="tip"></span></span><span class="belt purple"><span class="tip"><i></i></span></span></div></div>
+      <div class="card"><i data-lucide="activity"></i><h3>Carga semanal</h3><p class="muted">Duração × intensidade mostra quando puxar e quando descansar. Grátis, para todos.</p></div>
+      <div class="card"><i data-lucide="users"></i><h3>Sua academia aqui</h3><p class="muted">Grade de aulas, avisos, check-in por QR e ranking de presença do mês.</p></div>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <section class="section" style="padding-top:0">
+    <div class="grid-4">
+      <div class="card kpi"><div class="label">Treinos registrados</div><div class="value num">—</div><div class="small muted">contador público</div></div>
+      <div class="card kpi"><div class="label">Academias</div><div class="value num">—</div></div>
+      <div class="card kpi"><div class="label">Horas de tatame</div><div class="value num">—</div></div>
+      <div class="card kpi"><div class="label">Custo para você</div><div class="value num">0 €</div></div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="section" style="padding-top:0">
+    <div class="section-title"><span class="badge">Depoimentos</span><h2>O que dizem no tatame</h2><p class="small muted">(placeholders até o beta)</p></div>
+    <div class="bento">
+      <figure class="card" style="margin:0"><p>"Pela primeira vez sei quantas horas treinei até a azul."</p><figcaption class="row small muted" style="margin-top:auto"><span class="avatar avatar-sm">A</span>Aluna, faixa azul</figcaption></figure>
+      <figure class="card" style="margin:0"><p>"O ranking de presença lotou o open mat de sábado."</p><figcaption class="row small muted" style="margin-top:auto"><span class="avatar avatar-sm">P</span>Professor, faixa preta</figcaption></figure>
+      <figure class="card" style="margin:0"><p>"Uso o timer todo treino e nem lembro de registrar — já vai sozinho."</p><figcaption class="row small muted" style="margin-top:auto"><span class="avatar avatar-sm">M</span>Aluno, faixa roxa</figcaption></figure>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section" style="max-width:720px;margin:0 auto;padding-top:0">
+    <div class="section-title"><h2>Perguntas frequentes</h2></div>
+    <details class="faq" open><summary>É grátis mesmo? <i data-lucide="chevron-down"></i></summary><p>Sim. Não tem plano pago nem anúncios. O projeto é open source (AGPL) e os custos de servidor são cobertos por doações.</p></details>
+    <details class="faq"><summary>Preciso de relógio ou cinta cardíaca? <i data-lucide="chevron-down"></i></summary><p>Não. A intensidade é o seu esforço percebido (1 a 10). Integração com Health Connect vem depois, opcional.</p></details>
+    <details class="faq"><summary>Quem vê os meus treinos? <i data-lucide="chevron-down"></i></summary><p>Você escolhe em cada treino: todos, seguidores ou só você. Peso e idade nunca são públicos.</p></details>
+    <details class="faq"><summary>Tem para iPhone? <i data-lucide="chevron-down"></i></summary><p>Por enquanto use pelo navegador do iPhone. O app iOS chega quando as doações cobrirem a conta da Apple.</p></details>
+    <details class="faq"><summary>Sou professor. Como coloco minha academia? <i data-lucide="chevron-down"></i></summary><p>Crie a academia no app e compartilhe o QR code com os alunos. Você aprova quem entra e confirma as graduações.</p></details>
+  </section>
+
+  <!-- CTA -->
+  <section class="section" style="padding-top:0">
+    <div class="card" style="padding:40px 20px;text-align:center;display:flex;flex-direction:column;gap:14px;align-items:center;background:var(--primary);color:var(--primary-fg);border:0">
+      <h2 style="font-size:28px">Oss! Bora registrar o treino de hoje?</h2>
+      <div class="row wrap" style="justify-content:center"><a class="btn btn-lg" href="entrar.html" style="background:var(--primary-fg);color:var(--primary);border:0">Criar conta grátis</a><a class="btn btn-lg btn-ghost" href="apoie.html" style="color:var(--primary-fg)"><i data-lucide="heart"></i>Apoiar o projeto</a></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="site row wrap between small muted">
+    <span class="brand" style="padding:0"><span class="brand-mark">t</span>tatame</span>
+    <span class="row wrap" style="gap:16px"><a href="#">Privacidade</a><a href="#">Termos</a><a href="apoie.html">Apoie</a><a href="#">Código-fonte (AGPL-3.0)</a></span>
+  </div>
+</footer>
+</body>
+</html>

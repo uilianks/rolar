@@ -1,0 +1,11 @@
+{
+  "name": "video",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "HYPERFRAMES_NO_TELEMETRY=1 npx --yes hyperframes@0.8.161 preview",
+    "check": "HYPERFRAMES_NO_TELEMETRY=1 npx --yes hyperframes@0.8.161 check",
+    "render": "HYPERFRAMES_NO_TELEMETRY=1 npx --yes hyperframes@0.8.161 render",
+    "publish": "HYPERFRAMES_NO_TELEMETRY=1 npx --yes hyperframes@0.8.161 publish"
+  }
+}

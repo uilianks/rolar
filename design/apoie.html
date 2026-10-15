@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Apoie · tatame</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js" defer></script>
+<script src="app.js" defer></script>
+<style>
+  .tiers { display: grid; gap: 12px; grid-template-columns: 1fr; }
+  @media (min-width: 760px) { .tiers { grid-template-columns: repeat(3, 1fr); } }
+  .tier { padding: 22px; display: flex; flex-direction: column; gap: 12px; }
+  .tier.featured { border-color: var(--fg); box-shadow: 0 0 0 1px var(--fg), var(--shadow); }
+  .price { font-size: 32px; font-weight: 800; letter-spacing: -.04em; }
+  .tier ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .tier li { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+</style>
+</head>
+<body data-page="apoie" data-shell="app">
+<div class="app">
+  <header class="topbar"><h1 class="grow">Apoie o projeto</h1></header>
+
+  <main class="main wide stack-lg">
+    <section class="stack" style="text-align:center;align-items:center;gap:10px;padding:16px 0">
+      <span class="badge"><i data-lucide="heart" style="width:12px;height:12px"></i>Open source · AGPL-3.0</span>
+      <h1 style="font-size:clamp(26px,5vw,38px);font-weight:800;letter-spacing:-.04em;max-width:640px">Sem anúncios. Sem paywall. Mantido por quem treina.</h1>
+      <p class="muted" style="max-width:520px">Todas as funções são grátis para todo mundo. As doações pagam servidor, banco de dados e as contas das lojas de apps.</p>
+    </section>
+
+    <!-- Transparência: meta do mês -->
+    <section class="card card-pad stack">
+      <div class="row between"><h3>Custos de outubro</h3><span class="small muted"><b style="color:var(--fg)">6 €</b> doados de 9 €</span></div>
+      <div class="progress" style="height:10px"><span style="width:67%;background:var(--accent)"></span></div>
+      <div class="list" style="margin:0 -16px">
+        <div><span class="grow">Hospedagem (Vercel)</span><span class="num">0 €</span><span class="badge">plano grátis</span></div>
+        <div><span class="grow">Banco de dados (Neon)</span><span class="num">0 €</span><span class="badge">plano grátis</span></div>
+        <div><span class="grow">Domínio</span><span class="num">1 €/mês</span></div>
+        <div><span class="grow">Conta Apple para lançar no iPhone</span><span class="num">8 €/mês</span><span class="badge badge-accent">próxima meta</span></div>
+      </div>
+      <p class="tiny muted">Valores ilustrativos. A página real mostra os custos efetivos e o que sobra vai para a próxima meta.</p>
+    </section>
+
+    <!-- Pricing section → doações -->
+    <section class="tiers">
+      <div class="card tier">
+        <h3>Uma vez</h3>
+        <div class="price">Qualquer valor</div>
+        <p class="small muted">Cartão, PayPal, Apple Pay ou Google Pay, sem criar conta.</p>
+        <ul><li><i data-lucide="check"></i>Ajuda a pagar o mês</li><li><i data-lucide="check"></i>Nome na página de apoiadores (opcional)</li></ul>
+        <button class="btn btn-block" style="margin-top:auto"><i data-lucide="coffee"></i>Doar pelo Ko-fi</button>
+      </div>
+      <div class="card tier featured">
+        <div class="row between"><h3>Mensal</h3><span class="badge badge-accent">mais útil</span></div>
+        <div class="price">3 €<span class="muted" style="font-size:14px;font-weight:500">/mês</span></div>
+        <p class="small muted">Doação recorrente previsível ajuda a planejar.</p>
+        <ul><li><i data-lucide="check"></i>Selo de apoiador no perfil</li><li><i data-lucide="check"></i>Voto nas próximas funções</li><li><i data-lucide="check"></i>Cancela quando quiser</li></ul>
+        <div class="stack" style="gap:8px;margin-top:auto"><button class="btn btn-primary btn-block"><i data-lucide="heart"></i>Liberapay (SEPA, cartão)</button><button class="btn btn-block"><i data-lucide="github"></i>GitHub Sponsors</button></div>
+      </div>
+      <div class="card tier">
+        <h3>Academias</h3>
+        <div class="price">Patrocínio</div>
+        <p class="small muted">Para equipes que usam o app no dia a dia.</p>
+        <ul><li><i data-lucide="check"></i>Logo na página de apoiadores</li><li><i data-lucide="check"></i>Contato direto para sugestões</li></ul>
+        <a class="btn btn-block" style="margin-top:auto" href="#"><i data-lucide="github"></i>GitHub Sponsors</a>
+      </div>
+    </section>
+
+    <section class="card card-pad stack">
+      <h3>Outras formas de ajudar</h3>
+      <div class="grid-2" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
+        <a class="row card card-pad" href="#" style="box-shadow:none"><i data-lucide="code"></i><span class="grow">Contribuir com código</span></a>
+        <a class="row card card-pad" href="#" style="box-shadow:none"><i data-lucide="languages"></i><span class="grow">Traduzir o app</span></a>
+        <a class="row card card-pad" href="#" style="box-shadow:none"><i data-lucide="megaphone"></i><span class="grow">Indicar para sua academia</span></a>
+      </div>
+    </section>
+
+    <p class="wf-note">No app Android esta tela só mostra o link "Apoiar pelo site" (política de pagamentos do Google Play). Os botões de doação ficam apenas na versão web.</p>
+  </main>
+</div>
+</body>
+</html>

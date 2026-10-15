@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Academia · tatame</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body data-page="academia" data-shell="app">
+<div class="app">
+  <header class="topbar">
+    <h1 class="grow">Academia</h1>
+    <button class="btn btn-ghost btn-icon" aria-label="Buscar academias"><i data-lucide="search"></i></button>
+  </header>
+
+  <main class="main wide stack-lg">
+    <section class="card card-pad row wrap" style="gap:16px">
+      <span class="avatar avatar-lg" style="border-radius:16px;background:var(--primary);color:var(--primary-fg);border:0">ETC</span>
+      <div class="grow" style="min-width:200px">
+        <h1>Equipe Tatame Centro</h1>
+        <div class="small muted">São Paulo, SP · 84 membros · 3 professores</div>
+        <div class="row" style="margin-top:8px"><span class="badge"><i data-lucide="shield-check" style="width:12px;height:12px"></i>Você é aluna</span><span class="badge">Gi + No-gi</span></div>
+      </div>
+      <div class="row">
+        <button class="btn"><i data-lucide="qr-code"></i>Check-in</button>
+        <button class="btn btn-icon" aria-label="Mais"><i data-lucide="ellipsis"></i></button>
+      </div>
+    </section>
+
+    <div class="tabs" style="max-width:520px">
+      <a href="#" aria-selected="true">Visão geral</a><a href="#">Grade</a><a href="#">Membros</a><a href="#">Avisos</a>
+    </div>
+
+    <div class="grid-2" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr));align-items:start">
+      <!-- Grade de hoje -->
+      <section class="card">
+        <div class="card-head"><h3>Hoje</h3><span class="small muted">qua, 15/10</span></div>
+        <div class="list">
+          <div><b class="num" style="width:48px">07:00</b><div class="grow"><b>No-gi todos os níveis</b><div class="tiny muted">Prof. João Mendes · 60 min</div></div><span class="badge">12 vão</span></div>
+          <div><b class="num" style="width:48px">12:00</b><div class="grow"><b>Gi fundamentos</b><div class="tiny muted">Prof. Marcos Ribeiro · 60 min</div></div><span class="badge">8 vão</span></div>
+          <div style="background:var(--muted)"><b class="num" style="width:48px">19:30</b><div class="grow"><b>Gi avançado</b><div class="tiny muted">Prof. Marcos Ribeiro · 90 min · faixa azul+</div></div><button class="btn btn-sm btn-primary">Vou</button></div>
+          <div><b class="num" style="width:48px">21:00</b><div class="grow"><b>Open mat</b><div class="tiny muted">livre · 60 min</div></div><button class="btn btn-sm">Vou</button></div>
+        </div>
+      </section>
+
+      <!-- Ranking do mês (Local Legend) -->
+      <section class="card">
+        <div class="card-head"><h3>Mais presentes em outubro</h3><i data-lucide="trophy"></i></div>
+        <div class="list">
+          <div><b class="num" style="width:16px">1</b><span class="avatar avatar-sm">CF</span><div class="grow"><b>Carla Freitas</b><div class="tiny muted">Marrom</div></div><b class="num">14</b><span class="tiny muted">treinos</span></div>
+          <div><b class="num" style="width:16px">2</b><span class="avatar avatar-sm">RL</span><div class="grow"><b>Rafael Lima</b><div class="tiny muted">Azul</div></div><b class="num">12</b><span class="tiny muted">treinos</span></div>
+          <div style="background:var(--muted)"><b class="num" style="width:16px">5</b><span class="avatar avatar-sm">AS</span><div class="grow"><b>Você</b><div class="tiny muted">Roxa</div></div><b class="num">9</b><span class="tiny muted">treinos</span></div>
+        </div>
+      </section>
+
+      <!-- Painel do professor -->
+      <section class="card">
+        <div class="card-head"><h3>Pedidos pendentes</h3><span class="badge badge-accent">só professores</span></div>
+        <div class="list">
+          <div><span class="avatar avatar-sm">LC</span><div class="grow"><b>Lucas Costa</b><div class="tiny muted">quer entrar na academia</div></div><button class="btn btn-sm btn-icon" aria-label="Recusar"><i data-lucide="x"></i></button><button class="btn btn-sm btn-primary btn-icon" aria-label="Aceitar"><i data-lucide="check"></i></button></div>
+          <div><span class="avatar avatar-sm">AS</span><div class="grow"><b>Ana Souza</b><div class="tiny muted">pede confirmação: roxa 3º grau</div></div><button class="btn btn-sm btn-icon" aria-label="Recusar"><i data-lucide="x"></i></button><button class="btn btn-sm btn-primary btn-icon" aria-label="Confirmar"><i data-lucide="check"></i></button></div>
+        </div>
+      </section>
+
+      <!-- Avisos -->
+      <section class="card">
+        <div class="card-head"><h3>Avisos</h3><button class="btn btn-sm"><i data-lucide="megaphone"></i>Novo</button></div>
+        <div class="list">
+          <div style="align-items:flex-start"><span class="avatar avatar-sm">MR</span><div class="grow"><b>Graduação dia 30/11</b><p class="small muted">Cerimônia às 10h, tragam a família. Faixas-pretas convidados.</p><span class="tiny muted">2 dias atrás</span></div></div>
+          <div style="align-items:flex-start"><span class="avatar avatar-sm">JM</span><div class="grow"><b>Sem aula no feriado</b><p class="small muted">Open mat das 10h às 12h.</p><span class="tiny muted">1 semana atrás</span></div></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Membros -->
+    <section class="card">
+      <div class="card-head"><h3>Membros</h3><input class="input" style="max-width:220px;height:32px" placeholder="Buscar membro"></div>
+      <div class="list">
+        <div><span class="avatar avatar-sm">MR</span><div class="grow"><b>Marcos Ribeiro</b><div class="tiny muted">Professor · responsável</div></div><span class="belt black"><span class="tip"><i></i><i></i><i></i></span></span></div>
+        <div><span class="avatar avatar-sm">JM</span><div class="grow"><b>João Mendes</b><div class="tiny muted">Professor</div></div><span class="belt black"><span class="tip"><i></i></span></span></div>
+        <div><span class="avatar avatar-sm">CF</span><div class="grow"><b>Carla Freitas</b><div class="tiny muted">Aluna</div></div><span class="belt brown"><span class="tip"><i></i><i></i></span></span></div>
+        <div><span class="avatar avatar-sm">RL</span><div class="grow"><b>Rafael Lima</b><div class="tiny muted">Aluno</div></div><span class="belt blue"><span class="tip"></span></span></div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>
