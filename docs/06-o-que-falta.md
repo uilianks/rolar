@@ -48,3 +48,29 @@ Revisão feita antes de começar o código; última atualização em 15/10/2026,
 6. Beta com 1 ou 2 academias.
 7. Fase 2 que falta: push, rolas detalhados, catálogo de técnicas, fotos de treino, imagem de
    compartilhamento, landing pública.
+
+## Plano: notificações push
+
+Desenhado e testado em 15/10/2026, depois revertido para entrar mais tarde. Começar por **Web Push**
+(PWA), que não precisa de conta em nenhum serviço:
+
+- **Chaves VAPID** (`npx web-push generate-vapid-keys`) em `VAPID_PUBLIC_KEY` e `VAPID_PRIVATE_KEY`, no
+  `.env.local` e na Vercel. A privada é secreta, e as duas são para sempre: trocar invalida todas as
+  inscrições.
+- **Servidor:** tabela `push_subscriptions` (user_id, endpoint único, p256dh, auth, locale), pacote
+  `web-push`, e o `notify()` envia o push além de gravar no sino (passando a receber o contexto da
+  requisição em vez do `db`). Só os tipos numa lista `PUSH_TYPES`. O envio é aguardado (a função da
+  Vercel para depois da resposta), e inscrições que respondem 404/410 são apagadas.
+- **Segurança:** só aceitar endpoints dos serviços de push (`fcm.googleapis.com`,
+  `updates.push.services.mozilla.com`, `web.push.apple.com`, `*.push.apple.com`,
+  `*.notify.windows.com`; https, sem porta). O servidor faz POST para o endpoint, e qualquer outro
+  host seria SSRF.
+- **Rotas:** `GET /me/push` (chave pública), `PUT /me/push` (guardar a inscrição deste navegador),
+  `DELETE /me/push`. Incluir as inscrições na exportação de dados (RGPD).
+- **Navegador:** `public/sw.js` (eventos `push` e `notificationclick`, abre `/notificacoes`) servido
+  com `Cache-Control: no-cache`, e um interruptor "Notificações neste aparelho" nas configurações. Ao
+  sair da conta, cancelar a inscrição do navegador. No iPhone só funciona com o app na tela de início.
+- **Teste:** primeiro só com um professor, pela flag `push` em `/admin/flags`, e só para
+  `membership_request` (pedido para entrar na academia).
+- **Depois:** abrir para os outros tipos, lembretes agendados (cron) e push no app Android
+  (`expo-notifications` + FCM, precisa de projeto Firebase e build EAS).
