@@ -1,12 +1,17 @@
-# 03 — Modelo de dados (rascunho)
+# 03 — Modelo de dados
 
-Postgres no Neon, esquema em Drizzle (`api/db/schema.ts`). As tabelas de login (`user`, `session`,
-`account`, `verification`) são do Better Auth; `profiles` estende `user` 1:1.
+Postgres no Neon, esquema em Drizzle (`server/db/schema.ts`, migrações em `server/db/migrations/`). As
+tabelas de login (`user`, `session`, `account`, `verification`, `rate_limit`) são do Better Auth;
+`profiles` estende `user` 1:1.
+
+O desenho abaixo é o plano original, com o que mudou anotado. As tabelas que vieram depois estão em
+[Como ficou na implementação](#como-ficou-na-implementação-15102026).
 
 ```
 profiles        user_id · username · name · avatar_url · birth_year
-                belt (white|blue|purple|brown|black|coral|red + faixas kids) · stripes 0–4
-                weight_kg (privado) · home_academy_id · is_minor (derivado de birth_year)
+                belt (12 faixas kids IBJJF + white|blue|purple|brown|black) · stripes 0–6
+                home_academy_id · started_at · weekly_goal · default_visibility
+                searchable · show_in_ranking      (menor = derivado de birth_year; sem peso)
 
 academies       id · name · slug · city · country · lat/lng (opcional) · created_by
 academy_members academy_id · user_id · role (owner|coach|student) · status (pending|active) · joined_at
@@ -15,10 +20,12 @@ sessions        id · user_id · academy_id? · started_at · duration_min
 (treinos)       kind (gi|nogi|open_mat|drill|competition|private|teaching) · rounds · rpe 1–10
                 notes · visibility (public|followers|private) · source (manual|timer|health)
 
+                techniques text[]  (lista livre; o catálogo abaixo é da fase 2)
+
 rolls (fase 2)  session_id · partner_user_id? · partner_name? · partner_belt
                 outcome (sub_win|sub_loss|points|draw|flow) · technique_id?
-techniques      id · name · category (submission|sweep|pass|takedown|escape|position) · parent_id
-session_techniques  session_id · technique_id
+techniques (f2) id · name · category (submission|sweep|pass|takedown|escape|position) · parent_id
+session_techniques (f2)  session_id · technique_id
 session_media (fase 2)  session_id · object_key · width · height
 
 promotions      user_id · belt · stripes · promoted_at · academy_id · confirmed_by (coach)?
@@ -28,18 +35,18 @@ reactions       session_id · user_id   ("Oss")
 comments        id · session_id · user_id · body · created_at
 blocks          blocker_id · blocked_id
 reports         id · reporter_id · target_type · target_id · reason · status
-push_tokens     user_id · token · platform
+push_tokens (fase 2)  user_id · token · platform
 feature_flags   key · enabled_for (all | lista de user_id)
 ```
 
-## Regras de acesso (módulo `api/policies.ts`, uma função por recurso)
+## Regras de acesso (módulo `server/policies.ts`, uma função por recurso)
 
 - **Treinos**: o dono lê e escreve. Os outros só leem se:
   - o treino for `public`, ou
   - for `followers` e eles seguirem o dono.
   Em qualquer caso, ninguém lê se houver bloqueio em qualquer direção.
-- **Perfil**: `weight_kg` e `birth_year` só aparecem para o dono. Para isso existe um serializer
-  público separado, sem esses campos.
+- **Perfil**: `birth_year` só aparece para o dono. Para isso existe um serializer público separado,
+  sem esse campo.
 - **Academia**:
   - o aluno cria um pedido `pending`;
   - só `owner|coach` ativo aprova ou muda o papel de alguém.
@@ -138,10 +145,15 @@ Exigida pelo RGPD e pelas lojas. Apagar a conta remove em cascata:
     (`canManageBilling`), não os professores. Cada aluno vê só a própria situação. Lembrete no app: no
     máximo um por dia. CSV do mês com `;` e vírgula decimal para o Excel em Portugal;
   - pagamentos, presenças, check-ins e inscrições em eventos entram na exportação de dados (RGPD).
-- **Foto de perfil**: o app recorta em quadrado e reduz para 256×256 JPEG (~5–20 KB) antes de enviar;
-  a API confere o tipo pelos primeiros bytes (JPEG/PNG/WebP, até 150 KB) e guarda em `avatars` (base64
-  no Postgres, sem serviço de arquivos por enquanto). `profiles.avatar_url` é um caminho versionado
-  (`/api/avatars/:id?v=…`), servido como público e com cache "imutável". **Menores não podem ter foto**
-  (`canHaveAvatar`). Fotos de treino continuam na fase 2, já em armazenamento de objetos (R2), e as
-  fotos de perfil migram junto.
+- **Foto de perfil**: a pessoa enquadra a foto (arrastar e zoom) e o app reduz para 256×256 JPEG
+  (~5–20 KB) antes de enviar; a API confere o tipo pelos primeiros bytes (JPEG/PNG/WebP, até 150 KB). Em
+  produção os bytes ficam no **Vercel Blob privado** (`avatars/<user_id>`); sem credenciais do Blob (dev,
+  testes) ficam na tabela `avatars` (base64), que também serve as fotos antigas até serem trocadas.
+  `profiles.avatar_url` é um caminho versionado (`/api/avatars/:id?v=…`), servido pela API com cache
+  "imutável". **Menores não podem ter foto** (`canHaveAvatar`). Fotos de treino continuam na fase 2.
 - **Peso**: não é coletado. Não havia uso para ele no MVP, e o RGPD manda minimizar os dados.
+- **Moderação**: `reports` agrupadas por alvo na fila `/admin/denuncias`; a decisão (sem violação,
+  remover conteúdo, remover foto, suspender) avisa quem denunciou e quem foi afetado. Suspensão em
+  `user.suspended_at` + `suspension_reason`: a pessoa sai de todos os aparelhos e não consegue entrar.
+- **Textos**: mensagens de validação dos schemas zod são chaves de `validation` em `src/shared/i18n/`;
+  app e API traduzem. Notificações guardam só o tipo, e o texto é montado no idioma de quem lê.

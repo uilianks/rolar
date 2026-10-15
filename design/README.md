@@ -1,6 +1,8 @@
 # design/ — wireframes em HTML puro
 
-Layout de todas as telas antes do código do app. HTML + CSS + um pouco de JS (sem framework, sem build).
+Layout das telas do MVP, feito antes do código do app. HTML + CSS + um pouco de JS (sem framework, sem
+build). É referência histórica: o app já passou destes wireframes (login por código em vez de link
+mágico, telas da academia, admin, check-in) e não são mantidos em dia.
 
 ```bash
 python3 -m http.server 8765 --bind 127.0.0.1 --directory design   # abrir http://127.0.0.1:8765/

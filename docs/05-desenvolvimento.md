@@ -51,6 +51,17 @@ Rodar de novo apaga e recria só os dados demo (`demo.*@example.com`). Usa o `DA
 ambiente; com Docker: `DATABASE_URL=postgres://postgres:postgres@db.localtest.me:5432/rolar npm run db:seed`.
 Recusa rodar em produção ou num banco do Neon.
 
+### Admin e celular
+
+O painel `/admin` (números do app, verificação e edição de academias, denúncias, contas e feature
+flags) aparece para os e-mails em `ADMIN_EMAILS`, no `.env.local` em dev e nas variáveis da Vercel em
+produção. A API lê o `.env.local` ao subir.
+
+No celular, use `EXPO_PUBLIC_API_URL=http://<IP-do-PC>:8799` e acrescente a origem do app em
+`TRUSTED_ORIGINS`. O emulador Android acessa o PC por `10.0.2.2`, que é o padrão. Check-in (câmara) e
+idioma do aparelho usam módulos nativos (`expo-camera`, `expo-localization`): no Android é preciso um
+development build (`npx eas-cli build --profile development`), o Expo Go não basta.
+
 ### Vídeo de apresentação
 
 `video/` é um projeto [HyperFrames](https://github.com/heygen-com/hyperframes) (HTML + GSAP → MP4) com
@@ -69,49 +80,72 @@ sem direitos de terceiros), a 120 BPM para os cortes caírem na batida. Para reg
 Para atualizar as telas, rode `npm run db:seed` e capture-as de novo nas mesmas resoluções (celular 390×844 @3x,
 desktop 1440×900 @2x).
 
-### Admin
-
-O painel `/admin` (números do app, verificação e edição de academias, denúncias, contas e feature flags) aparece para os e-mails em `ADMIN_EMAILS`, no
-`.env.local` em dev e nas variáveis da Vercel em produção. A API lê o `.env.local` ao subir.
-
-No celular, use `EXPO_PUBLIC_API_URL=http://<IP-do-PC>:8799` e acrescente a origem do app em
-`TRUSTED_ORIGINS`. O emulador Android acessa o PC por `10.0.2.2`, que é o padrão.
 
 ## Comandos
 
 | Comando | O que faz |
 |---|---|
-| `npm test` | Vitest: API inteira contra PGlite em memória (login real por código, regras de acesso) + estatísticas |
-| `npm run typecheck` | `tsc --noEmit` (app, API e testes) |
+| `npm run dev:api` | API em `:8799` com PGlite (`.data/pglite`); migra ao subir |
+| `npm run dev:api:pg` | Mesma API contra o Postgres do Docker (`npm run db:up` antes) |
+| `npm run web` | App web em `:8081` |
+| `npm test` | Vitest: API inteira contra PGlite em memória (login real por código, regras de acesso, traduções) + estatísticas |
+| `npm run typecheck` | `tsc --noEmit` (app, API e testes; acusa também chave faltando em `en.ts`) |
 | `npm run lint` | ESLint (config do Expo) |
 | `npm run db:generate` | Gera migração SQL a partir de `server/db/schema.ts` |
 | `npm run db:migrate` | Aplica migrações em `DATABASE_URL` |
+| `npm run db:seed` | Recria os dados de demonstração |
 | `npm run build:web` | Exporta o site estático para `dist/` |
 
 ## Estrutura
 
 ```
 src/app/            telas (Expo Router)
-  _layout.tsx         estado de login → entrar | onboarding | (app)
-  entrar.tsx          login por código de 6 dígitos (+ Google, se configurado)
+  _layout.tsx         idioma, tema, estado de login → entrar | onboarding | (app)
+  entrar.tsx          login por código de 6 dígitos (+ Google, se configurado), troca de idioma
   onboarding.tsx      4 passos: nome/idade, faixa, academia, privacidade/meta
-  privacidade.tsx     política (pública, rascunho)
-  (app)/              moldura com sidebar (≥ 900 px) ou dock; feed, registrar, timer, progresso,
-                      treino/[id], perfil, u/[username], academia/{index,[id],buscar},
-                      notificacoes, config, apoie, buscar
+  termos.tsx, privacidade.tsx   textos legais públicos (pt e en)
+  (app)/              moldura com sidebar (≥ 900 px) ou dock
+    index, registrar, timer, progresso, treino/[id], perfil, u/[username], buscar,
+    notificacoes, config, apoie, ler-qr, checkin
+    academia/         index, buscar, nova, [id]/{index, calendario, chamada, horarios,
+                      mensalidades, qr, evento/{novo,[eventId]}}
+    admin/            index, academias, [id], denuncias, usuarios, usuario/[id], flags
 src/ui/             tema (tokens de design/styles.css), kit de componentes, shell, cartões
-src/lib/            cliente da API, Better Auth, React Query, tipos, formatação
-src/shared/         domínio e validação (zod) usados pelo app E pela API
+src/lib/            cliente da API, Better Auth, React Query, idioma (i18n.tsx), formatação, tipos
+src/shared/         usado pelo app E pela API
+  domain.ts           domínio e validação (zod)
+  i18n/               textos: pt.ts (fonte), en.ts (mesmo formato), escolha do idioma
 server/             API Hono
-  app.ts              CORS, auth, sessão → rotas
+  app.ts              idioma do pedido, CORS, CSRF, auth, sessão → rotas, erros traduzidos
+  http.ts             fail(status, "chave"), validação do corpo, viewer/admin
   policies.ts         TODAS as regras de acesso (visibilidade, bloqueio, menores, staff)
-  routes/             me, sessions (feed/treinos/Oss/comentários), social, academies, promotions
+  routes/             me, sessions, social, academies, promotions, classes, calendar, board,
+                      billing, admin
+  avatars.ts          fotos de perfil (Vercel Blob, ou tabela em dev)
   stats.ts            estatísticas no fuso do usuário (semana começa na segunda)
-  db/                 schema Drizzle, migrações, cliente Neon|PGlite
-api/index.ts        Vercel Function que serve a API
-tests/              testes de API e de estatísticas
-design/             wireframes HTML aprovados
+  vercel.ts           entrada da Vercel Function
+  db/                 schema Drizzle, migrações, cliente Neon|PGlite, seed
+scripts/            vercel-output.mjs (deploy pela Build Output API), smoke-api.mjs
+tests/              testes de API, regras, estatísticas e traduções
+design/             wireframes HTML do MVP
+video/              vídeo de apresentação (HyperFrames)
 ```
+
+## Traduções
+
+Todo texto visível fica em `src/shared/i18n/`. `pt.ts` é a fonte e define o tipo `Messages`; `en.ts`
+precisa ter o mesmo formato, e o typecheck acusa chave faltando ou sobrando. Textos com números ou
+nomes são funções (`members: (n) => …`), o que resolve plurais sem biblioteca.
+
+- **Componentes**: `const t = useT()` e `t.secao.chave`. Fora de componentes (formatadores, alertas):
+  `msg()`.
+- **Datas e números**: sempre por `src/lib/format.ts` (`dateFmt`, `euros`, `monthYear`…), que usam o
+  locale do idioma ativo (`pt-PT` ou `en-GB`). Nada de `"pt-PT"` fixo no código.
+- **API**: `fail(404, "planNotFound")` com chaves de `errors`; o servidor responde no `Accept-Language`
+  do pedido (o app envia o idioma escolhido). Schemas zod usam chaves de `validation` como mensagem.
+- **Textos longos** (termos, privacidade) ficam na própria página, um array por idioma.
+- **Novo idioma**: criar `xx.ts` com o tipo `Messages`, acrescentar em `LOCALES` e `DICTIONARIES`
+  (`src/shared/i18n/index.ts`) e as versões dos textos legais.
 
 ## Decisões tomadas durante a implementação
 
@@ -132,12 +166,15 @@ design/             wireframes HTML aprovados
 - **Menores só podem ser seguidos por membros ativos de uma academia em comum.** Isso soma à regra de
   nunca publicar para todos e de não aparecer na busca.
 - **Notificações dentro do app** (tabela `notifications`). Push fica para a fase 2.
+- **Traduções sem biblioteca** (15/10/2026): dicionários tipados em vez de i18next. São poucas
+  línguas, o typecheck garante que nenhuma chave falta e o mesmo código serve o app e a API.
 - **Ícones importados um a um** (`lucide-react-native/icons/<nome>`). Importar do pacote raiz punha
   1.500 ícones no bundle: 4,3 MB → 2,1 MB.
 
 ## Verificação feita
 
-- Os testes de API e de estatísticas passam (`npm test`).
+- Os testes de API, de estatísticas e de traduções passam (`npm test`, 12 arquivos); o CI roda o
+  mesmo em cada push.
 - Typecheck e lint estão limpos.
 - Migrações conferem com o schema (`drizzle-kit check`).
 - O build web e o bundle JS do Android compilam (`expo export -p web|android`).

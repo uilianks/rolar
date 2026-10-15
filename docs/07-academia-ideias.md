@@ -99,13 +99,16 @@ mostra o link; o dinheiro vai direto do aluno para a conta do dono.
 
 ## Ordem sugerida
 
-1. **Calendário + exceções + mural de avisos.** Resolve o dia a dia e substitui o WhatsApp. Junta-se o
-   link iCal, que é barato.
-2. **Mensalidades (controlo manual).** Era o pedido mais concreto, e o dono passa a abrir o app todos os
+1. ✅ **Calendário + exceções + mural de avisos.** Resolve o dia a dia e substitui o WhatsApp.
+   ⏳ Falta o link iCal, que é barato.
+2. ✅ **Mensalidades (controlo manual).** Era o pedido mais concreto, e o dono passa a abrir o app todos os
    meses.
-3. **Prontidão para graduar + alunos sumidos.** Aproveitam a chamada que já existe; quase não têm UI nova.
-4. **Campeonatos (cadastro manual com link) + resultados + quadro de medalhas.**
-5. Aula experimental e página pública da academia, que é o crescimento do app.
+3. ⏳ **Prontidão para graduar** + ✅ **alunos sumidos.** Aproveitam a chamada que já existe; quase não têm UI nova.
+4. ✅ **Campeonatos (cadastro manual com link) + resultados + quadro de medalhas.**
+5. ⏳ Aula experimental e página pública da academia, que é o crescimento do app.
+
+Também ⏳: professor por aula, troca pontual de horário, plano de semanas, seguro e termo,
+responsáveis dos menores, painel do dono.
 
 Fontes da pesquisa sobre campeonatos (15/10/2026):
 - [Smoothcomp Knowledge Base](https://support.smoothcomp.com/article/94-receive-payments-online): as chaves de API documentadas são só de pagamento.
