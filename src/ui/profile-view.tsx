@@ -13,7 +13,7 @@ import { api } from "@/lib/api";
 import { confirm } from "@/lib/confirm";
 import { hours } from "@/lib/format";
 import { useMe, useProfile, useStats, useUserSessions } from "@/lib/queries";
-import { BELT_LABEL, BELTS, type Belt as BeltName } from "@/shared/domain";
+import { BELT_LABEL, beltOptions, type Belt as BeltName } from "@/shared/domain";
 
 import { Avatar, Belt, Button, Card, CardHead, Col, ErrorText, Heatmap, Input, Kpi, Loading, Row, Segmented, Txt } from "./kit";
 import { SessionCardView } from "./session-card";
@@ -48,7 +48,7 @@ function PromotionForm({ onDone }: { onDone: () => void }) {
 
   return (
     <Col style={{ padding: space.lg }}>
-      <Segmented label="Faixa" value={belt} onChange={setBelt} options={BELTS.map((b) => ({ value: b, label: BELT_LABEL[b] }))} />
+      <Segmented label="Faixa" value={belt} onChange={setBelt} options={beltOptions(me?.profile?.birthYear, belt).map((b) => ({ value: b, label: BELT_LABEL[b] }))} />
       <Segmented label="Graus" value={stripes} onChange={setStripes} options={[0, 1, 2, 3, 4].map((n) => ({ value: n, label: String(n) }))} />
       <Input label="Data (AAAA-MM-DD)" value={date} onChangeText={setDate} />
       <Txt v="small" muted>{academyId ? "O professor da sua academia vai receber um pedido para confirmar." : "Sem academia: a graduação fica registrada sem confirmação."}</Txt>

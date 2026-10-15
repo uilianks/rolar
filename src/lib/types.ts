@@ -6,6 +6,8 @@ import type {
   BillingStatus,
   EventKind,
   PaymentMethod,
+  ReportAction,
+  ReportTarget,
   RequesterRole,
   Result,
   SessionKind,
@@ -37,7 +39,7 @@ export type Me = {
   flags: string[];
   unreadNotifications: number;
   /** Present only for admins. */
-  admin: { pendingAcademies: number } | null;
+  admin: { pendingAcademies: number; openReports: number } | null;
 };
 
 /** Anyone shown by name: `avatarUrl` is their photo (API path) or null for initials. */
@@ -147,7 +149,60 @@ export type AdminAcademy = Omit<Academy, "memberCount" | "membership" | "registr
     reviewedBy: string | null;
     requester: { id: string; name: string; email: string; username: string | null; accountCreatedAt: string; sessions: number; academiesRegistered: number } | null;
     similar: { id: string; name: string; city: string | null; status: AcademyStatus }[];
+    owner: { id: string; name: string; username: string } | null;
   };
+
+export type AdminReportGroup = {
+  targetType: ReportTarget;
+  targetId: string;
+  count: number;
+  firstAt: string;
+  reasons: string[];
+  action: ReportAction | null;
+  note: string | null;
+  resolvedAt: string | null;
+  /** Null once the content was deleted. */
+  target: { title: string; body: string | null; owner: (Person & { suspended: boolean }) | null } | null;
+};
+
+export type AdminUserRow = {
+  id: string;
+  email: string;
+  name: string;
+  username: string | null;
+  avatarUrl: string | null;
+  createdAt: string;
+  suspendedAt: string | null;
+};
+
+export type AdminUser = {
+  id: string;
+  email: string;
+  createdAt: string;
+  suspendedAt: string | null;
+  suspensionReason: string | null;
+  sessions: number;
+  followers: number;
+  reports: number;
+  isAdmin: boolean;
+  profile: { name: string; username: string; avatarUrl: string | null; belt: Belt; stripes: number; birthYear: number; minor: boolean } | null;
+  memberships: { id: string; name: string; role: AcademyRole; status: "pending" | "active" }[];
+};
+
+export type AdminFlag = { key: string; enabledForAll: boolean; usernames: string[] };
+
+export type AdminStats = {
+  users: number;
+  users7d: number;
+  users30d: number;
+  active7d: number;
+  active30d: number;
+  sessions7d: number;
+  sessions30d: number;
+  academies: number;
+  suspended: number;
+  weeks: { week: string; signups: number; sessions: number }[];
+};
 
 export type Member = Author & { role: AcademyRole; status: "pending" | "active"; /** Staff only. */ attendance30d?: number };
 

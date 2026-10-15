@@ -42,11 +42,35 @@ const dark: typeof light = {
 export type Colors = typeof light;
 
 export const BELT_COLORS: Record<Belt, string> = {
+  grey_white: "#9ca3af",
+  grey: "#9ca3af",
+  grey_black: "#9ca3af",
+  yellow_white: "#facc15",
+  yellow: "#facc15",
+  yellow_black: "#facc15",
+  orange_white: "#f97316",
+  orange: "#f97316",
+  orange_black: "#f97316",
+  green_white: "#16a34a",
+  green: "#16a34a",
+  green_black: "#16a34a",
   white: "#f5f5f4",
   blue: "#2563eb",
   purple: "#7c3aed",
   brown: "#8b4513",
   black: "#0a0a0a",
+};
+
+/** Colour of the lengthwise centre stripe on the two-tone kids belts. */
+export const BELT_MIDLINE: Partial<Record<Belt, string>> = {
+  grey_white: BELT_COLORS.white,
+  yellow_white: BELT_COLORS.white,
+  orange_white: BELT_COLORS.white,
+  green_white: BELT_COLORS.white,
+  grey_black: BELT_COLORS.black,
+  yellow_black: BELT_COLORS.black,
+  orange_black: BELT_COLORS.black,
+  green_black: BELT_COLORS.black,
 };
 
 export const radius = { sm: 8, md: 10, lg: 12, xl: 18, full: 999 };

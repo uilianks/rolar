@@ -23,8 +23,8 @@ Revisão feita antes de começar o código e atualizada ao final da primeira rod
 |---|---|---|
 | **RGPD** (o plano falava em LGPD; você está na UE) | Multa, remoção da loja | ✅ exportar dados, ✅ apagar conta, ✅ política (rascunho), ⏳ região UE no Neon, ⏳ registro de tratamento |
 | **Idade de consentimento** varia na UE (13–16) | Em alguns países, menores de 16 precisam de autorização dos pais | Base legal usada é **contrato**, não consentimento, e o app não tem perfilagem nem anúncios. Rever se surgirem funções baseadas em consentimento |
-| **DSA** (moderação) | Plataformas precisam de canal de denúncia e ponto de contacto | ✅ denúncia de usuário/treino. ✅ painel `/admin` (por enquanto só verifica academias). ⏳ revisar `reports` no painel (hoje é só SQL) |
-| **Academias falsas** | Alguém se passar pela academia de outra pessoa | ✅ cadastro com contactos oficiais + aprovação por admin. ⏳ upload de documento (precisa de armazenamento, fase 2); ⏳ editar academia aprovada (hoje só pelo suporte) |
+| **DSA** (moderação) | Plataformas precisam de canal de denúncia e ponto de contacto | ✅ denúncia de usuário/treino. ✅ fila de denúncias em `/admin/denuncias` (dispensar, remover conteúdo, remover foto, suspender), com aviso a quem denunciou e a quem teve conteúdo removido. ⏳ a notificação ao afetado não traz o motivo (só aponta para os termos) |
+| **Academias falsas** | Alguém se passar pela academia de outra pessoa | ✅ cadastro com contactos oficiais + aprovação por admin. ⏳ upload de documento (precisa de armazenamento, fase 2); ✅ admin edita os dados e transfere o responsável |
 | **Rate limit** | O spam de códigos por e-mail gasta a cota da Resend | ✅ No banco (tabela `rate_limit`, vale para todas as instâncias da Vercel). Envio de código: 30 por 10 min por IP (uma turma no Wi-Fi da academia); testado |
 | **Fuso horário** | Estatísticas erradas perto da meia-noite | ✅ calculadas no fuso do aparelho |
 | **Check-in no app Android** | `expo-camera` tem código nativo: precisa de um build do app (EAS), não roda no Expo Go | Verificado só na web (câmara simulada lendo o QR em 0,8 s). Com domínio próprio, configurar App Links para o QR lido pela câmara do sistema abrir direto no app |
@@ -35,13 +35,13 @@ Revisão feita antes de começar o código e atualizada ao final da primeira rod
 | **Bundle web 2,1 MB** | Primeiro carregamento lento em 4G | Aceitável no MVP. ⏳ Dividir rotas / landing estática |
 | **Landing para visitantes** | Na web, quem não está logado cai direto no login | ⏳ Publicar `design/landing.html` como página estática ou como rota pública |
 | **i18n** | Público PT-PT, PT-BR e EN | Textos em PT-BR fixos no código. ⏳ Extrair para um dicionário antes de traduzir |
-| **Moderação de fotos** | — | Fotos ainda não existem (fase 2) |
+| **Moderação de fotos** | Foto de perfil imprópria | ✅ admin remove a foto (pela denúncia do perfil ou na página da conta). Fotos de treino ainda não existem (fase 2) |
 
 ## Próximos passos sugeridos
 
 1. Commit e push para o GitHub, com a sua identidade no git.
 2. Vercel + Neon (UE) + Resend com domínio. Primeiro deploy; testar login de verdade.
 3. Build Android de teste (EAS) e teste interno da Play Store.
-4. Denúncias no painel `/admin`.
+4. ~~Denúncias no painel `/admin`.~~ Feito.
 5. Fase 2: push, timer com tela sempre acesa/vibração, rolas detalhados, catálogo de técnicas,
    grade de aulas e check-in por QR.

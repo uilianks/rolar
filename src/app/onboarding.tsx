@@ -7,7 +7,7 @@ import { authClient } from "@/lib/auth-client";
 import { handoff } from "@/lib/handoff";
 import { useMe } from "@/lib/queries";
 import type { Academy } from "@/lib/types";
-import { BELT_LABEL, BELTS, MIN_AGE, profileInput, VISIBILITY_LABEL, VISIBILITIES, type Belt as BeltName, type Visibility } from "@/shared/domain";
+import { BELT_LABEL, beltOptions, MIN_AGE, profileInput, VISIBILITY_LABEL, VISIBILITIES, type Belt as BeltName, type Visibility } from "@/shared/domain";
 import { Avatar, Belt, Button, Card, Col, ErrorText, Input, ListRow, Row, Segmented, SwitchRow, Txt } from "@/ui/kit";
 import { radius, space, useTheme } from "@/ui/theme";
 
@@ -125,7 +125,7 @@ export default function Onboarding() {
               <Txt muted>Você pode registrar o histórico de graduações depois.</Txt>
             </Col>
             <Row wrap gap={8}>
-              {BELTS.map((b) => (
+              {beltOptions(Number(birthYear), belt).map((b) => (
                 <Pressable
                   key={b}
                   accessibilityRole="radio"

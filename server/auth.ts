@@ -1,6 +1,8 @@
 import { expo } from "@better-auth/expo";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { APIError } from "better-auth/api";
+import { eq } from "drizzle-orm";
 import { emailOTP } from "better-auth/plugins";
 
 import type { Db } from "./db/client";
@@ -62,6 +64,20 @@ export function createAuth(db: Db, env: Env, sendLoginCode: LoginCodeSender = de
       },
     },
     trustedOrigins: env.TRUSTED_ORIGINS,
+    // Suspended accounts (moderation) get no new session, whatever the login method.
+    databaseHooks: {
+      session: {
+        create: {
+          before: async (session) => {
+            const [u] = await db
+              .select({ suspendedAt: schema.user.suspendedAt, reason: schema.user.suspensionReason })
+              .from(schema.user)
+              .where(eq(schema.user.id, session.userId));
+            if (u?.suspendedAt) throw new APIError("FORBIDDEN", { code: "ACCOUNT_SUSPENDED", message: `Conta suspensa: ${u.reason}` });
+          },
+        },
+      },
+    },
     socialProviders:
       env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
         ? { google: { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET } }

@@ -6,7 +6,7 @@
 //   npm run db:seed                 (uses DATABASE_URL, like the API)
 import { and, eq, like } from "drizzle-orm";
 
-import { type Belt, type SessionKind, isMinor } from "../../src/shared/domain";
+import { type Belt, BELT_LABEL, type SessionKind, isMinor } from "../../src/shared/domain";
 import { loadEnv } from "../env";
 import { createDb } from "./client";
 import * as s from "./schema";
@@ -330,7 +330,7 @@ async function main() {
     ])
     .returning({ id: s.academyEvents.id, title: s.academyEvents.title });
   const [open, seminar, , regional] = events;
-  const division = (p: Person) => `Adulto · ${{ white: "Branca", blue: "Azul", purple: "Roxa", brown: "Marrom", black: "Preta" }[p.belt]}`;
+  const division = (p: Person) => `Adulto · ${BELT_LABEL[p.belt]}`;
   const byHandle = (h: string) => [COACH, ...STUDENTS].find((p) => p.handle === h)!;
   await db.insert(s.eventAttendees).values([
     ...["miguel", "andre", "ines", "tiago", "sofia"].map((h) => ({ eventId: open.id, userId: id(h), category: `${division(byHandle(h))} · ${pick(["-70 kg", "-76 kg", "-82 kg", "-88 kg"])}` })),

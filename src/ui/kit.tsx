@@ -21,9 +21,9 @@ import {
 
 import { API_URL } from "@/lib/auth-client";
 import { initials } from "@/lib/format";
-import type { Belt as BeltName } from "@/shared/domain";
+import { BELT_LABEL, type Belt as BeltName } from "@/shared/domain";
 
-import { BELT_COLORS, radius, space, useTheme } from "./theme";
+import { BELT_COLORS, BELT_MIDLINE, radius, space, useTheme } from "./theme";
 
 type TxtVariant = "h1" | "h2" | "h3" | "body" | "small" | "tiny" | "kpi";
 const TXT: Record<TxtVariant, TextStyle> = {
@@ -208,12 +208,13 @@ export function Avatar({ name, size = 40, square, uri }: { name: string; size?: 
   );
 }
 
-/** Belt with a tip holding one white bar per stripe; the black belt has a red tip. */
+/** Belt with a tip holding one white bar per stripe; the black belt has a red tip, two-tone kids belts a centre stripe. */
 export function Belt({ belt, stripes = 0, size = "sm" }: { belt: BeltName; stripes?: number; size?: "sm" | "lg" }) {
   const lg = size === "lg";
+  const midline = BELT_MIDLINE[belt];
   return (
     <View
-      accessibilityLabel={`Faixa ${belt}, ${stripes} graus`}
+      accessibilityLabel={`Faixa ${BELT_LABEL[belt].toLowerCase()}, ${stripes} graus`}
       style={{
         width: lg ? 160 : 76,
         maxWidth: "100%",
@@ -227,6 +228,7 @@ export function Belt({ belt, stripes = 0, size = "sm" }: { belt: BeltName; strip
         flexShrink: 1,
       }}
     >
+      {midline ? <View style={{ position: "absolute", left: 0, right: 0, top: "33%", height: "34%", backgroundColor: midline }} /> : null}
       <View
         style={{
           width: lg ? 46 : 26,

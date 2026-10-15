@@ -7,7 +7,7 @@ import type { Db } from "../db/client";
 import * as s from "../db/schema";
 import { type AppEnv, body, fail, viewer } from "../http";
 import { notify } from "../notify";
-import { blockedBetween, effectiveVisibility, follows, membership, sessionVisibleTo } from "../policies";
+import { blockedBetween, effectiveVisibility, follows, membership, sessionVisibleTo, suspended } from "../policies";
 
 export const sessionsRoutes = new Hono<AppEnv>();
 
@@ -80,7 +80,7 @@ sessionsRoutes.get("/sessions/:id", async (c) => {
     })
     .from(s.comments)
     .innerJoin(s.profiles, eq(s.profiles.userId, s.comments.userId))
-    .where(and(eq(s.comments.sessionId, card.id), sql`not ${blockedBetween(userId, s.comments.userId)}`))
+    .where(and(eq(s.comments.sessionId, card.id), sql`not ${blockedBetween(userId, s.comments.userId)}`, sql`not ${suspended(s.comments.userId)}`))
     .orderBy(asc(s.comments.createdAt));
   const ossBy = await db
     .select({ id: s.profiles.userId, name: s.profiles.name, username: s.profiles.username, avatarUrl: s.profiles.avatarUrl })

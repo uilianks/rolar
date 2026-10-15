@@ -1,7 +1,16 @@
 // Domain vocabulary and validation shared by the app and the API.
 import { z } from "zod";
 
-export const BELTS = ["white", "blue", "purple", "brown", "black"] as const;
+/** IBJJF kids belts (4–15 anos), lowest first; each colour comes with a white- and a black-centred variant. */
+export const KIDS_BELTS = [
+  "grey_white", "grey", "grey_black",
+  "yellow_white", "yellow", "yellow_black",
+  "orange_white", "orange", "orange_black",
+  "green_white", "green", "green_black",
+] as const;
+export const ADULT_BELTS = ["white", "blue", "purple", "brown", "black"] as const;
+/** Every belt, lowest rank first; academy rosters sort by this order. */
+export const BELTS = [...KIDS_BELTS, ...ADULT_BELTS] as const;
 export type Belt = (typeof BELTS)[number];
 
 export const SESSION_KINDS = ["gi", "nogi", "open_mat", "drill", "private", "competition", "teaching"] as const;
@@ -22,6 +31,12 @@ export function ageInYear(birthYear: number, year = new Date().getFullYear()) {
 }
 export function isMinor(birthYear: number, year?: number) {
   return ageInYear(birthYear, year) < ADULT_AGE;
+}
+
+/** Belts a picker offers: kids belts only to minors, but never hide the belt already held. */
+export function beltOptions(birthYear: number | null | undefined, current?: Belt): readonly Belt[] {
+  if (birthYear && isMinor(birthYear)) return BELTS;
+  return current && KIDS_BELTS.some((b) => b === current) ? [current, ...ADULT_BELTS] : ADULT_BELTS;
 }
 
 const currentYear = () => new Date().getFullYear();
@@ -101,28 +116,35 @@ const optionalText = (max: number) =>
  * Registration of an academy. Everything an admin needs to confirm that the academy exists and that
  * the requester runs it: public contact channels to check against, and how to verify the requester.
  */
-export const academyInput = z
-  .object({
-    name: z.string().trim().min(2, "Nome: mínimo 2 caracteres").max(80),
-    affiliation: optionalText(80),
-    address: z.string().trim().min(5, "Informe a morada").max(200),
-    postalCode: optionalText(20),
-    city: z.string().trim().min(2, "Informe a cidade").max(80),
-    country: z.string().trim().length(2, "País: código de 2 letras (PT, ES…)").toUpperCase(),
-    phone: z.string().trim().regex(/^\+?[0-9 ()-]{6,30}$/, "Telefone inválido"),
-    email: z.email("E-mail inválido").optional().or(z.literal("").transform(() => undefined)),
-    website: z.url("Site inválido (comece com https://)").optional().or(z.literal("").transform(() => undefined)),
-    instagram: z
-      .string()
-      .trim()
-      .transform((v) => v.replace(/^@/, "").replace(/^https?:\/\/(www\.)?instagram\.com\//, "").replace(/\/$/, ""))
-      .pipe(z.string().regex(/^[A-Za-z0-9._]{0,30}$/, "Instagram inválido"))
-      .optional()
-      .transform((v) => v || undefined),
+const academyFields = z.object({
+  name: z.string().trim().min(2, "Nome: mínimo 2 caracteres").max(80),
+  affiliation: optionalText(80),
+  address: z.string().trim().min(5, "Informe a morada").max(200),
+  postalCode: optionalText(20),
+  city: z.string().trim().min(2, "Informe a cidade").max(80),
+  country: z.string().trim().length(2, "País: código de 2 letras (PT, ES…)").toUpperCase(),
+  phone: z.string().trim().regex(/^\+?[0-9 ()-]{6,30}$/, "Telefone inválido"),
+  email: z.email("E-mail inválido").optional().or(z.literal("").transform(() => undefined)),
+  website: z.url("Site inválido (comece com https://)").optional().or(z.literal("").transform(() => undefined)),
+  instagram: z
+    .string()
+    .trim()
+    .transform((v) => v.replace(/^@/, "").replace(/^https?:\/\/(www\.)?instagram\.com\//, "").replace(/\/$/, ""))
+    .pipe(z.string().regex(/^[A-Za-z0-9._]{0,30}$/, "Instagram inválido"))
+    .optional()
+    .transform((v) => v || undefined),
+});
+const hasWebOrInstagram = (a: { website?: string; instagram?: string }) => !!(a.website || a.instagram);
+const webOrInstagramIssue = { message: "Informe o site ou o Instagram da academia", path: ["website"] };
+
+export const academyInput = academyFields
+  .extend({
     requesterRole: z.enum(REQUESTER_ROLES),
     proof: z.string().trim().min(20, "Explique como podemos confirmar (mínimo 20 caracteres)").max(2000),
   })
-  .refine((a) => a.website || a.instagram, { message: "Informe o site ou o Instagram da academia", path: ["website"] });
+  .refine(hasWebOrInstagram, webOrInstagramIssue);
+/** Admin correction of an academy's details (any status); its address (slug) never changes. */
+export const academyEdit = academyFields.refine(hasWebOrInstagram, webOrInstagramIssue);
 export type AcademyInput = z.infer<typeof academyInput>;
 
 export const ACADEMY_STATUS_LABEL: Record<AcademyStatus, string> = {
@@ -261,11 +283,48 @@ export function formatEuros(cents: number) {
   return `${(cents / 100).toLocaleString("pt-PT", { minimumFractionDigits: cents % 100 ? 2 : 0, maximumFractionDigits: 2 })} €`;
 }
 
+export const REPORT_TARGETS = ["user", "session", "comment", "academy"] as const;
+export type ReportTarget = (typeof REPORT_TARGETS)[number];
 export const reportInput = z.object({
-  targetType: z.enum(["user", "session", "comment", "academy"]),
+  targetType: z.enum(REPORT_TARGETS),
   targetId: z.string().min(1),
   reason: z.string().trim().min(3).max(1000),
 });
+
+/**
+ * What an admin does with the reports on one target. "remove" deletes a session or comment and
+ * rejects an academy (hiding it); the profile itself is never deleted, only suspended. Suspending and
+ * rejecting tell the person why, so they need a note.
+ */
+export const REPORT_ACTIONS = ["dismiss", "remove", "remove_avatar", "suspend"] as const;
+export type ReportAction = (typeof REPORT_ACTIONS)[number];
+export const REPORT_ACTION_LABEL: Record<ReportAction, string> = {
+  dismiss: "Sem violação",
+  remove: "Conteúdo removido",
+  remove_avatar: "Foto removida",
+  suspend: "Conta suspensa",
+};
+export const reportResolution = z
+  .object({
+    targetType: z.enum(REPORT_TARGETS),
+    targetId: z.string().min(1),
+    action: z.enum(REPORT_ACTIONS),
+    note: z.string().trim().max(1000).optional(),
+  })
+  .refine((r) => r.action !== "remove" || r.targetType !== "user", { message: "Perfis não são removidos; suspenda a conta", path: ["action"] })
+  .refine((r) => !(r.action === "suspend" || (r.action === "remove" && r.targetType === "academy")) || (r.note?.length ?? 0) >= 5, {
+    message: "Explique o motivo; a pessoa vai ler",
+    path: ["note"],
+  });
+
+export const suspensionInput = z.object({ reason: z.string().trim().min(5, "Explique o motivo; a pessoa vai ler").max(1000) });
+
+/** Feature flag: on for everyone, or only for the listed usernames (beta testers). */
+export const featureFlagInput = z.object({
+  enabledForAll: z.boolean(),
+  usernames: z.array(usernameSchema).max(500).default([]),
+});
+export const FLAG_KEY = /^[a-z0-9][a-z0-9_-]{1,39}$/;
 
 export const KIND_LABEL: Record<SessionKind, string> = {
   gi: "Gi",
@@ -278,6 +337,18 @@ export const KIND_LABEL: Record<SessionKind, string> = {
 };
 
 export const BELT_LABEL: Record<Belt, string> = {
+  grey_white: "Cinza e branca",
+  grey: "Cinza",
+  grey_black: "Cinza e preta",
+  yellow_white: "Amarela e branca",
+  yellow: "Amarela",
+  yellow_black: "Amarela e preta",
+  orange_white: "Laranja e branca",
+  orange: "Laranja",
+  orange_black: "Laranja e preta",
+  green_white: "Verde e branca",
+  green: "Verde",
+  green_black: "Verde e preta",
   white: "Branca",
   blue: "Azul",
   purple: "Roxa",

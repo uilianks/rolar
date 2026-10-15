@@ -12,7 +12,7 @@ import { API_URL, authClient } from "@/lib/auth-client";
 import { confirm } from "@/lib/confirm";
 import { useMe } from "@/lib/queries";
 import type { Profile } from "@/lib/types";
-import { BELT_LABEL, BELTS, VISIBILITY_LABEL, VISIBILITIES, type Visibility } from "@/shared/domain";
+import { BELT_LABEL, beltOptions, VISIBILITY_LABEL, VISIBILITIES, type Visibility } from "@/shared/domain";
 import { AvatarEditor } from "@/ui/avatar-editor";
 import { Button, Card, CardHead, Col, ErrorText, Input, ListRow, Row, Segmented, SwitchRow, Tabs, Txt } from "@/ui/kit";
 import { Header, Screen, useWide } from "@/ui/shell";
@@ -104,7 +104,7 @@ export default function Settings() {
               <AvatarEditor />
               <Input label="Nome" value={form.name} onChangeText={(t) => set("name", t)} />
               <Input label="Nome de usuário" value={form.username} autoCapitalize="none" onChangeText={(t) => set("username", t.toLowerCase())} />
-              <Segmented label="Faixa" value={form.belt} onChange={(v) => set("belt", v)} options={BELTS.map((b) => ({ value: b, label: BELT_LABEL[b] }))} />
+              <Segmented label="Faixa" value={form.belt} onChange={(v) => set("belt", v)} options={beltOptions(me?.profile?.birthYear, form.belt).map((b) => ({ value: b, label: BELT_LABEL[b] }))} />
               <Segmented label="Graus" value={form.stripes} onChange={(v) => set("stripes", v)} options={[0, 1, 2, 3, 4].map((n) => ({ value: n, label: String(n) }))} />
               <Input label="Treina desde (AAAA-MM)" value={form.startedAt ?? ""} onChangeText={(t) => set("startedAt", t)} />
               <Segmented label="Meta de treinos por semana" value={form.weeklyGoal} onChange={(v) => set("weeklyGoal", v)} options={[0, 2, 3, 4, 5, 6].map((n) => ({ value: n, label: n ? String(n) : "Sem meta" }))} />

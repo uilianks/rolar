@@ -28,6 +28,8 @@ const TEXT: Record<string, string> = {
   event_published: "publicou um evento na academia",
   announcement: "publicou um aviso na academia",
   payment_reminder: "lembrou que a sua mensalidade está em aberto",
+  report_resolved: "analisou a sua denúncia. Obrigado por ajudar a manter o rolar seguro",
+  content_removed: "removeu um conteúdo seu que viola os termos de uso. Toque para ler",
 };
 
 function open(n: Notification) {
@@ -51,6 +53,7 @@ function open(n: Notification) {
   if (n.type.startsWith("academy_")) return router.push(`/academia/${n.targetId}`);
   if (n.type === "promotion_request") return router.push("/academia");
   if (n.type === "promotion_confirmed") return router.push("/perfil");
+  if (n.type === "content_removed") return router.push("/termos");
 }
 
 export default function Notifications() {

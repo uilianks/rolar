@@ -52,6 +52,8 @@ const AUTH_ERRORS: Record<string, string> = {
 
 function authMessage(error: { code?: string; message?: string; status?: number }, fallback: string) {
   if (error.status === 429) return "Muitas tentativas. Aguarde um pouco e tente de novo.";
+  // The server's message carries the moderator's reason (server/auth.ts).
+  if (error.code === "ACCOUNT_SUSPENDED" && error.message) return `${error.message}. Se discordar, escreva para o contacto nos termos de uso.`;
   return (error.code && AUTH_ERRORS[error.code]) || fallback;
 }
 

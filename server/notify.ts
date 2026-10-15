@@ -16,7 +16,9 @@ export type NotificationType =
   | "class_cancelled"
   | "event_published"
   | "announcement"
-  | "payment_reminder";
+  | "payment_reminder"
+  | "report_resolved"
+  | "content_removed";
 
 /** Records one notification per recipient, skipping the actor themself. */
 export async function notify(

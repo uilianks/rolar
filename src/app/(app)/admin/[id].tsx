@@ -2,11 +2,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
 import ArrowLeft from "lucide-react-native/icons/arrow-left";
 import Check from "lucide-react-native/icons/check";
+import ArrowRightLeft from "lucide-react-native/icons/arrow-right-left";
+import Pencil from "lucide-react-native/icons/pencil";
 import X from "lucide-react-native/icons/x";
 import { type ReactNode, useState } from "react";
 import { Linking, View } from "react-native";
 
 import { api } from "@/lib/api";
+import { confirm } from "@/lib/confirm";
 import { ago, whenLong } from "@/lib/format";
 import type { AdminAcademy } from "@/lib/types";
 import { ACADEMY_STATUS_LABEL, REQUESTER_ROLE_LABEL } from "@/shared/domain";
@@ -27,6 +30,89 @@ function Field({ label, children, href }: { label: string; children: ReactNode; 
   );
 }
 
+const EDITABLE = [
+  ["name", "Nome"],
+  ["affiliation", "Equipe / filiação"],
+  ["address", "Morada"],
+  ["postalCode", "Código postal"],
+  ["city", "Cidade"],
+  ["country", "País (2 letras)"],
+  ["phone", "Telefone"],
+  ["email", "E-mail"],
+  ["website", "Site"],
+  ["instagram", "Instagram"],
+] as const;
+type EditableKey = (typeof EDITABLE)[number][0];
+
+/** Admin correction of the academy's details, at any status (the address of its page stays the same). */
+function EditAcademy({ a, onDone }: { a: AdminAcademy; onDone: () => void }) {
+  const qc = useQueryClient();
+  const [form, setForm] = useState<Record<EditableKey, string>>(() => Object.fromEntries(EDITABLE.map(([k]) => [k, a[k] ?? ""])) as Record<EditableKey, string>);
+  const [error, setError] = useState<unknown>(null);
+
+  async function save() {
+    setError(null);
+    try {
+      await api(`/admin/academies/${a.id}`, { method: "PATCH", json: form });
+      await qc.invalidateQueries({ queryKey: ["admin"] });
+      onDone();
+    } catch (e) {
+      setError(e);
+    }
+  }
+
+  return (
+    <Col style={{ padding: space.lg }}>
+      {EDITABLE.map(([k, label]) => (
+        <Input key={k} label={label} value={form[k]} onChangeText={(v) => setForm({ ...form, [k]: v })} autoCapitalize={k === "name" || k === "address" || k === "city" || k === "affiliation" ? "sentences" : "none"} />
+      ))}
+      <ErrorText error={error} />
+      <Row>
+        <Button kind="primary" title="Salvar dados" onPress={save} />
+        <Button kind="ghost" title="Cancelar" onPress={onDone} />
+      </Row>
+    </Col>
+  );
+}
+
+/** Who answers for the academy, and handing it over to another account. */
+function Ownership({ a }: { a: AdminAcademy }) {
+  const qc = useQueryClient();
+  const [username, setUsername] = useState("");
+  const [error, setError] = useState<unknown>(null);
+
+  async function transfer() {
+    setError(null);
+    const target = username.trim().replace(/^@/, "").toLowerCase();
+    if (!target) return setError("Informe o nome de usuário do novo responsável.");
+    if (!(await confirm(`Transferir para @${target}?`, "O responsável atual passa a professor da academia.", "Transferir"))) return;
+    try {
+      await api(`/admin/academies/${a.id}/owner`, { method: "POST", json: { username: target } });
+      setUsername("");
+      await qc.invalidateQueries({ queryKey: ["admin"] });
+    } catch (e) {
+      setError(e);
+    }
+  }
+
+  return (
+    <Col style={{ padding: space.lg }}>
+      {a.owner ? (
+        <Field label="Responsável atual">
+          <Txt style={{ textDecorationLine: "underline" }} onPress={() => router.push(`/admin/usuario/${a.owner!.id}`)}>
+            {a.owner.name} (@{a.owner.username})
+          </Txt>
+        </Field>
+      ) : (
+        <Field label="Responsável atual">Ninguém (a conta foi apagada)</Field>
+      )}
+      <Input label="Transferir para (nome de usuário)" value={username} onChangeText={setUsername} autoCapitalize="none" placeholder="@professor" />
+      <ErrorText error={error} />
+      <Button icon={ArrowRightLeft} title="Transferir academia" onPress={transfer} style={{ alignSelf: "flex-start" }} />
+    </Col>
+  );
+}
+
 /** One registration with everything needed to decide, plus approve / reject with a reason. */
 export default function AdminAcademyReview() {
   const { c } = useTheme();
@@ -36,6 +122,7 @@ export default function AdminAcademyReview() {
   const [note, setNote] = useState("");
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   async function review(decision: "approve" | "reject") {
     setError(null);
@@ -45,7 +132,7 @@ export default function AdminAcademyReview() {
       await api(`/admin/academies/${id}/review`, { method: "POST", json: { decision, note: note.trim() || undefined } });
       await Promise.all([qc.invalidateQueries({ queryKey: ["admin"] }), qc.invalidateQueries({ queryKey: ["me"] })]);
       if (router.canGoBack()) router.back();
-      else router.replace("/admin");
+      else router.replace("/admin/academias");
     } catch (e) {
       setError(e);
       setBusy(false);
@@ -57,7 +144,7 @@ export default function AdminAcademyReview() {
     <>
       <Header
         title="Rever academia"
-        left={<Button kind="ghost" icon={ArrowLeft} accessibilityLabel="Voltar" onPress={() => (router.canGoBack() ? router.back() : router.replace("/admin"))} />}
+        left={<Button kind="ghost" icon={ArrowLeft} accessibilityLabel="Voltar" onPress={() => (router.canGoBack() ? router.back() : router.replace("/admin/academias"))} />}
       />
       <Screen wide>
         {q.isPending ? <Loading /> : null}
@@ -132,6 +219,23 @@ export default function AdminAcademyReview() {
                 </View>
               ) : null}
             </Card>
+
+            <Row wrap gap={space.md} style={{ alignItems: "flex-start" }}>
+              <Card pad={false} style={{ flexGrow: 1, flexBasis: 320 }}>
+                <CardHead title="Dados da academia" right={editing ? undefined : <Button size="sm" kind="ghost" icon={Pencil} title="Editar" onPress={() => setEditing(true)} />} />
+                {editing ? (
+                  <EditAcademy a={a} onDone={() => setEditing(false)} />
+                ) : (
+                  <View style={{ padding: space.lg }}>
+                    <Txt v="small" muted>Corrija nome, morada ou contactos sem mandar a academia de volta para a fila.</Txt>
+                  </View>
+                )}
+              </Card>
+              <Card pad={false} style={{ flexGrow: 1, flexBasis: 320 }}>
+                <CardHead title="Responsável" />
+                <Ownership a={a} />
+              </Card>
+            </Row>
 
             {a.status === "pending" ? (
               <Card style={{ gap: space.md }}>

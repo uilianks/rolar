@@ -108,7 +108,7 @@ function Sidebar({ path }: { path: string }) {
       {TOOLS.map((i) => (
         <SideLink key={i.href} item={i} active={i.match(path)} badge={i.href === "/notificacoes" ? unread : undefined} />
       ))}
-      {me?.admin ? <SideLink item={ADMIN} active={ADMIN.match(path)} badge={me.admin.pendingAcademies} /> : null}
+      {me?.admin ? <SideLink item={ADMIN} active={ADMIN.match(path)} badge={me.admin.pendingAcademies + me.admin.openReports} /> : null}
       <View style={{ flex: 1 }} />
       <Card style={{ gap: 8 }}>
         <Row>

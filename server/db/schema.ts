@@ -37,6 +37,9 @@ export const user = pgTable("user", {
   image: text("image"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  // Set by an admin (moderation): the account cannot sign in and its content is hidden from others.
+  suspendedAt: timestamp("suspended_at", { withTimezone: true }),
+  suspensionReason: text("suspension_reason"),
 });
 
 export const session = pgTable(
@@ -419,15 +422,24 @@ export const notifications = pgTable(
   (t) => [index("notifications_user_idx").on(t.userId, t.createdAt)],
 );
 
-export const reports = pgTable("reports", {
-  id: id(),
-  reporterId: text("reporter_id").references(() => user.id, { onDelete: "set null" }),
-  targetType: text("target_type").notNull(),
-  targetId: text("target_id").notNull(),
-  reason: text("reason").notNull(),
-  status: text("status").notNull().default("open"),
-  createdAt: createdAt(),
-});
+export const reports = pgTable(
+  "reports",
+  {
+    id: id(),
+    reporterId: text("reporter_id").references(() => user.id, { onDelete: "set null" }),
+    targetType: text("target_type").notNull(),
+    targetId: text("target_id").notNull(),
+    reason: text("reason").notNull(),
+    status: text("status").notNull().default("open"),
+    createdAt: createdAt(),
+    /** What the admin did (REPORT_ACTIONS) and why; every open report on the same target is resolved together. */
+    action: text("action"),
+    note: text("note"),
+    resolvedBy: text("resolved_by").references(() => user.id, { onDelete: "set null" }),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+  },
+  (t) => [index("reports_target_idx").on(t.targetType, t.targetId), index("reports_status_idx").on(t.status, t.createdAt)],
+);
 
 export const featureFlags = pgTable("feature_flags", {
   key: text("key").primaryKey(),

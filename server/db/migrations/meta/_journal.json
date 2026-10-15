@@ -50,6 +50,20 @@
       "when": 1792065560313,
       "tag": "0006_avatars",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792079157567,
+      "tag": "0007_kids_belts",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792082742787,
+      "tag": "0008_moderation",
+      "breakpoints": true
     }
   ]
 }

@@ -7,14 +7,23 @@ import { AVATAR_MAX_BYTES, avatarInput, profileInput, profilePatch, VISIBILITIES
 import type { Db } from "../db/client";
 import * as s from "../db/schema";
 import { type AppEnv, body, fail, isUniqueViolation, viewer } from "../http";
+import { removeAvatar } from "../moderation";
 import { canHaveAvatar, effectiveVisibility } from "../policies";
 import { computeStats, isValidTimeZone } from "../stats";
 
 export const me = new Hono<AppEnv>();
 
-async function pendingAcademies(db: Db) {
-  const [{ n }] = await db.select({ n: sql<number>`count(*)::int` }).from(s.academies).where(eq(s.academies.status, "pending"));
-  return n;
+/** What waits for an admin: drives the badge on the admin link. */
+async function adminQueue(db: Db) {
+  const [[{ pendingAcademies }], [{ openReports }]] = await Promise.all([
+    db.select({ pendingAcademies: sql<number>`count(*)::int` }).from(s.academies).where(eq(s.academies.status, "pending")),
+    // One per reported target: several reports on the same profile are one decision.
+    db
+      .select({ openReports: sql<number>`count(distinct (${s.reports.targetType}, ${s.reports.targetId}))::int` })
+      .from(s.reports)
+      .where(eq(s.reports.status, "open")),
+  ]);
+  return { pendingAcademies, openReports };
 }
 
 me.get("/", async (c) => {
@@ -45,7 +54,7 @@ me.get("/", async (c) => {
     memberships,
     flags: flags.map((f) => f.key),
     unreadNotifications: unread,
-    admin: c.get("isAdmin") ? { pendingAcademies: await pendingAcademies(db) } : null,
+    admin: c.get("isAdmin") ? await adminQueue(db) : null,
   });
 });
 
@@ -108,10 +117,7 @@ me.put("/avatar", async (c) => {
 });
 
 me.delete("/avatar", async (c) => {
-  const userId = viewer(c);
-  const db = c.get("db");
-  await db.delete(s.avatars).where(eq(s.avatars.userId, userId));
-  await db.update(s.profiles).set({ avatarUrl: null }).where(eq(s.profiles.userId, userId));
+  await removeAvatar(c.get("db"), viewer(c));
   return c.body(null, 204);
 });
 

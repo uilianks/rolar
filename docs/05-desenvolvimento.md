@@ -71,7 +71,7 @@ desktop 1440×900 @2x).
 
 ### Admin
 
-O painel `/admin` (verificação de academias) aparece para os e-mails em `ADMIN_EMAILS`, no
+O painel `/admin` (números do app, verificação e edição de academias, denúncias, contas e feature flags) aparece para os e-mails em `ADMIN_EMAILS`, no
 `.env.local` em dev e nas variáveis da Vercel em produção. A API lê o `.env.local` ao subir.
 
 No celular, use `EXPO_PUBLIC_API_URL=http://<IP-do-PC>:8799` e acrescente a origem do app em

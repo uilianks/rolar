@@ -13,16 +13,22 @@ export function blockedBetween(viewerId: string, other: AnyPgColumn | string): S
     or (b.blocker_id = ${other} and b.blocked_id = ${viewerId}))`;
 }
 
+/** True when an admin suspended the account: its content is hidden from everyone else. */
+export function suspended(userId: AnyPgColumn | string): SQL {
+  return sql`exists (select 1 from "user" u where u.id = ${userId} and u.suspended_at is not null)`;
+}
+
 export function follows(viewerId: string, owner: AnyPgColumn | string): SQL {
   return sql`exists (select 1 from follows f where f.follower_id = ${viewerId} and f.followee_id = ${owner})`;
 }
 
-/** Sessions the viewer may read: own; otherwise public, or followers-only when following; never across a block. */
+/** Sessions the viewer may read: own; otherwise public, or followers-only when following; never across a block or from a suspended account. */
 export function sessionVisibleTo(viewerId: string): SQL {
   return or(
     eq(sessions.userId, viewerId),
     and(
       sql`not ${blockedBetween(viewerId, sessions.userId)}`,
+      sql`not ${suspended(sessions.userId)}`,
       or(
         eq(sessions.visibility, "public"),
         and(eq(sessions.visibility, "followers"), follows(viewerId, sessions.userId)),

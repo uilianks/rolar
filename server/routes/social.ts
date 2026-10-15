@@ -6,13 +6,13 @@ import { pageOfCards } from "../cards";
 import * as s from "../db/schema";
 import { type AppEnv, body, fail, viewer } from "../http";
 import { notify } from "../notify";
-import { blockedBetween, canFollow, follows } from "../policies";
+import { blockedBetween, canFollow, follows, suspended } from "../policies";
 
 export const social = new Hono<AppEnv>();
 
 const adultSql = sql`(extract(year from now())::int - ${s.profiles.birthYear}) >= ${ADULT_AGE}`;
 
-/** Search covers adults who opted in, never across a block (minors are never searchable). */
+/** Search covers adults who opted in, never across a block or a suspension (minors are never searchable). */
 social.get("/users", async (c) => {
   const userId = viewer(c);
   const q = (c.req.query("q") ?? "").trim();
@@ -29,6 +29,7 @@ social.get("/users", async (c) => {
         adultSql,
         sql`${s.profiles.userId} <> ${userId}`,
         sql`not ${blockedBetween(userId, s.profiles.userId)}`,
+        sql`not ${suspended(s.profiles.userId)}`,
       ),
     )
     .limit(20);
@@ -66,17 +67,19 @@ social.get("/users/:username", async (c) => {
       following: sql<number>`(select count(*)::int from follows f where f.follower_id = ${s.profiles.userId})`,
       isFollowing: follows(userId, s.profiles.userId).mapWith(Boolean),
       blocked: blockedBetween(userId, s.profiles.userId).mapWith(Boolean),
+      suspended: suspended(s.profiles.userId).mapWith(Boolean),
     })
     .from(s.profiles)
     .leftJoin(s.academies, eq(s.academies.id, s.profiles.homeAcademyId))
     .where(eq(s.profiles.username, c.req.param("username").toLowerCase()));
-  if (!p || p.blocked) fail(404, "Perfil não encontrado");
+  // Admins still open a suspended profile, to review it.
+  if (!p || p.blocked || (p.suspended && !c.get("isAdmin"))) fail(404, "Perfil não encontrado");
   const promotions = await db
     .select()
     .from(s.promotions)
     .where(eq(s.promotions.userId, p.id))
     .orderBy(desc(s.promotions.promotedOn));
-  const { blocked: _blocked, ...profile } = p;
+  const { blocked: _blocked, suspended: _suspended, ...profile } = p;
   return c.json({
     ...profile,
     homeAcademy: p.homeAcademy?.id ? p.homeAcademy : null,
