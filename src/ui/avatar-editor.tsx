@@ -3,11 +3,12 @@ import Camera from "lucide-react-native/icons/camera";
 import { useState } from "react";
 import { View } from "react-native";
 
-import { pickAndUploadAvatar, removeAvatar } from "@/lib/avatar";
+import { pickImage, removeAvatar, uploadAvatar, type PickedImage } from "@/lib/avatar";
 import { confirm } from "@/lib/confirm";
 import { useMe } from "@/lib/queries";
 import { isMinor } from "@/shared/domain";
 
+import { AvatarCropper } from "./avatar-cropper";
 import { Avatar, Button, ErrorText, Row, Txt } from "./kit";
 import { space } from "./theme";
 
@@ -17,6 +18,7 @@ export function AvatarEditor() {
   const me = useMe().data;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
+  const [picked, setPicked] = useState<PickedImage | null>(null);
   const profile = me?.profile;
   if (!profile) return null;
   const minor = isMinor(profile.birthYear);
@@ -43,7 +45,7 @@ export function AvatarEditor() {
           <Txt v="small" muted style={{ flex: 1 }}>Para proteger menores de idade, o perfil usa as iniciais em vez de foto.</Txt>
         ) : (
           <Row gap={space.sm} wrap style={{ flex: 1 }}>
-            <Button size="sm" icon={Camera} title={profile.avatarUrl ? "Trocar foto" : "Escolher foto"} loading={busy} onPress={() => run(pickAndUploadAvatar)} />
+            <Button size="sm" icon={Camera} title={profile.avatarUrl ? "Trocar foto" : "Escolher foto"} loading={busy} onPress={() => pickImage().then(setPicked, setError)} />
             {profile.avatarUrl ? (
               <Button
                 size="sm"
@@ -59,6 +61,16 @@ export function AvatarEditor() {
         )}
       </Row>
       <ErrorText error={error} />
+      {picked ? (
+        <AvatarCropper
+          image={picked}
+          onCancel={() => setPicked(null)}
+          onDone={(rect) => {
+            setPicked(null);
+            void run(() => uploadAvatar(picked, rect));
+          }}
+        />
+      ) : null}
     </View>
   );
 }

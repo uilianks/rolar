@@ -1,5 +1,5 @@
-// Profile photo: pick from the gallery, crop to a centred square, shrink to 256×256 JPEG, upload.
-// Doing it on the phone keeps uploads ~20 KB and the API free of image processing.
+// Profile photo: pick from the gallery, the person frames it (AvatarCropper), then it is cropped and
+// shrunk to a 256×256 JPEG here. Doing it on the phone keeps uploads ~20 KB and the API free of image processing.
 import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 
@@ -7,19 +7,33 @@ import { api } from "./api";
 
 const SIZE = 256;
 
-/** Returns the new photo URL, or null if the person cancelled. */
-export async function pickAndUploadAvatar(): Promise<string | null> {
-  // Android 13+ and the web use the system photo picker: no permission prompt.
-  const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsEditing: true, aspect: [1, 1], quality: 1 });
-  if (picked.canceled || !picked.assets[0]) return null;
-  const { uri, width, height } = picked.assets[0];
-  const side = Math.min(width, height);
-  const ref = await ImageManipulator.manipulate(uri)
-    .crop({ originX: Math.floor((width - side) / 2), originY: Math.floor((height - side) / 2), width: side, height: side })
-    .resize({ width: SIZE, height: SIZE })
-    .renderAsync();
-  const out = await ref.saveAsync({ format: SaveFormat.JPEG, compress: 0.8, base64: true });
-  const { avatarUrl } = await api<{ avatarUrl: string }>("/me/avatar", { method: "PUT", json: { image: `data:image/jpeg;base64,${out.base64}` } });
+export type PickedImage = { uri: string; width: number; height: number };
+/** A square of the original image, in its pixels. */
+export type CropRect = { originX: number; originY: number; size: number };
+
+/** Returns null if the person cancelled. Android 13+ and the web use the system photo picker: no permission prompt. */
+export async function pickImage(): Promise<PickedImage | null> {
+  // No allowsEditing: the web has no editor, so AvatarCropper frames the photo on every platform.
+  const picked = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ["images"],
+    quality: 1,
+  });
+  const asset = picked.canceled ? undefined : picked.assets[0];
+  return asset ? { uri: asset.uri, width: asset.width, height: asset.height } : null;
+}
+
+/** Returns the new photo URL. */
+export async function uploadAvatar(image: PickedImage, { originX, originY, size }: CropRect): Promise<string> {
+  const ref = await ImageManipulator.manipulate(image.uri).crop({ originX, originY, width: size, height: size }).resize({ width: SIZE, height: SIZE }).renderAsync();
+  const out = await ref.saveAsync({
+    format: SaveFormat.JPEG,
+    compress: 0.8,
+    base64: true,
+  });
+  const { avatarUrl } = await api<{ avatarUrl: string }>("/me/avatar", {
+    method: "PUT",
+    json: { image: `data:image/jpeg;base64,${out.base64}` },
+  });
   return avatarUrl;
 }
 
