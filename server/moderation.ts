@@ -13,8 +13,3 @@ export async function suspendUser(db: Db, userId: string, reason: string) {
 export async function unsuspendUser(db: Db, userId: string) {
   await db.update(s.user).set({ suspendedAt: null, suspensionReason: null }).where(eq(s.user.id, userId));
 }
-
-export async function removeAvatar(db: Db, userId: string) {
-  await db.delete(s.avatars).where(eq(s.avatars.userId, userId));
-  await db.update(s.profiles).set({ avatarUrl: null }).where(eq(s.profiles.userId, userId));
-}

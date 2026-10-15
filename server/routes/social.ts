@@ -2,6 +2,7 @@ import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { Hono } from "hono";
 
 import { ADULT_AGE, reportInput } from "../../src/shared/domain";
+import { readAvatar } from "../avatars";
 import { pageOfCards } from "../cards";
 import * as s from "../db/schema";
 import { type AppEnv, body, fail, viewer } from "../http";
@@ -41,9 +42,9 @@ social.get("/users", async (c) => {
  * cookies. Minors never have one (canHaveAvatar), and the URL is versioned, so it is cached forever.
  */
 social.get("/avatars/:userId", async (c) => {
-  const [a] = await c.get("db").select({ mime: s.avatars.mime, data: s.avatars.data }).from(s.avatars).where(eq(s.avatars.userId, c.req.param("userId")));
+  const a = await readAvatar(c.get("db"), c.req.param("userId"));
   if (!a) fail(404, "Sem foto");
-  return c.body(Buffer.from(a.data, "base64"), 200, {
+  return c.body(a.bytes, 200, {
     "Content-Type": a.mime,
     "Cache-Control": "public, max-age=31536000, immutable",
     "X-Content-Type-Options": "nosniff",

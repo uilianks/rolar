@@ -18,7 +18,8 @@ import {
 import type { Db } from "../db/client";
 import * as s from "../db/schema";
 import { admin, type AppEnv, body, fail } from "../http";
-import { removeAvatar, suspendUser, unsuspendUser } from "../moderation";
+import { removeAvatar } from "../avatars";
+import { suspendUser, unsuspendUser } from "../moderation";
 import { notify } from "../notify";
 import { suspended } from "../policies";
 import { adminIds } from "./academies";

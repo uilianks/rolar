@@ -7,7 +7,7 @@ import { AVATAR_MAX_BYTES, avatarInput, profileInput, profilePatch, VISIBILITIES
 import type { Db } from "../db/client";
 import * as s from "../db/schema";
 import { type AppEnv, body, fail, isUniqueViolation, viewer } from "../http";
-import { removeAvatar } from "../moderation";
+import { readAvatar, removeAvatar, saveAvatar } from "../avatars";
 import { canHaveAvatar, effectiveVisibility } from "../policies";
 import { computeStats, isValidTimeZone } from "../stats";
 
@@ -106,14 +106,7 @@ me.put("/avatar", async (c) => {
   const bytes = Buffer.from(data, "base64");
   if (bytes.length > AVATAR_MAX_BYTES) fail(400, "Imagem grande demais");
   if (!SIGNATURES[mime]?.(bytes)) fail(400, "O arquivo não é uma imagem válida");
-  await db
-    .insert(s.avatars)
-    .values({ userId, mime, data })
-    .onConflictDoUpdate({ target: s.avatars.userId, set: { mime, data, updatedAt: new Date() } });
-  // A new URL on every change, so the photo can be cached forever.
-  const avatarUrl = `/api/avatars/${userId}?v=${Date.now().toString(36)}`;
-  await db.update(s.profiles).set({ avatarUrl }).where(eq(s.profiles.userId, userId));
-  return c.json({ avatarUrl });
+  return c.json({ avatarUrl: await saveAvatar(db, userId, mime, bytes) });
 });
 
 me.delete("/avatar", async (c) => {
@@ -208,7 +201,7 @@ me.get("/export", async (c) => {
     checkins: await db.select().from(s.checkins).where(eq(s.checkins.userId, userId)),
     events: await db.select().from(s.eventAttendees).where(eq(s.eventAttendees.userId, userId)),
     payments: await db.select().from(s.payments).where(eq(s.payments.userId, userId)),
-    avatar: (await db.select({ mime: s.avatars.mime, data: s.avatars.data }).from(s.avatars).where(eq(s.avatars.userId, userId)))[0] ?? null,
+    avatar: await readAvatar(db, userId).then((a) => (a ? { mime: a.mime, data: Buffer.from(a.bytes).toString("base64") } : null)),
   };
   c.header("Content-Disposition", 'attachment; filename="rolar-dados.json"');
   return c.json(data);
@@ -217,6 +210,8 @@ me.get("/export", async (c) => {
 /** GDPR art. 17 / store requirement: deleting the user cascades to all of their data. */
 me.delete("/", async (c) => {
   const userId = viewer(c);
-  await c.get("db").delete(s.user).where(eq(s.user.id, userId));
+  const db = c.get("db");
+  await removeAvatar(db, userId);
+  await db.delete(s.user).where(eq(s.user.id, userId));
   return c.body(null, 204);
 });
