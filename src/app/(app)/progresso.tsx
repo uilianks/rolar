@@ -1,4 +1,3 @@
-import { router } from "expo-router";
 import CalendarCheck from "lucide-react-native/icons/calendar-check";
 import Clock from "lucide-react-native/icons/clock";
 import Flame from "lucide-react-native/icons/flame";
@@ -6,10 +5,11 @@ import Swords from "lucide-react-native/icons/swords";
 import { useState } from "react";
 import { View } from "react-native";
 
-import { duration, hours, when } from "@/lib/format";
+import { duration, hours } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import { useFeed, useMe, useStats } from "@/lib/queries";
 import { Badge, Bars, Card, CardHead, Col, ErrorText, Heatmap, Kpi, ListRow, Loading, Progress, Row, Tabs, Txt } from "@/ui/kit";
+import { SessionRow } from "@/ui/session-card";
 import { Header, Screen } from "@/ui/shell";
 import { space, useTheme } from "@/ui/theme";
 
@@ -126,15 +126,7 @@ export default function ProgressScreen() {
         <Card pad={false}>
           <CardHead title={t.progress.log} />
           {(diary.data?.pages.flatMap((p) => p.items) ?? []).map((d) => (
-            <ListRow key={d.id} onPress={() => router.push(`/treino/${d.id}`)}>
-              <View style={{ width: 70 }}>
-                <Badge>{t.sessionKind[d.kind]}</Badge>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Txt bold numberOfLines={1}>{d.title || t.sessionTitle(t.sessionKind[d.kind])}</Txt>
-                <Txt v="tiny" muted>{when(d.startedAt)} · {duration(d.durationMin)} · intensidade {d.rpe}</Txt>
-              </View>
-            </ListRow>
+            <SessionRow key={d.id} s={d} />
           ))}
           {diary.hasNextPage ? (
             <ListRow onPress={() => diary.fetchNextPage()}>

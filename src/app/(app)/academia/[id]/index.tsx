@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
 import ArrowLeft from "lucide-react-native/icons/arrow-left";
 import Check from "lucide-react-native/icons/check";
+import BookOpen from "lucide-react-native/icons/book-open";
 import CalendarDays from "lucide-react-native/icons/calendar-days";
 import ClipboardCheck from "lucide-react-native/icons/clipboard-check";
 import QrCode from "lucide-react-native/icons/qr-code";
@@ -101,6 +102,7 @@ export default function AcademyScreen() {
             {approved ? (
               <Row gap={space.sm} wrap style={{ maxWidth: "100%" }}>
                 <Button size="sm" icon={CalendarDays} title={t.academyCards.calendar} onPress={() => router.push(`/academia/${a.id}/calendario`)} />
+                <Button size="sm" icon={BookOpen} title={t.techniques.title} onPress={() => router.push(`/tecnicas?academia=${a.id}`)} />
                 {member && !staff ? <Button size="sm" kind="primary" icon={ScanLine} title={t.nav.checkin} onPress={startCheckinScan} /> : null}
                 {staff ? <Button size="sm" icon={QrCode} title={t.academy.checkinQr} onPress={() => router.push(`/academia/${a.id}/qr`)} /> : null}
                 {member && a.membership?.role === "owner" ? <Button size="sm" icon={Wallet} title={t.academy.fees} onPress={() => router.push(`/academia/${a.id}/mensalidades`)} /> : null}

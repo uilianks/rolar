@@ -76,6 +76,11 @@ export function isActiveStaff(m: { role: string; status: string } | null) {
   return !!m && m.status === "active" && (m.role === "owner" || m.role === "coach");
 }
 
+/** An academy's techniques are edited by its active staff; admins may remove any (moderation). */
+export function canManageTechnique(m: { role: string; status: string } | null, isAdmin: boolean) {
+  return isAdmin || isActiveStaff(m);
+}
+
 /** Billing (plans, payments, who is late) is visible to the owner only, not to coaches. */
 export function canManageBilling(m: { role: string; status: string } | null) {
   return !!m && m.status === "active" && m.role === "owner";

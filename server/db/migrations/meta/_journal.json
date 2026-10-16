@@ -64,6 +64,20 @@
       "when": 1792082742787,
       "tag": "0008_moderation",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792152277125,
+      "tag": "0009_techniques",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792153324402,
+      "tag": "0010_known_techniques",
+      "breakpoints": true
     }
   ]
 }

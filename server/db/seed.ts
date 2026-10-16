@@ -314,6 +314,51 @@ async function main() {
     { academyId: academy.id, authorId: id(COACH.handle), body: "Turma de competição: tragam kimono azul e branco na terça.", pinned: false, createdAt: daysAgo(1, 22) },
   ]);
 
+  // Technique catalog: the professor's curriculum, chained into the map ("leads to").
+  type Cat = (typeof s.techniques.$inferInsert)["category"];
+  type Pos = (typeof s.techniques.$inferInsert)["position"];
+  const CATALOG: [name: string, category: Cat, position: Pos, aliases: string[], leadsTo: string[], description: string][] = [
+    ["Single leg", "takedown", "standing", ["Baiana de uma perna"], ["Passagem toreando", "Cem quilos"], "Entre baixo, cabeça por dentro, prenda a perna junto ao peito e gire para o lado da perna presa."],
+    ["Double leg", "takedown", "standing", ["Baiana"], ["Knee slice", "Cem quilos"], "Mude o nível, passo de penetração entre os pés, ombro na cintura e empurre na diagonal."],
+    ["Guilhotina", "submission", "standing", [], [], "Braço por baixo do queixo, punho no esterno, quadril para trás e puxe para cima com o peito."],
+    ["Guarda fechada", "guard", "closed_guard", [], ["Armlock da guarda", "Triângulo", "Kimura", "Raspagem tesoura", "Omoplata"], "Pernas cruzadas nas costas do oponente; quebre a postura puxando a gola e a cabeça."],
+    ["Armlock da guarda", "submission", "closed_guard", ["Chave de braço", "Armbar"], ["Triângulo", "Omoplata"], "Controle o braço, pé no quadril, gire 90°, perna sobre a cabeça, joelhos fechados e quadril alto."],
+    ["Triângulo", "submission", "closed_guard", ["Triangle"], ["Armlock da guarda", "Omoplata"], "Um braço dentro, um fora; feche a perna atrás do pescoço, ajuste o ângulo e puxe a cabeça."],
+    ["Kimura", "submission", "closed_guard", ["Americana invertida"], ["Raspagem de gancho", "Guilhotina"], "Pegue o punho, braço por cima do ombro, segure o próprio punho e gire o braço para as costas."],
+    ["Omoplata", "submission", "closed_guard", [], ["Raspagem tesoura", "Montada"], "Perna por cima do ombro, gire para fora, sente-se e incline para a frente controlando a cintura."],
+    ["Raspagem tesoura", "sweep", "closed_guard", ["Scissor sweep"], ["Montada"], "Abra a guarda, canela na barriga, puxe gola e manga e corte a perna de base como tesoura."],
+    ["De la Riva", "guard", "open_guard", ["DLR"], ["Berimbolo", "Raspagem de gancho"], "Gancho por fora da perna da frente, pegada no tornozelo e na manga; desequilibre puxando."],
+    ["Berimbolo", "sweep", "open_guard", [], ["Costas"], "Da De la Riva, invista por baixo, gire sobre o ombro e caia nas costas do oponente."],
+    ["Raspagem de gancho", "sweep", "half_guard", ["Butterfly sweep"], ["Montada", "Cem quilos"], "Ganchos por dentro, sente-se, pegada debaixo do braço, caia para o lado e eleve com o gancho."],
+    ["Meia-guarda", "guard", "half_guard", [], ["Raspagem de gancho", "Kimura"], "Prenda uma perna, fique de lado, controle por baixo do braço e não deixe o peito chegar."],
+    ["Passagem toreando", "pass", "open_guard", ["Toreando", "Bullfighter pass"], ["Cem quilos", "Joelho na barriga"], "Pegue as calças nos joelhos, empurre as pernas para um lado e circule para o outro."],
+    ["Knee slice", "pass", "half_guard", ["Passagem de joelho"], ["Cem quilos", "Montada"], "Joelho atravessa a coxa do oponente, controle a cabeça ou a gola e deslize até o chão."],
+    ["Cem quilos", "control", "side_control", ["Side control"], ["Montada", "Kimura", "Joelho na barriga"], "Peito no peito, quadril baixo, um braço na cabeça e outro no quadril."],
+    ["Joelho na barriga", "control", "knee_on_belly", ["Knee on belly"], ["Montada", "Armlock da guarda"], "Joelho na barriga, outro pé longe, peso no joelho e pegadas na gola e na calça."],
+    ["Montada", "control", "mount", ["Mount"], ["Estrangulamento cruzado", "Ezequiel", "Armlock da guarda", "Costas"], "Joelhos altos, pés por baixo do quadril, peso no peito do oponente."],
+    ["Estrangulamento cruzado", "submission", "mount", ["Cross collar choke"], ["Armlock da guarda"], "Primeira mão funda na gola, segunda cruzada por cima, cotovelos abertos e puxe."],
+    ["Ezequiel", "submission", "mount", ["Ezekiel"], [], "Braço atrás do pescoço, mão dentro da própria manga, a outra mão corta pela frente da garganta."],
+    ["Costas", "control", "back", ["Pegada nas costas"], ["Mata-leão"], "Ganchos por dentro das coxas, pegada de cinto de segurança, peito colado nas costas."],
+    ["Mata-leão", "submission", "back", ["Rear naked choke"], [], "Braço passa por baixo do queixo, mão no bíceps, a outra mão atrás da cabeça e aperte."],
+    ["Saída de montada", "escape", "mount", ["Upa"], ["Guarda fechada", "Meia-guarda"], "Prenda braço e pé do mesmo lado, ponte forte por cima do ombro e caia na guarda."],
+    ["Heel hook", "submission", "leg_entanglement", ["Chave de calcanhar"], [], "Controle o joelho, calcanhar na dobra do cotovelo e gire com o corpo inteiro. Solte rápido no treino."],
+  ];
+  const techniqueIds = new Map(CATALOG.map(([name]) => [name, crypto.randomUUID()]));
+  await db.insert(s.techniques).values(
+    CATALOG.map(([name, category, position, aliases, , description], i) => ({
+      id: techniqueIds.get(name)!,
+      academyId: academy.id,
+      authorId: id(i % 3 ? PROFESSOR.handle : COACH.handle),
+      name,
+      category,
+      position,
+      aliases,
+      description,
+      createdAt: daysAgo(90 - i),
+    })),
+  );
+  await db.insert(s.techniqueLinks).values(CATALOG.flatMap(([name, , , , leadsTo]) => leadsTo.map((to) => ({ fromId: techniqueIds.get(name)!, toId: techniqueIds.get(to)! }))));
+
   // Events: an upcoming competition with sign-ups, a seminar, the graduation, and a past competition with medals.
   const at = (days: number, hour: number) => {
     const t = new Date(now + days * 86_400_000);

@@ -11,6 +11,8 @@ import type {
   RequesterRole,
   Result,
   SessionKind,
+  TechniqueCategory,
+  TechniquePosition,
   Visibility,
 } from "@/shared/domain";
 
@@ -31,6 +33,24 @@ export type Profile = {
 };
 
 export type AcademyRef = { id: string; name: string; slug: string };
+
+export type TechniqueRef = { id: string; name: string; category: TechniqueCategory };
+export type Technique = TechniqueRef & {
+  aliases: string[];
+  position: TechniquePosition | null;
+  academy: AcademyRef;
+  /** The viewer marked it as known. */
+  known: boolean;
+};
+export type TechniqueDetail = Technique & {
+  description: string;
+  updatedAt: string;
+  author: { id: string; name: string; username: string } | null;
+  leadsTo: TechniqueRef[];
+  comesFrom: TechniqueRef[];
+  canEdit: boolean;
+};
+export type TechniqueGraph = { nodes: (TechniqueRef & { position: TechniquePosition | null })[]; links: { from: string; to: string }[] };
 
 export type Me = {
   user: { id: string; email: string; name: string; image: string | null };

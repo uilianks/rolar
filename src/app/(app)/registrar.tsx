@@ -16,6 +16,7 @@ import { useCreateSession, useMe } from "@/lib/queries";
 import type { ClassWithOccurrence } from "@/lib/types";
 import { SESSION_KINDS, sessionInput, type SessionKind, type Visibility } from "@/shared/domain";
 import { validationMessage } from "@/shared/i18n";
+import { DateField } from "@/ui/date-field";
 import { Button, Card, Col, ErrorText, Input, Loading, Row, Segmented, Stepper, Txt } from "@/ui/kit";
 import { Header, Screen } from "@/ui/shell";
 import { space, useTheme } from "@/ui/theme";
@@ -120,7 +121,7 @@ function RegisterForm({ params, fromClass }: { params: Params; fromClass?: Class
 
         <Row gap={space.md}>
           <View style={{ flex: 1 }}>
-            <Input label={t.log.date} value={date} onChangeText={setDate} placeholder={t.log.datePlaceholder} />
+            <DateField label={t.log.date} value={date} onChange={setDate} placeholder={t.log.datePlaceholder} />
           </View>
           <View style={{ flex: 1 }}>
             <Input label={t.log.start} value={time} onChangeText={setTime} placeholder="19:30" />

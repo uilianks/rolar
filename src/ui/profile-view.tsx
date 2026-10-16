@@ -17,7 +17,8 @@ import { useMe, useProfile, useStats, useUserSessions } from "@/lib/queries";
 import { beltOptions, type Belt as BeltName } from "@/shared/domain";
 import type { Messages } from "@/shared/i18n";
 
-import { Avatar, Belt, Button, Card, CardHead, Col, ErrorText, Heatmap, Input, Kpi, Loading, Row, Segmented, Txt } from "./kit";
+import { DateField } from "./date-field";
+import { Avatar, Belt, Button, Card, CardHead, Col, ErrorText, Heatmap, Kpi, Loading, Row, Segmented, Txt } from "./kit";
 import { SessionCardView } from "./session-card";
 import { BELT_COLORS, space, useTheme } from "./theme";
 
@@ -53,7 +54,7 @@ function PromotionForm({ onDone }: { onDone: () => void }) {
     <Col style={{ padding: space.lg }}>
       <Segmented label={t.profile.belt} value={belt} onChange={setBelt} options={beltOptions(me?.profile?.birthYear, belt).map((b) => ({ value: b, label: t.belt[b] }))} />
       <Segmented label={t.profile.stripes} value={stripes} onChange={setStripes} options={[0, 1, 2, 3, 4].map((n) => ({ value: n, label: String(n) }))} />
-      <Input label={t.profile.dateField} value={date} onChangeText={setDate} />
+      <DateField label={t.profile.dateField} value={date} onChange={setDate} />
       <Txt v="small" muted>{academyId ? t.profile.promotionToCoach : t.profile.promotionNoAcademy}</Txt>
       <ErrorText error={error} />
       <Row>

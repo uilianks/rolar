@@ -209,6 +209,27 @@ export const occurrenceInput = z.object({
   note: z.string().trim().max(300).optional().transform((v) => v || undefined),
 });
 
+// ---------- Techniques (text-only catalog written by academy staff) ----------
+
+export const TECHNIQUE_CATEGORIES = ["takedown", "guard", "pass", "sweep", "control", "submission", "escape"] as const;
+export type TechniqueCategory = (typeof TECHNIQUE_CATEGORIES)[number];
+
+export const TECHNIQUE_POSITIONS = [
+  "standing", "closed_guard", "open_guard", "half_guard", "side_control", "mount", "knee_on_belly", "back", "turtle", "leg_entanglement",
+] as const;
+export type TechniquePosition = (typeof TECHNIQUE_POSITIONS)[number];
+
+export const techniqueInput = z.object({
+  name: z.string().trim().min(2, v("techniqueName")).max(80),
+  /** Other names for the same move ("armbar", "chave de braço"); the search matches them too. */
+  aliases: z.array(z.string().trim().min(1).max(80)).max(10).default([]),
+  category: z.enum(TECHNIQUE_CATEGORIES),
+  position: z.enum(TECHNIQUE_POSITIONS).nullable().default(null),
+  description: z.string().trim().max(10_000).default(""),
+  /** Ids of the same academy's techniques this one leads to (a chain, drawn as the technique graph). */
+  leadsTo: z.array(z.string().min(1).max(64)).max(20).default([]),
+});
+
 // ---------- Board ----------
 
 export const announcementInput = z.object({

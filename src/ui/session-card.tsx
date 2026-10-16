@@ -8,7 +8,7 @@ import { useT } from "@/lib/i18n";
 import { useToggleOss } from "@/lib/queries";
 import type { SessionCard } from "@/lib/types";
 
-import { Avatar, Belt, Card, Row, Txt } from "./kit";
+import { Avatar, Badge, Belt, Card, ListRow, Row, Txt } from "./kit";
 import { space, useTheme } from "./theme";
 
 export function Stat({ label, value }: { label: string; value: string }) {
@@ -51,6 +51,22 @@ export function OssButton({ session }: { session: Pick<SessionCard, "id" | "osse
       <HandHeart size={16} color={on ? c.accent : c.fg} />
       <Txt v="small" bold color={on ? c.accent : c.fg}>{t.session.oss} · {count}</Txt>
     </Pressable>
+  );
+}
+
+/** One line of the user's own training log. */
+export function SessionRow({ s }: { s: Pick<SessionCard, "id" | "kind" | "title" | "startedAt" | "durationMin" | "rpe"> }) {
+  const t = useT();
+  return (
+    <ListRow onPress={() => router.push(`/treino/${s.id}`)}>
+      <View style={{ width: 70 }}>
+        <Badge>{t.sessionKind[s.kind]}</Badge>
+      </View>
+      <View style={{ flex: 1 }}>
+        <Txt bold numberOfLines={1}>{s.title || t.sessionTitle(t.sessionKind[s.kind])}</Txt>
+        <Txt v="tiny" muted>{when(s.startedAt)} · {duration(s.durationMin)} · intensidade {s.rpe}</Txt>
+      </View>
+    </ListRow>
   );
 }
 

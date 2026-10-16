@@ -21,6 +21,8 @@ import {
   REQUESTER_ROLES,
   RESULTS,
   SESSION_KINDS,
+  TECHNIQUE_CATEGORIES,
+  TECHNIQUE_POSITIONS,
   VISIBILITIES,
 } from "../../src/shared/domain";
 
@@ -109,6 +111,8 @@ export const academyStatusEnum = pgEnum("academy_status", ACADEMY_STATUSES);
 export const requesterRoleEnum = pgEnum("requester_role", REQUESTER_ROLES);
 export const eventKindEnum = pgEnum("event_kind", EVENT_KINDS);
 export const resultEnum = pgEnum("competition_result", RESULTS);
+export const techniqueCategoryEnum = pgEnum("technique_category", TECHNIQUE_CATEGORIES);
+export const techniquePositionEnum = pgEnum("technique_position", TECHNIQUE_POSITIONS);
 export const paymentMethodEnum = pgEnum("payment_method", PAYMENT_METHODS);
 
 export const profiles = pgTable(
@@ -372,6 +376,45 @@ export const announcements = pgTable(
     createdAt: createdAt(),
   },
   (t) => [index("announcements_academy_idx").on(t.academyId, t.createdAt)],
+);
+
+/** Text-only technique catalog: written by an academy's staff, readable by everyone signed in. */
+export const techniques = pgTable(
+  "techniques",
+  {
+    id: id(),
+    academyId: text("academy_id").notNull().references(() => academies.id, { onDelete: "cascade" }),
+    authorId: text("author_id").references(() => user.id, { onDelete: "set null" }),
+    name: text("name").notNull(),
+    aliases: text("aliases").array().notNull().default(sql`'{}'::text[]`),
+    category: techniqueCategoryEnum("category").notNull(),
+    position: techniquePositionEnum("position"),
+    description: text("description").notNull().default(""),
+    createdAt: createdAt(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("techniques_academy_name_idx").on(t.academyId, sql`lower(${t.name})`)],
+);
+
+/** "Leads to" edges between two techniques of the same academy. */
+export const techniqueLinks = pgTable(
+  "technique_links",
+  {
+    fromId: text("from_id").notNull().references(() => techniques.id, { onDelete: "cascade" }),
+    toId: text("to_id").notNull().references(() => techniques.id, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.fromId, t.toId] }), index("technique_links_to_idx").on(t.toId)],
+);
+
+/** Techniques a user says they know (private to them); their map also adds the ones they trained. */
+export const knownTechniques = pgTable(
+  "known_techniques",
+  {
+    userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+    techniqueId: text("technique_id").notNull().references(() => techniques.id, { onDelete: "cascade" }),
+    createdAt: createdAt(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.techniqueId] })],
 );
 
 export const membershipPlans = pgTable(

@@ -24,7 +24,12 @@ sessions        id · user_id · academy_id? · started_at · duration_min
 
 rolls (fase 2)  session_id · partner_user_id? · partner_name? · partner_belt
                 outcome (sub_win|sub_loss|points|draw|flow) · technique_id?
-techniques (f2) id · name · category (submission|sweep|pass|takedown|escape|position) · parent_id
+techniques      id · academy_id · author_id? · name (único por academia, sem caixa) · aliases text[]
+(catálogo)      category (takedown|guard|pass|sweep|control|submission|escape)
+                position? (standing|closed_guard|open_guard|half_guard|side_control|mount|
+                knee_on_belly|back|turtle|leg_entanglement) · description (só texto)
+technique_links from_id · to_id   ("leva a", só dentro da mesma academia; vira o mapa de técnicas)
+known_techniques user_id · technique_id   ("eu sei esta técnica", marcado pelo próprio atleta)
 session_techniques (f2)  session_id · technique_id
 session_media (fase 2)  session_id · object_key · width · height
 
@@ -51,6 +56,14 @@ feature_flags   key · enabled_for (all | lista de user_id)
   - o aluno cria um pedido `pending`;
   - só `owner|coach` ativo aprova ou muda o papel de alguém.
 - **Graduação**: só `coach|owner` ativo da academia preenche `confirmed_by`.
+- **Técnicas** (`canManageTechnique`):
+  - qualquer usuário logado lê as técnicas e o mapa de academias aprovadas;
+  - só `owner|coach` ativo da academia cria, edita ou apaga, e as ligações só apontam para técnicas
+    da mesma academia;
+  - admin pode apagar qualquer uma (moderação).
+- **Meu mapa de técnicas** (`/techniques/known`): só o próprio atleta vê. Entram as técnicas que ele
+  marcou como sabidas e as das academias em que é membro ativo cujo nome ou outro nome ele anotou
+  num treino (sem diferenciar maiúsculas).
 - **Menores (13–17)**:
   - perfil e treinos privados por padrão;
   - fora da busca e de "sugestões de quem seguir";

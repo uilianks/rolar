@@ -1,9 +1,11 @@
 // App frame from the wireframes: sidebar on wide screens (≥ 900 px), floating dock on phones.
 import { router, usePathname } from "expo-router";
 import Bell from "lucide-react-native/icons/bell";
+import BookOpen from "lucide-react-native/icons/book-open";
 import ChartNoAxesColumn from "lucide-react-native/icons/chart-no-axes-column";
 import Heart from "lucide-react-native/icons/heart";
 import House from "lucide-react-native/icons/house";
+import Newspaper from "lucide-react-native/icons/newspaper";
 import Plus from "lucide-react-native/icons/plus";
 import ScanLine from "lucide-react-native/icons/scan-line";
 import ShieldCheck from "lucide-react-native/icons/shield-check";
@@ -30,7 +32,7 @@ export const WIDE = 900;
 type NavItem = { href: string; label: keyof Messages["nav"]; icon: LucideIcon; match: (p: string) => boolean; onPress?: () => void };
 
 const MAIN: NavItem[] = [
-  { href: "/", label: "feed", icon: House, match: (p) => p === "/" },
+  { href: "/", label: "home", icon: House, match: (p) => p === "/" },
   { href: "/progresso", label: "progress", icon: ChartNoAxesColumn, match: (p) => p.startsWith("/progresso") },
   { href: "/academia", label: "academy", icon: Users, match: (p) => p.startsWith("/academia") },
   { href: "/perfil", label: "profile", icon: User, match: (p) => p.startsWith("/perfil") },
@@ -39,6 +41,8 @@ const MAIN: NavItem[] = [
 const CHECKIN: NavItem = { href: "/ler-qr", label: "checkin", icon: ScanLine, match: (p) => p.startsWith("/ler-qr") || p.startsWith("/checkin"), onPress: startCheckinScan };
 
 const TOOLS: NavItem[] = [
+  { href: "/tecnicas", label: "techniques", icon: BookOpen, match: (p) => p.startsWith("/tecnicas") },
+  { href: "/feed", label: "feed", icon: Newspaper, match: (p) => p.startsWith("/feed") },
   { href: "/timer", label: "timer", icon: Timer, match: (p) => p.startsWith("/timer") },
   { href: "/notificacoes", label: "notifications", icon: Bell, match: (p) => p.startsWith("/notificacoes") },
   { href: "/config", label: "settings", icon: Settings, match: (p) => p.startsWith("/config") },

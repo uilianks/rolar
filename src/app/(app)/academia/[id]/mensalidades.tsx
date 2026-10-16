@@ -23,6 +23,7 @@ import {
   planInput,
 } from "@/shared/domain";
 import { validationMessage } from "@/shared/i18n";
+import { DateField } from "@/ui/date-field";
 import { Avatar, Badge, Button, Card, CardHead, Col, ErrorText, Input, Kpi, ListRow, Loading, Row, Segmented, Stepper, Txt } from "@/ui/kit";
 import { Header, Screen } from "@/ui/shell";
 import { space, useTheme } from "@/ui/theme";
@@ -188,7 +189,7 @@ function MemberBilling({ academyId, member: m, plans, onChange }: { academyId: s
               <Input label={t.fees.amount} value={amount} onChangeText={setAmount} keyboardType="decimal-pad" />
             </Col>
             <Col style={{ flex: 1, minWidth: 140 }}>
-              <Input label={t.fees.paidOn} value={paidOn} onChangeText={setPaidOn} maxLength={10} />
+              <DateField label={t.fees.paidOn} value={paidOn} onChange={setPaidOn} />
             </Col>
             <Col style={{ flex: 1, minWidth: 120 }}>
               <Input label={t.fees.covers} value={coversFrom} onChangeText={setCoversFrom} maxLength={7} />

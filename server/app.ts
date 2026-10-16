@@ -15,6 +15,7 @@ import { classesRoutes } from "./routes/classes";
 import { me } from "./routes/me";
 import { promotionsRoutes } from "./routes/promotions";
 import { sessionsRoutes } from "./routes/sessions";
+import { techniquesRoutes } from "./routes/techniques";
 import { social } from "./routes/social";
 
 export function createApp({
@@ -82,6 +83,7 @@ export function createApp({
   app.route("/", calendarRoutes);
   app.route("/", boardRoutes);
   app.route("/", billingRoutes);
+  app.route("/", techniquesRoutes);
   app.route("/admin", adminRoutes);
 
   app.onError((err, c) => {

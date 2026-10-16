@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { useColorScheme } from "react-native";
 
 import { prefs } from "@/lib/prefs";
-import type { Belt } from "@/shared/domain";
+import type { Belt, TechniqueCategory } from "@/shared/domain";
 
 const light = {
   bg: "#ffffff",
@@ -59,6 +59,17 @@ export const BELT_COLORS: Record<Belt, string> = {
   purple: "#7c3aed",
   brown: "#8b4513",
   black: "#0a0a0a",
+};
+
+/** Node and badge colour per technique category (graph view, catalog). */
+export const TECHNIQUE_COLORS: Record<TechniqueCategory, string> = {
+  takedown: "#d97706",
+  guard: "#2563eb",
+  pass: "#7c3aed",
+  sweep: "#16a34a",
+  control: "#0891b2",
+  submission: "#dc2626",
+  escape: "#db2777",
 };
 
 /** Colour of the lengthwise centre stripe on the two-tone kids belts. */

@@ -9,6 +9,7 @@ import { useT } from "@/lib/i18n";
 import type { EventDetail } from "@/lib/types";
 import { EVENT_KINDS, eventInput, type EventKind } from "@/shared/domain";
 import { validationMessage } from "@/shared/i18n";
+import { DateField } from "@/ui/date-field";
 import { Button, Card, Col, ErrorText, Input, Loading, Row, Segmented, Txt } from "@/ui/kit";
 import { Header, Screen } from "@/ui/shell";
 import { space } from "@/ui/theme";
@@ -81,7 +82,7 @@ function EventForm({ academyId, existing, initialKind }: { academyId: string; ex
           <Input label={t.newAcademy.name} value={title} onChangeText={setTitle} placeholder={competition ? t.eventForm.titleCompetition : t.eventForm.titleOther} />
           <Row gap={space.md} wrap>
             <Col style={{ flex: 2, minWidth: 150 }}>
-              <Input label={t.eventForm.date} value={date} onChangeText={setDate} placeholder="2026-11-21" maxLength={10} />
+              <DateField label={t.eventForm.date} value={date} onChange={setDate} placeholder="2026-11-21" />
             </Col>
             <Col style={{ flex: 1, minWidth: 100 }}>
               <Input label={t.eventForm.time} value={time} onChangeText={setTime} placeholder="09:00" maxLength={5} />
@@ -89,7 +90,7 @@ function EventForm({ academyId, existing, initialKind }: { academyId: string; ex
           </Row>
           <Row gap={space.md} wrap>
             <Col style={{ flex: 2, minWidth: 150 }}>
-              <Input label={t.eventForm.endDate} value={endDate} onChangeText={setEndDate} placeholder="2026-11-22" maxLength={10} />
+              <DateField label={t.eventForm.endDate} value={endDate} onChange={setEndDate} placeholder="2026-11-22" />
             </Col>
             <Col style={{ flex: 1, minWidth: 100 }}>
               <Input label={t.eventForm.endTime} value={endTimeText} onChangeText={setEndTimeText} placeholder="18:00" maxLength={5} />
@@ -105,12 +106,11 @@ function EventForm({ academyId, existing, initialKind }: { academyId: string; ex
             keyboardType="url"
             hint={competition ? t.eventForm.linkHint : undefined}
           />
-          <Input
+          <DateField
             label={competition ? t.eventForm.signupCompetition : t.eventForm.signupOther}
             value={signupUntil}
-            onChangeText={setSignupUntil}
+            onChange={setSignupUntil}
             placeholder="2026-11-14"
-            maxLength={10}
             hint={t.eventForm.signupHint}
           />
           <Input label={t.eventForm.description} value={description} onChangeText={setDescription} multiline placeholder={competition ? t.eventForm.descriptionCompetition : t.eventForm.descriptionOther} />
