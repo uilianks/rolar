@@ -60,7 +60,8 @@ feature_flags   key · enabled_for (all | lista de user_id)
   - qualquer usuário logado lê as técnicas e o mapa de academias aprovadas;
   - só `owner|coach` ativo da academia cria, edita ou apaga, e as ligações só apontam para técnicas
     da mesma academia;
-  - admin pode apagar qualquer uma (moderação).
+  - admin cria, edita e apaga técnicas de qualquer academia aprovada (painel admin → Técnicas,
+    escolhendo a academia).
 - **Meu mapa de técnicas** (`/techniques/known`): só o próprio atleta vê. Entram as técnicas que ele
   marcou como sabidas e as das academias em que é membro ativo cujo nome ou outro nome ele anotou
   num treino (sem diferenciar maiúsculas).

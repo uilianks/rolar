@@ -29,9 +29,9 @@ import type {
   TechniqueGraph,
 } from "./types";
 
-export function useTechniques(filters: { q?: string; category?: string; academy?: string }) {
+export function useTechniques(filters: { q?: string; category?: string; academy?: string }, enabled = true) {
   const qs = new URLSearchParams(Object.entries(filters).filter((e): e is [string, string] => !!e[1])).toString();
-  return useQuery({ queryKey: ["techniques", filters], queryFn: () => api<Technique[]>(`/techniques${qs ? `?${qs}` : ""}`) });
+  return useQuery({ queryKey: ["techniques", filters], queryFn: () => api<Technique[]>(`/techniques${qs ? `?${qs}` : ""}`), enabled });
 }
 
 export function useTechnique(id: string | undefined) {

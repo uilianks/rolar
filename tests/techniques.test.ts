@@ -62,6 +62,16 @@ describe("technique catalog", () => {
     expect((await api.call("GET", `/techniques/${created.data.id}`, { cookie: owner.cookie })).status).toBe(404);
   });
 
+  it("lets an admin add a technique to any approved academy", async () => {
+    const admin = { cookie: await api.signIn("admin@example.com") };
+    const created = await api.call("POST", `/academies/${otherAcademyId}/techniques`, { cookie: admin.cookie, json: tech("Mata-leão", { position: "back" }) });
+    expect(created.status).toBe(201);
+    const detail = await api.call("GET", `/techniques/${created.data.id}`, { cookie: otherOwner.cookie });
+    expect(detail.data).toMatchObject({ name: "Mata-leão", academy: { id: otherAcademyId }, canEdit: true });
+    expect((await api.call("GET", `/techniques/${created.data.id}`, { cookie: admin.cookie })).data.canEdit).toBe(true);
+    expect((await api.call("POST", "/academies/nao-existe/techniques", { cookie: admin.cookie, json: tech("X1") })).status).toBe(404);
+  });
+
   it("links techniques of the same academy into a graph", async () => {
     const base = `/academies/${academyId}/techniques`;
     const sweep = await api.call("POST", base, { cookie: coach.cookie, json: tech("Raspagem tesoura", { category: "sweep" }) });

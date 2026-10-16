@@ -346,6 +346,7 @@ export const en: Messages = {
     saveAndNew: "Save and add another",
     saved: (name: string) => `"${name}" saved. Go ahead with the next one.`,
     academy: "Academy",
+    pickAcademy: "Pick the technique's academy",
     remove: "Delete technique",
     removeTitle: (name: string) => `Delete "${name}"?`,
     removeText: "Its links to other techniques go too.",
@@ -792,6 +793,8 @@ export const en: Messages = {
 
   admin: {
     academies: "Academies",
+    techniques: "Techniques",
+    techniquesText: "Add techniques to an academy's catalog",
     verifyTitle: "Academy verification",
     verifyText: "Check the official channels before approving. Pending academies are not shown to anyone.",
     pendingTab: "Pending",

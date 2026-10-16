@@ -6,7 +6,7 @@ import Plus from "lucide-react-native/icons/plus";
 import { View } from "react-native";
 
 import { useT } from "@/lib/i18n";
-import { useAcademy, useStaffAcademies, useTechniqueGraph } from "@/lib/queries";
+import { useAcademy, useMe, useStaffAcademies, useTechniqueGraph } from "@/lib/queries";
 import { Button, Card, Empty, ErrorText, Loading, Row, Txt } from "@/ui/kit";
 import { Header, useWide } from "@/ui/shell";
 import { TechniqueGraphView } from "@/ui/technique-graph";
@@ -20,7 +20,8 @@ export default function TechniqueMap() {
   const { id, focus } = useLocalSearchParams<{ id: string; focus?: string }>();
   const academy = useAcademy(id).data;
   const graph = useTechniqueGraph(academy?.id);
-  const staff = useStaffAcademies().some((a) => a.id === academy?.id);
+  const admin = !!useMe().data?.admin;
+  const staff = useStaffAcademies().some((a) => a.id === academy?.id) || (admin && !!academy);
 
   return (
     <>

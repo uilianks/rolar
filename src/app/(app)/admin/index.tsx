@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { type Href, router } from "expo-router";
 import Activity from "lucide-react-native/icons/activity";
+import BookOpen from "lucide-react-native/icons/book-open";
 import Building from "lucide-react-native/icons/building";
 import CalendarCheck from "lucide-react-native/icons/calendar-check";
 import ChevronRight from "lucide-react-native/icons/chevron-right";
@@ -49,6 +50,7 @@ export default function AdminHome() {
       <Screen onRefresh={() => stats.refetch()} refreshing={stats.isRefetching}>
         <Card pad={false}>
           <Section href="/admin/academias" icon={Building} title={t.admin.academies} text={t.admin.academiesText} count={queue?.pendingAcademies} />
+          <Section href="/admin/tecnicas" icon={BookOpen} title={t.admin.techniques} text={t.admin.techniquesText} />
           <Section href="/admin/denuncias" icon={Flag} title={t.admin.reportsTitle} text={t.admin.reportsText} count={queue?.openReports} />
           <Section href="/admin/usuarios" icon={Users} title={t.admin.accounts} text={t.admin.accountsText} />
           <Section href="/admin/flags" icon={ToggleRight} title={t.admin.flags} text={t.admin.flagsText} />

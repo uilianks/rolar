@@ -7,7 +7,7 @@ import * as s from "../db/schema";
 import type { Db } from "../db/client";
 import { type AppEnv, body, fail, isUniqueViolation, viewer } from "../http";
 import { canManageTechnique, membership } from "../policies";
-import { requireStaff } from "./academies";
+import { findAcademy } from "./academies";
 
 /** The technique catalog: academy staff write it, everyone signed in reads it (approved academies only). */
 export const techniquesRoutes = new Hono<AppEnv>();
@@ -161,8 +161,11 @@ async function setLinks(db: Pick<Db, "select" | "insert" | "delete">, academyId:
   if (targets.length) await db.insert(s.techniqueLinks).values(targets.map((toId) => ({ fromId, toId })));
 }
 
+/** Staff add techniques to their academy; admins to any approved one (from the admin panel). */
 techniquesRoutes.post("/academies/:id/techniques", async (c) => {
-  const { a } = await requireStaff(c, c.req.param("id"));
+  const a = await findAcademy(c, c.req.param("id"));
+  if (a.status !== "approved") fail(404, "academyNotFound");
+  if (!canManageTechnique(await membership(c.get("db"), a.id, viewer(c)), c.get("isAdmin"))) fail(403, "academyCoachesOnly");
   const { leadsTo, ...input } = await body(c, techniqueInput);
   try {
     const row = await c.get("db").transaction(async (tx) => {

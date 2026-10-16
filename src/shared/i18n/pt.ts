@@ -344,6 +344,7 @@ export const pt = {
     saveAndNew: "Salvar e adicionar outra",
     saved: (name: string) => `"${name}" salva. Pode cadastrar a próxima.`,
     academy: "Academia",
+    pickAcademy: "Escolha a academia da técnica",
     remove: "Apagar técnica",
     removeTitle: (name: string) => `Apagar "${name}"?`,
     removeText: "As ligações com outras técnicas também somem.",
@@ -790,6 +791,8 @@ export const pt = {
 
   admin: {
     academies: "Academias",
+    techniques: "Técnicas",
+    techniquesText: "Cadastrar técnicas no catálogo de uma academia",
     verifyTitle: "Verificação de academias",
     verifyText: "Confira os canais oficiais antes de aprovar. Academias pendentes não aparecem para ninguém.",
     pendingTab: "Pendentes",

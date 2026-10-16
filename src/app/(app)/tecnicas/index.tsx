@@ -8,7 +8,7 @@ import { useDeferredValue, useState } from "react";
 import { View } from "react-native";
 
 import { useT } from "@/lib/i18n";
-import { useAcademy, useStaffAcademies, useTechniques, useToggleKnown } from "@/lib/queries";
+import { useAcademy, useMe, useStaffAcademies, useTechniques, useToggleKnown } from "@/lib/queries";
 import { TECHNIQUE_CATEGORIES, type TechniqueCategory } from "@/shared/domain";
 import { Button, Card, Empty, ErrorText, Input, ListRow, Loading, Row, Segmented, Txt } from "@/ui/kit";
 import { Header, Screen } from "@/ui/shell";
@@ -22,9 +22,11 @@ export default function TechniqueCatalog() {
   const [category, setCategory] = useState<TechniqueCategory | "">("");
   const academy = useAcademy(params.academia).data;
   const staffAt = useStaffAcademies();
-  // Where "+" adds to: the academy being browsed if the viewer teaches there, else their first one.
-  const addTo = params.academia ? staffAt.find((a) => a.id === params.academia) : staffAt[0];
-  const add = addTo ? () => router.push(`/academia/${addTo.id}/tecnica`) : undefined;
+  const admin = !!useMe().data?.admin;
+  // Where "+" adds to: the academy being browsed if the viewer teaches there (or is an admin), else
+  // their first one; an admin without a filter goes to the admin form, which asks for the academy.
+  const addTo = params.academia ? (admin && academy ? academy : staffAt.find((a) => a.id === params.academia)) : staffAt[0];
+  const add = addTo ? () => router.push(`/academia/${addTo.id}/tecnica`) : admin ? () => router.push("/admin/tecnicas") : undefined;
   const toggle = useToggleKnown();
   const list = useTechniques({ q: useDeferredValue(q.trim()), category, academy: params.academia });
 
