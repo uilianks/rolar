@@ -4,9 +4,11 @@
 chord per bar. Intro without drums, full groove from the first cut, a soft hit on every scene change,
 and the drums drop for the outro.
 
-    python3 music/compose.py   # writes music/track.wav (then encoded to assets/music.m4a)
+    python3 music/compose.py geral|professores|alunos   # writes music/track-<v>.wav and assets/music-<v>.m4a
 """
 
+import subprocess
+import sys
 import wave
 from pathlib import Path
 
@@ -15,9 +17,15 @@ import numpy as np
 SR = 44100
 BPM = 120
 BEAT = 60 / BPM
-LENGTH = 50.0
-DRUMS_IN, DRUMS_OUT = 4.5, 45.0
-CUTS = [4.5, 10.5, 16.5, 21.5, 28.5, 34.5, 40.0, 45.0]
+# Per video: total length and the scene cuts of its HTML; the last cut is the outro, where the drums drop.
+VERSIONS = {
+    "geral": (56.0, [4.5, 10.5, 16.5, 21.5, 27.5, 34.5, 40.5, 46.0, 51.0]),
+    "professores": (63.0, [5.0, 11.0, 16.5, 22.0, 28.0, 34.0, 39.5, 45.5, 51.5, 57.0]),
+    "alunos": (43.5, [4.5, 10.5, 16.5, 21.5, 27.5, 33.0, 38.5]),
+}
+VERSION = sys.argv[1] if len(sys.argv) > 1 else "geral"
+LENGTH, CUTS = VERSIONS[VERSION]
+DRUMS_IN, DRUMS_OUT = CUTS[0], CUTS[-1]
 
 rng = np.random.default_rng(7)  # deterministic: same file on every run
 n = int(SR * LENGTH)
@@ -174,10 +182,12 @@ mix *= fade_in * fade_out
 mix = np.tanh(mix * 1.1)  # gentle saturation / limiting
 mix *= 0.89 / np.max(np.abs(mix))  # about -1 dBFS peak
 
-out = Path(__file__).with_name("track.wav")
+out = Path(__file__).with_name(f"track-{VERSION}.wav")
 with wave.open(str(out), "wb") as w:
     w.setnchannels(2)
     w.setsampwidth(2)
     w.setframerate(SR)
     w.writeframes((mix.T * 32767).astype("<i2").tobytes())
-print(f"wrote {out} ({LENGTH:.0f} s, {BPM} BPM)")
+m4a = Path(__file__).parent.parent / "assets" / f"music-{VERSION}.m4a"
+subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(out), "-c:a", "aac", "-b:a", "192k", str(m4a)], check=True)
+print(f"wrote {m4a} ({LENGTH:g} s, {BPM} BPM)")

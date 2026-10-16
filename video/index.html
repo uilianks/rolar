@@ -6,206 +6,19 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=block" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      html,
-      body {
-        width: 1920px;
-        height: 1080px;
-        overflow: hidden;
-        background: #0b0b0c;
-      }
-      #root {
-        position: relative;
-        width: 1920px;
-        height: 1080px;
-        font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-        color: #f4f4f5;
-        background: radial-gradient(1200px 700px at 75% 40%, #1d1414 0%, #0b0b0c 60%);
-      }
-      .clip {
-        position: absolute;
-        inset: 0;
-      }
-      .kicker {
-        font-size: 26px;
-        font-weight: 600;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: #ef4444;
-      }
-      .title {
-        font-size: 84px;
-        font-weight: 800;
-        letter-spacing: -0.035em;
-        line-height: 1.02;
-      }
-      .sub {
-        font-size: 34px;
-        line-height: 1.35;
-        color: #a1a1aa;
-        font-weight: 400;
-      }
-      .copy {
-        position: absolute;
-        left: 120px;
-        top: 50%;
-        width: 640px;
-        transform: translateY(-50%);
-        display: flex;
-        flex-direction: column;
-        gap: 28px;
-      }
-      .bullets {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        font-size: 30px;
-        color: #e4e4e7;
-      }
-      .bullets div::before {
-        content: "";
-        display: inline-block;
-        width: 10px;
-        height: 10px;
-        border-radius: 5px;
-        background: #ef4444;
-        margin-right: 18px;
-        vertical-align: middle;
-      }
-      /* Device frames around the real screenshots. */
-      .phone {
-        position: absolute;
-        width: 380px;
-        height: 822px;
-        border-radius: 56px;
-        padding: 14px;
-        background: #18181b;
-        box-shadow: 0 0 0 2px #3f3f46, 0 40px 90px rgba(0, 0, 0, 0.6);
-      }
-      .phone .screen {
-        width: 100%;
-        height: 100%;
-        border-radius: 44px;
-        overflow: hidden;
-        background: #fff;
-      }
-      .phone img,
-      .browser img {
-        width: 100%;
-        display: block;
-      }
-      .browser {
-        position: absolute;
-        width: 1040px;
-        border-radius: 18px;
-        overflow: hidden;
-        background: #fff;
-        box-shadow: 0 0 0 2px #3f3f46, 0 40px 100px rgba(0, 0, 0, 0.65);
-      }
-      .browser .bar {
-        height: 40px;
-        background: #e4e4e7;
-        display: flex;
-        align-items: center;
-        gap: 9px;
-        padding: 0 18px;
-      }
-      .browser .bar i {
-        width: 13px;
-        height: 13px;
-        border-radius: 7px;
-        background: #a1a1aa;
-      }
-      .browser .bar span {
-        margin-left: 18px;
-        height: 24px;
-        flex: 1;
-        max-width: 420px;
-        border-radius: 12px;
-        background: #f4f4f5;
-        font-size: 14px;
-        color: #6f6f78;
-        display: flex;
-        align-items: center;
-        padding-left: 14px;
-      }
-      .browser .viewport {
-        height: 650px;
-        overflow: hidden;
-      }
-      .mark {
-        width: 150px;
-        height: 150px;
-        border-radius: 40px;
-        background: #f4f4f5;
-        color: #0b0b0c;
-        font-size: 96px;
-        font-weight: 800;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .mark {
-        flex-direction: column;
-        line-height: 0.9;
-      }
-      .mark .tip {
-        display: block;
-        width: 34%;
-        height: 8%;
-        border-radius: 6px;
-        background: #ef4444;
-        margin-top: 4%;
-      }
-      .center {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 34px;
-        text-align: center;
-      }
-      .pill {
-        display: inline-flex;
-        align-items: center;
-        height: 64px;
-        padding: 0 32px;
-        border-radius: 32px;
-        border: 2px solid #3f3f46;
-        font-size: 30px;
-        font-weight: 500;
-        color: #e4e4e7;
-      }
-      .tag {
-        position: absolute;
-        padding: 16px 26px;
-        border-radius: 18px;
-        background: #ef4444;
-        color: #fff;
-        font-size: 28px;
-        font-weight: 600;
-        box-shadow: 0 18px 40px rgba(239, 68, 68, 0.35);
-      }
-    </style>
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <div id="root" data-composition-id="main" data-start="0" data-duration="50" data-width="1920" data-height="1080">
+    <div id="root" data-composition-id="main" data-start="0" data-duration="56" data-width="1920" data-height="1080">
       <!-- Music: synthesized for this video (music/compose.py), 120 BPM so the scene cuts land on beats. -->
-      <audio id="music" src="assets/music.m4a" data-start="0" data-duration="50" data-track-index="1" data-volume="1"></audio>
+      <audio id="music" src="assets/music-geral.m4a" data-start="0" data-duration="56" data-track-index="1" data-volume="1"></audio>
 
       <!-- 1 · Intro -->
       <div id="s1" class="clip" data-start="0" data-duration="4.5" data-track-index="0">
         <div class="center">
-          <div class="mark" id="s1-mark">r<i class="tip"></i></div>
-          <div class="title" id="s1-name" style="font-size: 132px">rolar</div>
-          <div class="sub" id="s1-sub">O diário de treino do jiu-jitsu.</div>
+          <div class="mark" data-pop>r<i class="tip"></i></div>
+          <div class="title" data-rise style="font-size: 132px">rolar</div>
+          <div class="sub" data-rise>O diário de treino do jiu-jitsu.</div>
         </div>
       </div>
 
@@ -257,8 +70,28 @@
         <div class="tag" id="s4-tag" style="left: 1430px; top: 640px">Oss! 👊</div>
       </div>
 
+      <!-- 4b · Account: passwordless sign-in and profile photo -->
+      <div id="s4b" class="clip" data-start="21.5" data-duration="6" data-track-index="0">
+        <div class="copy">
+          <div class="kicker">Sua conta</div>
+          <div class="title">Entrar sem senha.</div>
+          <div class="bullets">
+            <div>Só um código no e-mail</div>
+            <div>Foto de perfil, faixa e graus</div>
+            <div>Menores aparecem só com iniciais</div>
+          </div>
+        </div>
+        <div class="phone" id="s4b-p1" style="left: 900px; top: 129px">
+          <div class="screen"><img src="assets/shots/phone-entrar.png" alt="" /></div>
+        </div>
+        <div class="phone" id="s4b-p2" style="left: 1360px; top: 129px">
+          <div class="screen"><img src="assets/shots/phone-perfil.png" alt="" /></div>
+        </div>
+        <div class="tag" id="s4b-tag" style="left: 1560px; top: 210px">Nova foto 📸</div>
+      </div>
+
       <!-- 5 · Academy for the professor -->
-      <div id="s5" class="clip" data-start="21.5" data-duration="7" data-track-index="0">
+      <div id="s5" class="clip" data-start="27.5" data-duration="7" data-track-index="0">
         <div class="copy" style="width: 560px">
           <div class="kicker">Para o professor</div>
           <div class="title">A academia num lugar só.</div>
@@ -275,7 +108,7 @@
       </div>
 
       <!-- 6 · Roll call + QR -->
-      <div id="s6" class="clip" data-start="28.5" data-duration="6" data-track-index="0">
+      <div id="s6" class="clip" data-start="34.5" data-duration="6" data-track-index="0">
         <div class="copy" style="width: 560px">
           <div class="kicker">Chamada</div>
           <div class="title">Check-in por QR.</div>
@@ -291,7 +124,7 @@
       </div>
 
       <!-- 7 · Calendar + competitions -->
-      <div id="s7" class="clip" data-start="34.5" data-duration="5.5" data-track-index="0">
+      <div id="s7" class="clip" data-start="40.5" data-duration="5.5" data-track-index="0">
         <div class="copy" style="width: 560px">
           <div class="kicker">Calendário</div>
           <div class="title">Aulas, eventos e campeonatos.</div>
@@ -307,7 +140,7 @@
       </div>
 
       <!-- 8 · Fees -->
-      <div id="s8" class="clip" data-start="40" data-duration="5" data-track-index="0">
+      <div id="s8" class="clip" data-start="46" data-duration="5" data-track-index="0">
         <div class="copy" style="width: 560px">
           <div class="kicker">Mensalidades</div>
           <div class="title">Quem pagou, sem planilha.</div>
@@ -320,58 +153,45 @@
       </div>
 
       <!-- 9 · Outro -->
-      <div id="s9" class="clip" data-start="45" data-duration="5" data-track-index="0">
+      <div id="s9" class="clip" data-start="51" data-duration="5" data-track-index="0">
         <div class="center">
-          <div class="mark" id="s9-mark" style="width: 120px; height: 120px; font-size: 76px; border-radius: 32px">r<i class="tip"></i></div>
-          <div class="title" id="s9-title">Grátis. Open source. Sem anúncios.</div>
-          <div style="display: flex; gap: 22px" id="s9-pills">
+          <div class="mark" data-pop style="width: 120px; height: 120px; font-size: 76px; border-radius: 32px">r<i class="tip"></i></div>
+          <div class="title" data-rise>Grátis. Open source. Sem anúncios.</div>
+          <div style="display: flex; gap: 22px" data-rise data-stagger>
             <div class="pill">Web e Android</div>
             <div class="pill">Privacidade em primeiro lugar</div>
             <div class="pill">Mantido por doações</div>
           </div>
-          <div class="sub" id="s9-sub">rolar.app — feito pela comunidade do jiu-jitsu.</div>
+          <div class="sub" data-rise>Já no ar em rolar.app — feito pela comunidade do jiu-jitsu.</div>
         </div>
       </div>
     </div>
 
+    <script src="common.js"></script>
     <script>
       window.__timelines = window.__timelines || {};
       const tl = gsap.timeline({ paused: true });
-      const ease = "power3.out";
+      const { scene, tag, intro, outro } = rolarScenes(tl);
 
-      // Enter: copy slides up, devices rise in. Exit: the whole scene fades just before its clip ends.
-      function scene(id, start, dur, devices) {
-        tl.fromTo(`#${id} .copy > *`, { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.7, stagger: 0.12, ease }, start + 0.15);
-        devices.forEach((sel, i) => {
-          tl.fromTo(sel, { opacity: 0, y: 120 }, { opacity: 1, y: 0, duration: 0.9, ease }, start + 0.3 + i * 0.2);
-        });
-        tl.to(`#${id}`, { opacity: 0, duration: 0.45, ease: "power2.in" }, start + dur - 0.45);
-      }
-
-      // 1 · Intro
-      tl.fromTo("#s1-mark", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.8, ease: "back.out(1.7)" }, 0.2);
-      tl.fromTo("#s1-name", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.7, ease }, 0.6);
-      tl.fromTo("#s1-sub", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.7, ease }, 1.0);
-      tl.to("#s1", { opacity: 0, duration: 0.45, ease: "power2.in" }, 4.05);
+      intro("s1", 0, 4.5);
 
       scene("s2", 4.5, 6, ["#s2-p1", "#s2-p2"]);
       scene("s3", 10.5, 6, ["#s3-b", "#s3-p"]);
       scene("s4", 16.5, 5, ["#s4-p"]);
-      tl.fromTo("#s4-tag", { opacity: 0, scale: 0.4, rotation: -8 }, { opacity: 1, scale: 1, rotation: -4, duration: 0.6, ease: "back.out(2)" }, 18.2);
+      tag("#s4-tag", 18.2);
 
-      scene("s5", 21.5, 7, ["#s5-b"]);
+      scene("s4b", 21.5, 6, ["#s4b-p1", "#s4b-p2"]);
+      tag("#s4b-tag", 23.3, 4);
+
+      scene("s5", 27.5, 7, ["#s5-b"]);
       // Scroll the academy page like a visit: from the top to the timetable.
-      tl.fromTo("#s5-img", { y: 0 }, { y: -1150, duration: 4.4, ease: "power1.inOut" }, 23.0);
+      tl.fromTo("#s5-img", { y: 0 }, { y: -1150, duration: 4.4, ease: "power1.inOut" }, 29.0);
 
-      scene("s6", 28.5, 6, ["#s6-b", "#s6-p"]);
-      scene("s7", 34.5, 5.5, ["#s7-b", "#s7-p"]);
-      scene("s8", 40, 5, ["#s8-b"]);
+      scene("s6", 34.5, 6, ["#s6-b", "#s6-p"]);
+      scene("s7", 40.5, 5.5, ["#s7-b", "#s7-p"]);
+      scene("s8", 46, 5, ["#s8-b"]);
 
-      // 9 · Outro
-      tl.fromTo("#s9-mark", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.7, ease: "back.out(1.7)" }, 45.2);
-      tl.fromTo("#s9-title", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.7, ease }, 45.5);
-      tl.fromTo("#s9-pills > *", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.12, ease }, 46.0);
-      tl.fromTo("#s9-sub", { opacity: 0 }, { opacity: 1, duration: 0.6 }, 46.8);
+      outro("s9", 51);
 
       window.__timelines["main"] = tl;
       tl.seek(0);
