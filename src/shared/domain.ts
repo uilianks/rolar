@@ -98,6 +98,13 @@ export const sessionInput = z.object({
 });
 export type SessionInput = z.infer<typeof sessionInput>;
 
+/** Editing a session: only the fields sent change (no defaults filling in rounds or techniques). */
+export const sessionPatch = sessionInput
+  .omit({ source: true })
+  .extend({ rounds: sessionInput.shape.rounds.unwrap(), techniques: sessionInput.shape.techniques.unwrap() })
+  .partial();
+export type SessionPatch = z.infer<typeof sessionPatch>;
+
 export const commentInput = z.object({ body: z.string().trim().min(1).max(2000) });
 
 export const ACADEMY_STATUSES = ["pending", "approved", "rejected"] as const;

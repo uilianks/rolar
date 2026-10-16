@@ -21,6 +21,7 @@ export function sessionCards(db: Db, viewerId: string) {
       techniques: sessions.techniques,
       visibility: sessions.visibility,
       source: sessions.source,
+      reviewPending: sessions.reviewPending,
       academy: { id: academies.id, name: academies.name, slug: academies.slug },
       author: {
         id: profiles.userId,

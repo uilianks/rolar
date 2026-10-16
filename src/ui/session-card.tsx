@@ -64,7 +64,10 @@ export function SessionRow({ s }: { s: Pick<SessionCard, "id" | "kind" | "title"
       </View>
       <View style={{ flex: 1 }}>
         <Txt bold numberOfLines={1}>{s.title || t.sessionTitle(t.sessionKind[s.kind])}</Txt>
-        <Txt v="tiny" muted>{when(s.startedAt)} · {duration(s.durationMin)} · intensidade {s.rpe}</Txt>
+        <Txt v="tiny" muted>
+          {when(s.startedAt)} · {duration(s.durationMin)}
+          {s.rpe ? ` · ${t.session.intensity.toLowerCase()} ${s.rpe}` : ""}
+        </Txt>
       </View>
     </ListRow>
   );
@@ -99,7 +102,7 @@ export function SessionCardView({ s }: { s: SessionCard }) {
             <Stat label={t.session.kind} value={t.sessionKind[s.kind]} />
             <Stat label={t.session.duration} value={duration(s.durationMin)} />
             <Stat label={t.session.rounds} value={String(s.rounds)} />
-            <Stat label={t.session.intensity} value={`${s.rpe}/10`} />
+            <Stat label={t.session.intensity} value={s.rpe ? `${s.rpe}/10` : t.session.noIntensity} />
           </Row>
           <Chips items={s.techniques} />
         </Pressable>

@@ -17,8 +17,9 @@ academies       id · name · slug · city · country · lat/lng (opcional) · c
 academy_members academy_id · user_id · role (owner|coach|student) · status (pending|active) · joined_at
 
 sessions        id · user_id · academy_id? · started_at · duration_min
-(treinos)       kind (gi|nogi|open_mat|drill|competition|private|teaching) · rounds · rpe 1–10
-                notes · visibility (public|followers|private) · source (manual|timer|health)
+(treinos)       kind (gi|nogi|open_mat|drill|competition|private|teaching) · rounds · rpe 1–10?
+                notes · visibility (public|followers|private) · source (manual|timer|checkin|health)
+                review_pending (criado pelo check-in, ainda sem resposta a "Como foi o treino?")
 
                 techniques text[]  (lista livre; o catálogo abaixo é da fase 2)
 
@@ -152,6 +153,13 @@ Exigida pelo RGPD e pelas lojas. Apagar a conta remove em cascata:
     celular (de 45 min antes do início até o fim; a mais próxima ganha), recusa aula cancelada e grava em
     `checkins`. O dono gera um QR novo se o impresso vazar. O check-in é um pedido: aparece na chamada e
     em "Chamadas por fazer" para o professor confirmar;
+  - **o check-in já registra o treino**: o primeiro check-in na aula cria o treino com o tipo, a hora, a
+    duração e o nome da aula (`source = checkin`), privado e sem intensidade, e ele já conta na semana,
+    na sequência e na meta. Quando a aula acaba, a primeira vez que o aluno abre o app aparece "Como foi o
+    treino?" (até 7 dias depois): **Preencher** abre o treino para completar (intensidade, rolas,
+    técnicas, notas e visibilidade) e **Pular** deixa como está; os dois param de perguntar. Fechar o
+    aviso só adia para a próxima abertura. Se o aluno já tinha registrado a aula, nada é criado, e
+    "registrar o treino" a partir da presença confirmada edita o treino que já existe;
   - **check-in em um toque**: botão **Check-in** na barra de baixo (e na lateral, no desktop) e no cartão
     "Aula agora" do feed. Android: leitor de códigos do Google (`CameraView.launchScanner`), sem pedir
     permissão e fechando sozinho; web: câmara dentro do app (`/ler-qr`). Ao ler, o check-in acontece sem

@@ -104,9 +104,9 @@ export const pt = {
     incompleteLink: "Este link de check-in está incompleto. Leia o QR de novo.",
     scanAgain: "Ler de novo",
     done: "Check-in feito!",
-    doneText: "O professor confirma a sua presença na chamada. Bom treino!",
-    logThisClass: "Registrar o treino desta aula",
-    seeAcademy: "Ver a academia",
+    doneText: "O treino já conta na sua semana. Depois da aula a gente pergunta como foi. Bom treino!",
+    goHome: "Ir para o início",
+    fillNow: "Preencher o treino agora",
     pointTitle: "Aponte para o QR da aula",
     cameraText: "O Rolar usa a câmara só para ler o código. Nada é gravado.",
     openCamera: "Abrir a câmara",
@@ -183,6 +183,7 @@ export const pt = {
     duration: "Duração",
     rounds: "Rolas",
     intensity: "Intensidade",
+    noIntensity: "—",
     comments: "Comentários",
   },
 
@@ -487,7 +488,17 @@ export const pt = {
     hint: "Mantenha a tela aberta durante o treino. Ao encerrar, o treino abre já preenchido com a duração e o número de rolas.",
   },
 
+  /** Asked when the app opens after a class the athlete checked in to. */
+  review: {
+    title: "Como foi o treino?",
+    text: "O treino já está registrado. Conte a intensidade, as técnicas e como foi, ou pule.",
+    fill: "Preencher",
+    skip: "Pular",
+    later: "Depois",
+  },
+
   log: {
+    editTitle: "Editar treino",
     topicNote: (topic: string) => `Tema da aula: ${topic}`,
     invalidDate: "Data ou hora inválida",
     useTimer: "Usar o timer de rounds",
@@ -527,6 +538,8 @@ export const pt = {
     commentPlaceholder: "Escreva um comentário…",
     sendComment: "Enviar comentário",
     fromTimer: "Registrado pelo timer de rounds.",
+    fromCheckin: "Registrado pelo check-in na academia.",
+    edit: "Editar treino",
     ossBy: (names: string) => `Oss de ${names}`,
   },
 

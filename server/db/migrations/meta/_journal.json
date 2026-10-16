@@ -92,6 +92,13 @@
       "when": 1792155796155,
       "tag": "0012_rolar_catalog",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792186459130,
+      "tag": "0013_checkin_sessions",
+      "breakpoints": true
     }
   ]
 }

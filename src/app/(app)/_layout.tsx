@@ -2,6 +2,7 @@ import { router, Stack, usePathname } from "expo-router";
 import { useEffect } from "react";
 
 import { handoff } from "@/lib/handoff";
+import { ReviewPrompt } from "@/ui/review-prompt";
 import { AppShell } from "@/ui/shell";
 import { useTheme } from "@/ui/theme";
 
@@ -19,6 +20,7 @@ export default function AppLayout() {
   return (
     <AppShell>
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.bg } }} />
+      <ReviewPrompt />
     </AppShell>
   );
 }

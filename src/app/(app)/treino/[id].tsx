@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
 import ArrowLeft from "lucide-react-native/icons/arrow-left";
 import Flag from "lucide-react-native/icons/flag";
+import Pencil from "lucide-react-native/icons/pencil";
 import Send from "lucide-react-native/icons/send";
 import Share2 from "lucide-react-native/icons/share-2";
 import Trash2 from "lucide-react-native/icons/trash";
@@ -78,6 +79,9 @@ export default function SessionScreen() {
             <Row gap={4}>
               <Button kind="ghost" icon={Share2} accessibilityLabel={t.sessionDetail.share} onPress={share} />
               {mine ? (
+                <Button kind="ghost" icon={Pencil} accessibilityLabel={t.sessionDetail.edit} onPress={() => router.push({ pathname: "/registrar", params: { sessionId: s.id } })} />
+              ) : null}
+              {mine ? (
                 <Button kind="ghost" icon={Trash2} accessibilityLabel={t.sessionDetail.delete} onPress={deleteSession} />
               ) : (
                 <Button kind="ghost" icon={Flag} accessibilityLabel={t.profile.report} onPress={report} />
@@ -116,7 +120,11 @@ export default function SessionScreen() {
               <Kpi label={t.session.kind} value={t.sessionKind[s.kind]} />
               <Kpi label={t.session.duration} value={duration(s.durationMin)} />
               <Kpi label={t.session.rounds} value={String(s.rounds)} />
-              <Kpi label={t.session.intensity} value={`${s.rpe}/10`} sub={t.sessionDetail.load(s.durationMin * s.rpe)} />
+              <Kpi
+                label={t.session.intensity}
+                value={s.rpe ? `${s.rpe}/10` : t.session.noIntensity}
+                sub={s.rpe ? t.sessionDetail.load(s.durationMin * s.rpe) : undefined}
+              />
             </Row>
 
             {s.techniques.length ? (
@@ -162,7 +170,9 @@ export default function SessionScreen() {
                 <ErrorText error={error} />
               </View>
             </Card>
-            {s.source === "timer" ? <Txt v="tiny" muted style={{ color: c.mutedFg }}>{t.sessionDetail.fromTimer}</Txt> : null}
+            {s.source === "timer" || s.source === "checkin" ? (
+              <Txt v="tiny" muted style={{ color: c.mutedFg }}>{s.source === "timer" ? t.sessionDetail.fromTimer : t.sessionDetail.fromCheckin}</Txt>
+            ) : null}
           </>
         ) : null}
       </Screen>

@@ -12,8 +12,8 @@ import { Pressable, View } from "react-native";
 import { api } from "@/lib/api";
 import { ymd } from "@/lib/format";
 import { useT } from "@/lib/i18n";
-import { useCreateSession, useMe } from "@/lib/queries";
-import type { ClassWithOccurrence } from "@/lib/types";
+import { TZ, useCreateSession, useMe, useSession, useUpdateSession } from "@/lib/queries";
+import type { ClassWithOccurrence, SessionCard } from "@/lib/types";
 import { SESSION_KINDS, sessionInput, type SessionKind, type Visibility } from "@/shared/domain";
 import { validationMessage } from "@/shared/i18n";
 import { DateField } from "@/ui/date-field";
@@ -23,41 +23,55 @@ import { space, useTheme } from "@/ui/theme";
 
 const VIS_ICON = { public: Globe, followers: Users, private: Lock };
 
-type Params = { durationMin?: string; rounds?: string; kind?: string; source?: string; classId?: string; date?: string };
+type Params = { durationMin?: string; rounds?: string; kind?: string; source?: string; classId?: string; date?: string; sessionId?: string };
 
-/** Log a session; prefilled by the timer (duration, rounds) or by a roll call (class and date). */
+const hhmm = (d: Date) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+
+/**
+ * Log a session; prefilled by the timer (duration, rounds) or by a roll call (class and date). With
+ * `sessionId`, or a class the athlete already has a session for (a check-in logs one), it edits that
+ * session instead of logging the class twice.
+ */
 export default function Register() {
   const params = useLocalSearchParams<Params>();
   const fromClass = useQuery({
     queryKey: ["class", params.classId, params.date],
-    queryFn: () => api<ClassWithOccurrence>(`/classes/${params.classId}${params.date ? `?date=${params.date}` : ""}`),
+    queryFn: () => api<ClassWithOccurrence>(`/classes/${params.classId}${params.date ? `?date=${params.date}&tz=${encodeURIComponent(TZ)}` : ""}`),
     enabled: !!params.classId,
   });
-  if (params.classId && fromClass.isPending) return <Loading />;
-  return <RegisterForm params={params} fromClass={fromClass.data} />;
+  const editId = params.sessionId ?? fromClass.data?.sessionId ?? undefined;
+  const existing = useSession(editId ?? "");
+  if ((params.classId && fromClass.isPending) || (editId && existing.isPending)) return <Loading />;
+  return <RegisterForm key={existing.data?.id} params={params} fromClass={fromClass.data} existing={existing.data} />;
 }
 
-function RegisterForm({ params, fromClass }: { params: Params; fromClass?: ClassWithOccurrence }) {
+function RegisterForm({ params, fromClass, existing }: { params: Params; fromClass?: ClassWithOccurrence; existing?: SessionCard }) {
   const t = useT();
   const { c } = useTheme();
   const me = useMe().data;
   const create = useCreateSession();
+  const update = useUpdateSession(existing?.id ?? "");
+  const saving = create.isPending || update.isPending;
   const now = new Date();
   const activeAcademies = (me?.memberships ?? []).filter((m) => m.status === "active");
-  const presetKind = fromClass?.kind ?? params.kind;
+  const presetKind = existing?.kind ?? fromClass?.kind ?? params.kind;
+  const started = existing ? new Date(existing.startedAt) : null;
+  const topicNote = fromClass?.topic ? t.log.topicNote(fromClass.topic) : "";
+  const defaultVisibility = me?.profile?.defaultVisibility ?? "followers";
 
   const [kind, setKind] = useState<SessionKind>((SESSION_KINDS as readonly string[]).includes(presetKind ?? "") ? (presetKind as SessionKind) : "gi");
-  const [date, setDate] = useState(fromClass && params.date ? params.date : ymd(now));
-  const [time, setTime] = useState(fromClass?.startTime ?? `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`);
-  const [durationMin, setDuration] = useState(fromClass?.durationMin ?? (Number(params.durationMin) || 90));
-  const [rounds, setRounds] = useState(Number(params.rounds) || 0);
-  const [rpe, setRpe] = useState(7);
-  const [academyId, setAcademyId] = useState<string | null>(fromClass?.academyId ?? me?.profile?.homeAcademyId ?? null);
-  const [title, setTitle] = useState(fromClass?.title ?? "");
-  const [notes, setNotes] = useState(fromClass?.topic ? t.log.topicNote(fromClass.topic) : "");
-  const [techniques, setTechniques] = useState<string[]>([]);
+  const [date, setDate] = useState(started ? ymd(started) : fromClass && params.date ? params.date : ymd(now));
+  const [time, setTime] = useState(started ? hhmm(started) : (fromClass?.startTime ?? hhmm(now)));
+  const [durationMin, setDuration] = useState(existing?.durationMin ?? fromClass?.durationMin ?? (Number(params.durationMin) || 90));
+  const [rounds, setRounds] = useState(existing?.rounds ?? (Number(params.rounds) || 0));
+  const [rpe, setRpe] = useState(existing?.rpe ?? 7);
+  const [academyId, setAcademyId] = useState<string | null>(existing ? (existing.academy?.id ?? null) : (fromClass?.academyId ?? me?.profile?.homeAcademyId ?? null));
+  const [title, setTitle] = useState(existing ? (existing.title ?? "") : (fromClass?.title ?? ""));
+  const [notes, setNotes] = useState(existing?.notes ?? topicNote);
+  const [techniques, setTechniques] = useState<string[]>(existing?.techniques ?? []);
   const [technique, setTechnique] = useState("");
-  const [visibility, setVisibility] = useState<Visibility>(me?.profile?.defaultVisibility ?? "followers");
+  // A check-in session is private until filled in; filling it in publishes it like any other session.
+  const [visibility, setVisibility] = useState<Visibility>(existing && !existing.reviewPending ? existing.visibility : defaultVisibility);
   const [error, setError] = useState<string | null>(null);
 
   function addTechnique() {
@@ -85,8 +99,11 @@ function RegisterForm({ params, fromClass }: { params: Params; fromClass?: Class
     });
     if (!input.success) return setError(validationMessage(t, input.error.issues[0].message));
     try {
-      const s = await create.mutateAsync(input.data);
-      router.replace(`/treino/${s.id}`);
+      const { source: _source, ...patch } = input.data;
+      const s = existing ? await update.mutateAsync(patch) : await create.mutateAsync(input.data);
+      // Editing from the session page goes back to it; anything else lands on the saved session.
+      if (existing && !existing.reviewPending && router.canGoBack()) router.back();
+      else router.replace(`/treino/${s.id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -95,12 +112,12 @@ function RegisterForm({ params, fromClass }: { params: Params; fromClass?: Class
   return (
     <>
       <Header
-        title={t.nav.logSession}
+        title={existing?.reviewPending ? t.review.title : existing ? t.log.editTitle : t.nav.logSession}
         left={<Button kind="ghost" icon={X} accessibilityLabel={t.common.cancel} onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))} />}
-        right={<Button kind="primary" size="sm" title={t.common.save} loading={create.isPending} onPress={save} />}
+        right={<Button kind="primary" size="sm" title={t.common.save} loading={saving} onPress={save} />}
       />
       <Screen>
-        {params.source !== "timer" ? (
+        {params.source !== "timer" && !existing ? (
           <Pressable onPress={() => router.push("/timer")}>
             <Card>
               <Row gap={12}>
@@ -192,7 +209,7 @@ function RegisterForm({ params, fromClass }: { params: Params; fromClass?: Class
         />
 
         <ErrorText error={error} />
-        <Button kind="primary" size="lg" title={t.log.save} loading={create.isPending} onPress={save} />
+        <Button kind="primary" size="lg" title={t.log.save} loading={saving} onPress={save} />
       </Screen>
     </>
   );

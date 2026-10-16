@@ -1,7 +1,7 @@
-import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
 
-import { commentInput, sessionInput } from "../../src/shared/domain";
+import { commentInput, sessionInput, sessionPatch } from "../../src/shared/domain";
 import { normalizeCard, pageOfCards, sessionCards } from "../cards";
 import type { Db } from "../db/client";
 import * as s from "../db/schema";
@@ -67,6 +67,46 @@ sessionsRoutes.post("/sessions", async (c) => {
   return c.json(await visibleSession(db, userId, row.id), 201);
 });
 
+/** How long after a check-in class the app still asks how it went. */
+const REVIEW_WINDOW_MS = 7 * 86_400_000;
+
+/**
+ * The latest session a check-in created that is over and still waiting to be filled in or skipped: the app
+ * asks about it when it opens. Null when there is nothing to ask.
+ */
+sessionsRoutes.get("/sessions/to-review", async (c) => {
+  const userId = viewer(c);
+  const now = Date.now();
+  const [row] = await c
+    .get("db")
+    .select({ id: s.sessions.id })
+    .from(s.sessions)
+    .where(
+      and(
+        eq(s.sessions.userId, userId),
+        eq(s.sessions.reviewPending, true),
+        sql`${s.sessions.startedAt} + make_interval(mins => ${s.sessions.durationMin}) <= ${new Date(now).toISOString()}::timestamptz`,
+        gte(s.sessions.startedAt, new Date(now - REVIEW_WINDOW_MS)),
+      ),
+    )
+    .orderBy(desc(s.sessions.startedAt))
+    .limit(1);
+  return c.json(row ? await visibleSession(c.get("db"), userId, row.id) : null);
+});
+
+/** "Skip": the session stays as the check-in logged it (private, no intensity) and the app stops asking. */
+sessionsRoutes.post("/sessions/:id/skip-review", async (c) => {
+  const userId = viewer(c);
+  const [row] = await c
+    .get("db")
+    .update(s.sessions)
+    .set({ reviewPending: false })
+    .where(and(eq(s.sessions.id, c.req.param("id")), eq(s.sessions.userId, userId)))
+    .returning({ id: s.sessions.id });
+  if (!row) fail(404, "sessionNotFound");
+  return c.body(null, 204);
+});
+
 sessionsRoutes.get("/sessions/:id", async (c) => {
   const userId = viewer(c);
   const db = c.get("db");
@@ -94,10 +134,11 @@ sessionsRoutes.get("/sessions/:id", async (c) => {
 sessionsRoutes.patch("/sessions/:id", async (c) => {
   const userId = viewer(c);
   const db = c.get("db");
-  const input = await body(c, sessionInput.partial());
+  const input = await body(c, sessionPatch);
   const profile = await requireProfile(db, userId);
   const { startedAt, academyId, visibility, ...rest } = input;
-  const patch: Partial<typeof s.sessions.$inferInsert> = { ...rest };
+  // Any edit answers the "how did it go?" question for a check-in session.
+  const patch: Partial<typeof s.sessions.$inferInsert> = { ...rest, reviewPending: false };
   if (startedAt) patch.startedAt = new Date(startedAt);
   if (academyId !== undefined) patch.academyId = await checkAcademy(db, userId, academyId);
   if (visibility) patch.visibility = effectiveVisibility(visibility, profile.birthYear);

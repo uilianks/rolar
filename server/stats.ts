@@ -1,6 +1,6 @@
 // Training statistics computed from a user's sessions in their own time zone (weeks start on Monday).
 
-export type StatRow = { startedAt: Date; durationMin: number; rounds: number; rpe: number; kind: string };
+export type StatRow = { startedAt: Date; durationMin: number; rounds: number; rpe: number | null; kind: string };
 
 export type LoadBand = "low" | "ideal" | "high" | "none";
 
@@ -61,7 +61,8 @@ export function computeStats(rows: StatRow[], opts: { tz: string; now: Date; wee
     days[day] = (days[day] ?? 0) + 1;
     const w = perWeek.get(week) ?? { sessions: 0, load: 0 };
     w.sessions += 1;
-    w.load += r.durationMin * r.rpe;
+    // A session without intensity (check-in, skipped) counts as training but adds no load.
+    w.load += r.durationMin * (r.rpe ?? 0);
     perWeek.set(week, w);
     kinds.set(r.kind, (kinds.get(r.kind) ?? 0) + 1);
     totals.sessions += 1;

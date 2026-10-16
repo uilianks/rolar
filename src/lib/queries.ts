@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { SessionInput } from "@/shared/domain";
+import type { SessionInput, SessionPatch } from "@/shared/domain";
 
 import { api } from "./api";
 import { authClient } from "./auth-client";
@@ -197,6 +197,28 @@ export function useCreateSession() {
   return useMutation({
     mutationFn: (input: SessionInput) => api<SessionCard>("/sessions", { method: "POST", json: input }),
     onSuccess: invalidate,
+  });
+}
+
+export function useUpdateSession(id: string) {
+  const qc = useQueryClient();
+  const invalidate = useInvalidateTraining();
+  return useMutation({
+    mutationFn: (input: SessionPatch) => api<SessionCard>(`/sessions/${id}`, { method: "PATCH", json: input }),
+    onSuccess: () => Promise.all([invalidate(), qc.invalidateQueries({ queryKey: ["session", id] }), qc.invalidateQueries({ queryKey: ["session-to-review"] })]),
+  });
+}
+
+/** The check-in session the app should ask about now (class over, not filled in or skipped), or null. */
+export function useSessionToReview(enabled: boolean) {
+  return useQuery({ queryKey: ["session-to-review"], queryFn: () => api<SessionCard | null>("/sessions/to-review"), enabled });
+}
+
+export function useSkipReview() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api(`/sessions/${id}/skip-review`, { method: "POST" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["session-to-review"] }),
   });
 }
 

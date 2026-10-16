@@ -76,12 +76,15 @@ export type SessionCard = {
   startedAt: string;
   durationMin: number;
   rounds: number;
-  rpe: number;
+  /** Null for a check-in session nobody filled in yet. */
+  rpe: number | null;
   title: string | null;
   notes: string | null;
   techniques: string[];
   visibility: Visibility;
   source: string;
+  /** Created by a check-in and not yet filled in or skipped. */
+  reviewPending: boolean;
   academy: AcademyRef | null;
   author: Author;
   ossCount: number;
@@ -248,7 +251,8 @@ export type AttendanceSheet = {
 
 export type Occurrence = { cancelled: boolean; note: string | null; topic: string | null };
 
-export type ClassWithOccurrence = AcademyClass & Partial<Occurrence>;
+/** `sessionId`: the viewer's own session for that class and date, when they already have one. */
+export type ClassWithOccurrence = AcademyClass & Partial<Occurrence> & { sessionId?: string | null };
 
 export type AcademyEvent = {
   id: string;

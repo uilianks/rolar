@@ -204,12 +204,15 @@ export const sessions = pgTable(
     startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
     durationMin: integer("duration_min").notNull(),
     rounds: integer("rounds").notNull().default(0),
-    rpe: integer("rpe").notNull(),
+    /** Null until the athlete says how hard it was (a session created by a check-in). */
+    rpe: integer("rpe"),
     title: text("title"),
     notes: text("notes"),
     techniques: text("techniques").array().notNull().default(sql`'{}'::text[]`),
     visibility: visibilityEnum("visibility").notNull(),
     source: text("source").notNull().default("manual"),
+    /** Created by a check-in and not yet filled in or skipped: the app asks about it after the class. */
+    reviewPending: boolean("review_pending").notNull().default(false),
     createdAt: createdAt(),
   },
   (t) => [

@@ -263,6 +263,59 @@ describe("check-in by the academy QR and lesson topic", () => {
   });
 });
 
+describe("session logged by the check-in", () => {
+  it("counts right away, stays private and is asked about after the class", async () => {
+    const boss = await api.user("dona_rev");
+    const pupil = await api.user("aluno_rev");
+    const a = await api.approvedAcademy(boss.cookie, { name: "Academia Rev", instagram: "academiarev" });
+    await api.call("POST", `/academies/${a.id}/join`, { cookie: pupil.cookie });
+    await api.call("PATCH", `/academies/${a.id}/members/${pupil.id}`, { cookie: boss.cookie, json: { status: "active" } });
+
+    const now = new Date();
+    const start = new Date(Math.max(now.getTime() - 10 * 60000, Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())));
+    const startTime = start.toISOString().slice(11, 16);
+    const today = now.toISOString().slice(0, 10);
+    const weekday = ((now.getUTCDay() + 6) % 7) + 1;
+    const k = await api.call("POST", `/academies/${a.id}/classes`, { cookie: boss.cookie, json: { weekday, startTime, durationMin: 60, title: "Noite", kind: "nogi" } });
+    const qr = await api.call("GET", `/academies/${a.id}/checkin-qr`, { cookie: boss.cookie });
+    const scan = () => api.call("POST", "/checkin", { cookie: pupil.cookie, json: { a: a.id, t: qr.data.token, tz: "UTC" } });
+
+    const ok = await scan();
+    const id = ok.data.sessionId as string;
+    expect(id).toBeTruthy();
+    expect((await scan()).data.sessionId).toBe(id); // scanning twice logs it once
+    expect(await api.db.select().from(s.sessions).where(eq(s.sessions.userId, pupil.id))).toHaveLength(1);
+
+    const own = await api.call("GET", `/sessions/${id}`, { cookie: pupil.cookie });
+    expect(own.data).toMatchObject({ kind: "nogi", title: "Noite", durationMin: 60, rpe: null, visibility: "private", source: "checkin", reviewPending: true });
+    expect(own.data.startedAt.slice(11, 16)).toBe(startTime);
+    expect((await api.call("GET", `/sessions/${id}`, { cookie: boss.cookie })).status).toBe(404);
+    const stats = await api.call("GET", "/me/stats?tz=UTC", { cookie: pupil.cookie });
+    expect(stats.data.thisWeek.sessions).toBe(1);
+    // "Log this class" from a notification edits it instead of logging it again.
+    expect((await api.call("GET", `/classes/${k.data.id}?date=${today}&tz=UTC`, { cookie: pupil.cookie })).data.sessionId).toBe(id);
+
+    // Not asked while the class is on; asked once it is over.
+    expect((await api.call("GET", "/sessions/to-review", { cookie: pupil.cookie })).data).toBeNull();
+    await api.db.update(s.sessions).set({ startedAt: new Date(now.getTime() - 90 * 60000) }).where(eq(s.sessions.id, id));
+    expect((await api.call("GET", "/sessions/to-review", { cookie: pupil.cookie })).data).toMatchObject({ id });
+    expect((await api.call("GET", "/sessions/to-review", { cookie: boss.cookie })).data).toBeNull();
+
+    // Skipping keeps the session as it is and stops asking.
+    expect((await api.call("POST", `/sessions/${id}/skip-review`, { cookie: boss.cookie })).status).toBe(404);
+    expect((await api.call("POST", `/sessions/${id}/skip-review`, { cookie: pupil.cookie })).status).toBe(204);
+    expect((await api.call("GET", "/sessions/to-review", { cookie: pupil.cookie })).data).toBeNull();
+    expect((await api.call("GET", `/sessions/${id}`, { cookie: pupil.cookie })).data).toMatchObject({ reviewPending: false, visibility: "private", rpe: null });
+
+    // Filling it in answers too; a partial edit leaves the other fields alone.
+    await api.db.update(s.sessions).set({ reviewPending: true }).where(eq(s.sessions.id, id));
+    await api.call("PATCH", `/sessions/${id}`, { cookie: pupil.cookie, json: { rounds: 4, techniques: ["Kimura"] } });
+    const filled = await api.call("PATCH", `/sessions/${id}`, { cookie: pupil.cookie, json: { rpe: 8, visibility: "followers" } });
+    expect(filled.data).toMatchObject({ rpe: 8, rounds: 4, techniques: ["Kimura"], visibility: "followers", source: "checkin", reviewPending: false });
+    expect((await api.call("GET", "/sessions/to-review", { cookie: pupil.cookie })).data).toBeNull();
+  });
+});
+
 describe("notice board and missing students", () => {
   it("is for members; staff post and see who stopped coming", async () => {
     const base = `/academies/${academyId}`;

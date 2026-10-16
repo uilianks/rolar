@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
 import CircleCheck from "lucide-react-native/icons/circle-check";
 import { useEffect } from "react";
@@ -13,15 +13,23 @@ import { Button, Card, Col, Empty, ErrorText, Loading, Txt } from "@/ui/kit";
 import { Header, Screen } from "@/ui/shell";
 import { space, useTheme } from "@/ui/theme";
 
-type CheckinResult = { class: AcademyClass; academy: { id: string; name: string }; date: string };
+type CheckinResult = { class: AcademyClass; academy: { id: string; name: string }; date: string; sessionId: string | null };
 
-/** Opened by the academy's QR (?a=academy&t=secret): checks in to the class on now, then offers to log it. */
+/**
+ * Opened by the academy's QR (?a=academy&t=secret): checks in to the class on now, which also logs the
+ * session. The details come later: after the class the app asks how it went.
+ */
 export default function Checkin() {
   const { c } = useTheme();
   const t = useT();
   const { a: academyId, t: token } = useLocalSearchParams<{ a?: string; t?: string }>();
-  // The phone's time zone is the academy's: the student is standing in it.
-  const checkin = useMutation({ mutationFn: () => api<CheckinResult>("/checkin", { method: "POST", json: { a: academyId, t: token, tz: TZ } }) });
+  const qc = useQueryClient();
+  const checkin = useMutation({
+    // The phone's time zone is the academy's: the student is standing in it.
+    mutationFn: () => api<CheckinResult>("/checkin", { method: "POST", json: { a: academyId, t: token, tz: TZ } }),
+    // The check-in logged a session: the week and the streak count it already.
+    onSuccess: () => Promise.all([qc.invalidateQueries({ queryKey: ["stats"] }), qc.invalidateQueries({ queryKey: ["user-sessions"] })]),
+  });
   const { mutate } = checkin;
 
   useEffect(() => {
@@ -48,8 +56,8 @@ export default function Checkin() {
               <Txt v="small" color={c.mutedFg} style={{ textAlign: "center" }}>
                 {t.checkin.doneText}
               </Txt>
-              <Button kind="primary" title={t.checkin.logThisClass} onPress={() => router.replace({ pathname: "/registrar", params: { classId: r.class.id, date: r.date } })} />
-              <Button title={t.checkin.seeAcademy} onPress={() => router.replace(`/academia/${r.academy.id}`)} />
+              <Button kind="primary" title={t.checkin.goHome} onPress={() => router.replace("/")} />
+              <Button title={t.checkin.fillNow} onPress={() => router.replace({ pathname: "/registrar", params: r.sessionId ? { sessionId: r.sessionId } : { classId: r.class.id, date: r.date } })} />
             </Col>
           </Card>
         ) : null}

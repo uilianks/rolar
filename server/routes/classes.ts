@@ -52,6 +52,17 @@ function localParts(at: Date, tz: string) {
 
 const minutesOf = (hhmm: string) => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5));
 
+/** The instant a local date and HH:MM in `tz` names (twice round, so a DST change between guesses settles). */
+function zonedInstant(date: string, hhmm: string, tz: string) {
+  const wanted = Date.parse(`${date}T${hhmm}:00Z`);
+  let at = wanted;
+  for (let i = 0; i < 2; i++) {
+    const p = localParts(new Date(at), tz);
+    at += wanted - (Date.parse(`${p.date}T00:00:00Z`) + p.minutes * 60_000);
+  }
+  return new Date(at);
+}
+
 /**
  * Sessions members logged at the academy between two dates, as local date + start minute: what students
  * say they trained, which staff can confirm in the roll call.
@@ -59,7 +70,7 @@ const minutesOf = (hhmm: string) => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.
 async function loggedSessions(c: Parameters<typeof viewer>[0], academyId: string, from: string, to: string, tz: string) {
   const rows = await c
     .get("db")
-    .select({ userId: s.sessions.userId, startedAt: s.sessions.startedAt })
+    .select({ id: s.sessions.id, userId: s.sessions.userId, startedAt: s.sessions.startedAt })
     .from(s.sessions)
     .where(
       and(
@@ -68,11 +79,18 @@ async function loggedSessions(c: Parameters<typeof viewer>[0], academyId: string
         lte(s.sessions.startedAt, new Date(new Date(`${to}T00:00:00Z`).getTime() + 2 * DAY)),
       ),
     );
-  return rows.map((r) => ({ userId: r.userId, ...localParts(r.startedAt, tz) }));
+  return rows.map((r) => ({ id: r.id, userId: r.userId, ...localParts(r.startedAt, tz) }));
 }
 
 function matches(k: { startTime: string }, date: string, x: { date: string; minutes: number }) {
   return x.date === date && Math.abs(x.minutes - minutesOf(k.startTime)) <= MATCH_WINDOW_MIN;
+}
+
+/** The viewer's own session for this class on this date (logged by hand or by a check-in), if any. */
+async function ownClassSession(c: Parameters<typeof viewer>[0], k: { id: string; academyId: string; startTime: string }, date: string, tz: string) {
+  const userId = viewer(c);
+  const mine = (await loggedSessions(c, k.academyId, date, date, tz)).filter((x) => x.userId === userId && matches(k, date, x));
+  return mine[0]?.id ?? null;
 }
 
 async function staffAcademy(c: Parameters<typeof viewer>[0], academyId: string) {
@@ -144,7 +162,8 @@ async function occurrence(c: Parameters<typeof viewer>[0], classId: string, date
 
 /**
  * One class (with that date's topic when `date` is given), for a member opening "register this session"
- * from an attendance notification or a check-in.
+ * from an attendance notification or a check-in. `sessionId` is the viewer's session for it, if they
+ * already have one (the app then edits it instead of logging the class twice).
  */
 classesRoutes.get("/classes/:classId", async (c) => {
   const [k] = await c.get("db").select(classColumns).from(s.academyClasses).where(eq(s.academyClasses.id, c.req.param("classId")));
@@ -152,7 +171,8 @@ classesRoutes.get("/classes/:classId", async (c) => {
   await findAcademy(c, k.academyId);
   const date = c.req.query("date");
   if (!date) return c.json(k);
-  return c.json({ ...k, ...(await occurrence(c, k.id, attendanceInput.shape.date.parse(date))) });
+  const day = attendanceInput.shape.date.parse(date);
+  return c.json({ ...k, ...(await occurrence(c, k.id, day)), sessionId: await ownClassSession(c, k, day, timeZone(c)) });
 });
 
 /** Staff cancel one date of a class (holiday) or leave a note; members are told when a date is cancelled or restored. */
@@ -320,7 +340,8 @@ const CHECKIN_EARLY_MIN = 45;
 /**
  * A member scans the academy QR. The server picks the class on now in the member's time zone (from 45
  * minutes before it starts until it ends; the closest start wins) and records a check-in for it: a
- * request staff still confirm in the roll call.
+ * request staff still confirm in the roll call. The first check-in also logs the session from the class
+ * (private, no intensity yet), so it counts right away; after the class the app asks how it went.
  */
 classesRoutes.post("/checkin", async (c) => {
   const userId = viewer(c);
@@ -349,6 +370,19 @@ classesRoutes.post("/checkin", async (c) => {
     .from(s.classOccurrences)
     .where(and(eq(s.classOccurrences.classId, k.id), eq(s.classOccurrences.date, now.date)));
   if (o?.cancelled) fail(409, "classCancelledToday");
-  await db.insert(s.checkins).values({ classId: k.id, date: now.date, userId }).onConflictDoNothing();
-  return c.json({ class: k, academy: { id: a.id, name: a.name }, date: now.date });
+  const fresh = await db.insert(s.checkins).values({ classId: k.id, date: now.date, userId }).onConflictDoNothing().returning({ userId: s.checkins.userId });
+  if (fresh.length && !(await ownClassSession(c, k, now.date, tz))) {
+    await db.insert(s.sessions).values({
+      userId,
+      academyId: a.id,
+      kind: k.kind,
+      startedAt: zonedInstant(now.date, k.startTime, tz),
+      durationMin: k.durationMin,
+      title: k.title,
+      visibility: "private",
+      source: "checkin",
+      reviewPending: true,
+    });
+  }
+  return c.json({ class: k, academy: { id: a.id, name: a.name }, date: now.date, sessionId: await ownClassSession(c, k, now.date, tz) });
 });

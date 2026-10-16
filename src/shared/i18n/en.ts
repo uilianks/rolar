@@ -108,9 +108,9 @@ export const en: Messages = {
     incompleteLink: "This check-in link is incomplete. Scan the QR again.",
     scanAgain: "Scan again",
     done: "Checked in!",
-    doneText: "Your coach confirms your attendance in the roll call. Have a good class!",
-    logThisClass: "Log this class",
-    seeAcademy: "See the academy",
+    doneText: "The session already counts in your week. After class we'll ask how it went. Have a good one!",
+    goHome: "Go to home",
+    fillNow: "Fill in the session now",
     pointTitle: "Point at the class QR",
     cameraText: "Rolar only uses the camera to read the code. Nothing is recorded.",
     openCamera: "Open the camera",
@@ -187,6 +187,7 @@ export const en: Messages = {
     duration: "Duration",
     rounds: "Rounds",
     intensity: "Intensity",
+    noIntensity: "—",
     comments: "Comments",
   },
 
@@ -489,7 +490,16 @@ export const en: Messages = {
     hint: "Keep the screen on during training. When you finish, the session opens already filled in with the duration and number of rounds.",
   },
 
+  review: {
+    title: "How was training?",
+    text: "The session is already logged. Add the intensity, techniques and how it went, or skip.",
+    fill: "Fill in",
+    skip: "Skip",
+    later: "Later",
+  },
+
   log: {
+    editTitle: "Edit session",
     topicNote: (topic: string) => `Class topic: ${topic}`,
     invalidDate: "Invalid date or time",
     useTimer: "Use the round timer",
@@ -529,6 +539,8 @@ export const en: Messages = {
     commentPlaceholder: "Write a comment…",
     sendComment: "Send comment",
     fromTimer: "Logged with the round timer.",
+    fromCheckin: "Logged by checking in at the academy.",
+    edit: "Edit session",
     ossBy: (names: string) => `Oss from ${names}`,
   },
 
