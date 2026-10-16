@@ -52,7 +52,4 @@ example
 # video (HyperFrames)
 video/renders/
 video/.hyperframes/
-video/*/.hyperframes/
-video/music/track*.wav
-video/*
-video/index.html
+video/music/track.wav
