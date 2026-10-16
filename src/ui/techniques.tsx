@@ -6,6 +6,16 @@ import { TECHNIQUE_CATEGORIES, type TechniqueCategory } from "@/shared/domain";
 import { Row, Txt } from "./kit";
 import { radius, space, TECHNIQUE_COLORS, useTheme } from "./theme";
 
+/** Where a technique of this catalog is added (an academy's, or Rolar's from the admin panel). */
+export const newTechniqueHref = (academyId: string | null) => (academyId ? `/academia/${academyId}/tecnica` : "/admin/tecnicas?catalogo=rolar");
+
+export const editTechniqueHref = (academyId: string | null, id: string) =>
+  academyId ? `/academia/${academyId}/tecnica?techniqueId=${id}` : `/admin/tecnicas?techniqueId=${id}`;
+
+/** The map of a technique's catalog. */
+export const techniqueMapHref = (academyId: string | null, focus?: string) =>
+  (academyId ? `/academia/${academyId}/mapa` : "/tecnicas/mapa?escopo=rolar") + (focus ? `${academyId ? "?" : "&"}focus=${focus}` : "");
+
 export function CategoryDot({ category, size = 10 }: { category: TechniqueCategory; size?: number }) {
   return <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: TECHNIQUE_COLORS[category] }} />;
 }

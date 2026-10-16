@@ -78,6 +78,20 @@
       "when": 1792153324402,
       "tag": "0010_known_techniques",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792155679339,
+      "tag": "0011_rolar_techniques",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792155796155,
+      "tag": "0012_rolar_catalog",
+      "breakpoints": true
     }
   ]
 }

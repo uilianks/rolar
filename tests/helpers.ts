@@ -12,12 +12,13 @@ export async function testApi(overrides: Record<string, string> = {}) {
   });
   await handle.migrate();
 
-  async function call(method: string, path: string, opts: { cookie?: string; json?: unknown; ip?: string } = {}) {
+  async function call(method: string, path: string, opts: { cookie?: string; json?: unknown; ip?: string; lang?: string } = {}) {
     const res = await app.request(`http://localhost:8799/api${path}`, {
       method,
       headers: {
         Origin: ORIGIN,
         ...(opts.ip ? { "X-Forwarded-For": opts.ip } : {}),
+        ...(opts.lang ? { "Accept-Language": opts.lang } : {}),
         ...(opts.cookie ? { Cookie: opts.cookie } : {}),
         ...(opts.json !== undefined ? { "Content-Type": "application/json" } : {}),
       },

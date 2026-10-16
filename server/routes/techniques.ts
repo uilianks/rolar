@@ -1,4 +1,4 @@
-import { and, asc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
 import { type Context, Hono } from "hono";
 import { z } from "zod";
 
@@ -9,7 +9,10 @@ import { type AppEnv, body, fail, isUniqueViolation, viewer } from "../http";
 import { canManageTechnique, membership } from "../policies";
 import { findAcademy } from "./academies";
 
-/** The technique catalog: academy staff write it, everyone signed in reads it (approved academies only). */
+/**
+ * The technique catalog, read by everyone signed in. Two kinds: an approved academy's (its staff
+ * write them) and the Rolar catalog (no academy; admins write it in Portuguese and English).
+ */
 export const techniquesRoutes = new Hono<AppEnv>();
 
 /** Unknown filter values are ignored rather than rejected: the list is a search. */
@@ -18,26 +21,55 @@ const listQuery = z.object({
   category: z.enum(TECHNIQUE_CATEGORIES).optional().catch(undefined),
   position: z.enum(TECHNIQUE_POSITIONS).optional().catch(undefined),
   academy: z.string().max(80).optional().catch(undefined),
+  /** `mine`: the academies the viewer is an active member of; `rolar`: the app's own catalog. */
+  scope: z.enum(["mine", "rolar"]).optional().catch(undefined),
 });
 
 const academyRef = { id: s.academies.id, name: s.academies.name, slug: s.academies.slug };
 
+/** Rolar techniques, and those of approved academies. */
+const visible = or(isNull(s.techniques.academyId), eq(s.academies.status, "approved"))!;
+
+/** The academy's own catalog, or Rolar's when `academyId` is null. */
+const sameCatalog = (academyId: string | null) => (academyId ? eq(s.techniques.academyId, academyId) : isNull(s.techniques.academyId));
+
+const memberOf = (userId: string, academy: SQL | typeof s.techniques.academyId) =>
+  sql`exists (select 1 from academy_members m where m.user_id = ${userId} and m.academy_id = ${academy} and m.status = 'active')`;
+
+/** Name and description in the request's language (Rolar techniques have English versions). */
+function localized(c: Context<AppEnv>) {
+  const en = c.get("locale") === "en";
+  return {
+    name: en ? sql<string>`coalesce(${s.techniques.nameEn}, ${s.techniques.name})` : s.techniques.name,
+    description: en ? sql<string>`coalesce(${s.techniques.descriptionEn}, ${s.techniques.description})` : s.techniques.description,
+  };
+}
+
+/** `academy` is null for Rolar techniques (the left join leaves its columns null). */
+const withAcademy = <T extends { academy: { id: string | null; name: string | null; slug: string | null } | null }>(r: T) => ({
+  ...r,
+  academy: r.academy?.id ? (r.academy as { id: string; name: string; slug: string }) : null,
+});
+
 techniquesRoutes.get("/techniques", async (c) => {
   const userId = viewer(c);
-  const { q, category, position, academy } = listQuery.parse(c.req.query());
-  const where: (SQL | undefined)[] = [eq(s.academies.status, "approved")];
+  const { q, category, position, academy, scope } = listQuery.parse(c.req.query());
+  const where: (SQL | undefined)[] = [visible];
   if (q) {
     const like = `%${q.replace(/[\\%_]/g, (ch) => `\\${ch}`)}%`;
-    where.push(or(ilike(s.techniques.name, like), sql`array_to_string(${s.techniques.aliases}, ' ') ilike ${like}`));
+    where.push(sql`concat_ws(' ', ${s.techniques.name}, ${s.techniques.nameEn}, array_to_string(${s.techniques.aliases}, ' ')) ilike ${like}`);
   }
   if (category) where.push(eq(s.techniques.category, category));
   if (position) where.push(eq(s.techniques.position, position));
   if (academy) where.push(eq(s.techniques.academyId, academy));
+  if (scope === "rolar") where.push(isNull(s.techniques.academyId));
+  if (scope === "mine") where.push(memberOf(userId, s.techniques.academyId));
+  const { name } = localized(c);
   const rows = await c
     .get("db")
     .select({
       id: s.techniques.id,
-      name: s.techniques.name,
+      name,
       aliases: s.techniques.aliases,
       category: s.techniques.category,
       position: s.techniques.position,
@@ -46,20 +78,21 @@ techniquesRoutes.get("/techniques", async (c) => {
       known: sql<boolean>`exists (select 1 from known_techniques k where k.user_id = ${userId} and k.technique_id = ${s.techniques.id})`,
     })
     .from(s.techniques)
-    .innerJoin(s.academies, eq(s.academies.id, s.techniques.academyId))
+    .leftJoin(s.academies, eq(s.academies.id, s.techniques.academyId))
     .where(and(...where))
-    .orderBy(asc(sql`lower(${s.techniques.name})`))
+    .orderBy(asc(sql`lower(${name})`))
     .limit(200);
-  return c.json(rows);
+  return c.json(rows.map(withAcademy));
 });
 
-/** The techniques matching `where` (approved academies only) and the "leads to" links among them. */
-async function graph(db: Db, where: SQL) {
+/** The techniques matching `where` (visible ones only) and the "leads to" links among them. */
+async function graph(c: Context<AppEnv>, where: SQL) {
+  const db = c.get("db");
   const nodes = await db
-    .select({ id: s.techniques.id, name: s.techniques.name, category: s.techniques.category, position: s.techniques.position })
+    .select({ id: s.techniques.id, name: localized(c).name, category: s.techniques.category, position: s.techniques.position })
     .from(s.techniques)
-    .innerJoin(s.academies, eq(s.academies.id, s.techniques.academyId))
-    .where(and(where, eq(s.academies.status, "approved")));
+    .leftJoin(s.academies, eq(s.academies.id, s.techniques.academyId))
+    .where(and(where, visible));
   const ids = nodes.map((n) => n.id);
   const links = ids.length
     ? await db
@@ -70,26 +103,91 @@ async function graph(db: Db, where: SQL) {
   return { nodes, links };
 }
 
-/** Every technique of an academy, for its map. */
+/** An academy's map (`?academy=`), or the Rolar catalog's (`?scope=rolar`). */
 techniquesRoutes.get("/techniques/graph", async (c) => {
   viewer(c);
-  return c.json(await graph(c.get("db"), eq(s.techniques.academyId, c.req.query("academy") ?? "")));
+  const rolar = c.req.query("scope") === "rolar";
+  return c.json(await graph(c, rolar ? isNull(s.techniques.academyId) : eq(s.techniques.academyId, c.req.query("academy") ?? "")));
 });
 
+/** True when session word `w` names the technique aliased `t` (its name, English name or another name). */
+const names = (t: string, w: string) =>
+  sql.raw(`(lower(trim(${w})) = lower(${t}.name) or lower(trim(${w})) = lower(${t}.name_en)
+    or lower(trim(${w})) in (select lower(a) from unnest(${t}.aliases) a))`);
+
 /**
- * Techniques the viewer marked as known, plus those of their academies whose name or other name
- * they wrote in a session they logged. Private: only ever the viewer's own map.
+ * Techniques the viewer marked as known, plus the ones they wrote in a session they logged: from
+ * their academies, or from the Rolar catalog when none of their academies has a technique by that
+ * name (the academy's version wins). Private: only ever the viewer's own map.
  */
 function knownBy(userId: string): SQL {
   return or(
     sql`exists (select 1 from known_techniques k where k.user_id = ${userId} and k.technique_id = ${s.techniques.id})`,
-    sql`exists (select 1 from academy_members m where m.user_id = ${userId} and m.academy_id = ${s.techniques.academyId} and m.status = 'active')
-      and exists (select 1 from sessions x, unnest(x.techniques) w where x.user_id = ${userId}
-        and (lower(trim(w)) = lower(${s.techniques.name}) or lower(trim(w)) in (select lower(a) from unnest(${s.techniques.aliases}) a)))`,
+    sql`exists (select 1 from sessions x, unnest(x.techniques) w where x.user_id = ${userId} and ${names('"techniques"', "w")}
+      and (
+        (${s.techniques.academyId} is not null and ${memberOf(userId, s.techniques.academyId)})
+        or (${s.techniques.academyId} is null and not exists (
+          select 1 from techniques o where o.academy_id is not null and ${memberOf(userId, sql`o.academy_id`)} and ${names("o", "w")}))
+      ))`,
   )!;
 }
 
-techniquesRoutes.get("/techniques/known", async (c) => c.json(await graph(c.get("db"), knownBy(viewer(c)))));
+techniquesRoutes.get("/techniques/known", async (c) => c.json(await graph(c, knownBy(viewer(c)))));
+
+/** A visible technique, or 404. */
+async function findTechnique(c: Context<AppEnv>, id: string) {
+  const { name, description } = localized(c);
+  const [row] = await c
+    .get("db")
+    .select({
+      id: s.techniques.id,
+      name,
+      aliases: s.techniques.aliases,
+      category: s.techniques.category,
+      position: s.techniques.position,
+      description,
+      // The stored texts, for the edit form (the fields above are in the request's language).
+      source: { name: s.techniques.name, nameEn: s.techniques.nameEn, description: s.techniques.description, descriptionEn: s.techniques.descriptionEn },
+      updatedAt: s.techniques.updatedAt,
+      academy: academyRef,
+      author: { id: s.profiles.userId, name: s.profiles.name, username: s.profiles.username },
+    })
+    .from(s.techniques)
+    .leftJoin(s.academies, eq(s.academies.id, s.techniques.academyId))
+    .leftJoin(s.profiles, eq(s.profiles.userId, s.techniques.authorId))
+    .where(and(eq(s.techniques.id, id), visible));
+  if (!row) fail(404, "techniqueNotFound");
+  const ref = { id: s.techniques.id, name, category: s.techniques.category };
+  const [leadsTo, comesFrom] = await Promise.all([
+    c.get("db").select(ref).from(s.techniqueLinks).innerJoin(s.techniques, eq(s.techniques.id, s.techniqueLinks.toId)).where(eq(s.techniqueLinks.fromId, id)),
+    c.get("db").select(ref).from(s.techniqueLinks).innerJoin(s.techniques, eq(s.techniques.id, s.techniqueLinks.fromId)).where(eq(s.techniqueLinks.toId, id)),
+  ]);
+  return { ...withAcademy(row), author: row.author?.id ? row.author : null, leadsTo, comesFrom };
+}
+
+/** Staff of its academy, or an admin; only admins for the Rolar catalog. */
+async function canManage(c: Context<AppEnv>, academyId: string | null) {
+  return canManageTechnique(academyId ? await membership(c.get("db"), academyId, viewer(c)) : null, c.get("isAdmin"));
+}
+
+async function requireTechniqueManager(c: Context<AppEnv>, id: string) {
+  const tq = await findTechnique(c, id);
+  if (!(await canManage(c, tq.academy?.id ?? null))) fail(403, tq.academy ? "academyCoachesOnly" : "adminsOnly");
+  return tq;
+}
+
+techniquesRoutes.get("/techniques/:id", async (c) => {
+  const { source, ...tq } = await findTechnique(c, c.req.param("id"));
+  const [canEdit, [known]] = await Promise.all([
+    canManage(c, tq.academy?.id ?? null),
+    c
+      .get("db")
+      .select({ id: s.knownTechniques.techniqueId })
+      .from(s.knownTechniques)
+      .where(and(eq(s.knownTechniques.userId, viewer(c)), eq(s.knownTechniques.techniqueId, tq.id))),
+  ]);
+  return c.json({ ...tq, canEdit, known: !!known, source: canEdit ? source : undefined });
+});
 
 techniquesRoutes.put("/techniques/:id/known", async (c) => {
   const tq = await findTechnique(c, c.req.param("id"));
@@ -105,72 +203,23 @@ techniquesRoutes.delete("/techniques/:id/known", async (c) => {
   return c.body(null, 204);
 });
 
-/** A technique of an approved academy, or 404. */
-async function findTechnique(c: Context<AppEnv>, id: string) {
-  const [row] = await c
-    .get("db")
-    .select({
-      id: s.techniques.id,
-      name: s.techniques.name,
-      aliases: s.techniques.aliases,
-      category: s.techniques.category,
-      position: s.techniques.position,
-      description: s.techniques.description,
-      updatedAt: s.techniques.updatedAt,
-      academy: academyRef,
-      author: { id: s.profiles.userId, name: s.profiles.name, username: s.profiles.username },
-    })
-    .from(s.techniques)
-    .innerJoin(s.academies, eq(s.academies.id, s.techniques.academyId))
-    .leftJoin(s.profiles, eq(s.profiles.userId, s.techniques.authorId))
-    .where(and(eq(s.techniques.id, id), eq(s.academies.status, "approved")));
-  if (!row) fail(404, "techniqueNotFound");
-  const ref = { id: s.techniques.id, name: s.techniques.name, category: s.techniques.category };
-  const [leadsTo, comesFrom] = await Promise.all([
-    c.get("db").select(ref).from(s.techniqueLinks).innerJoin(s.techniques, eq(s.techniques.id, s.techniqueLinks.toId)).where(eq(s.techniqueLinks.fromId, id)),
-    c.get("db").select(ref).from(s.techniqueLinks).innerJoin(s.techniques, eq(s.techniques.id, s.techniqueLinks.fromId)).where(eq(s.techniqueLinks.toId, id)),
-  ]);
-  return { ...row, author: row.author?.id ? row.author : null, leadsTo, comesFrom };
-}
-
-async function requireTechniqueManager(c: Context<AppEnv>, id: string) {
-  const tq = await findTechnique(c, id);
-  if (!canManageTechnique(await membership(c.get("db"), tq.academy.id, viewer(c)), c.get("isAdmin"))) fail(403, "academyCoachesOnly");
-  return tq;
-}
-
-techniquesRoutes.get("/techniques/:id", async (c) => {
-  const tq = await findTechnique(c, c.req.param("id"));
-  const db = c.get("db");
-  const userId = viewer(c);
-  const [canEdit, [known]] = await Promise.all([
-    membership(db, tq.academy.id, userId).then((m) => canManageTechnique(m, c.get("isAdmin"))),
-    db.select({ id: s.knownTechniques.techniqueId }).from(s.knownTechniques).where(and(eq(s.knownTechniques.userId, userId), eq(s.knownTechniques.techniqueId, tq.id))),
-  ]);
-  return c.json({ ...tq, canEdit, known: !!known });
-});
-
-/** Replaces a technique's outgoing links; targets must be other techniques of the same academy. */
-async function setLinks(db: Pick<Db, "select" | "insert" | "delete">, academyId: string, fromId: string, leadsTo: string[]) {
+/** Replaces a technique's outgoing links; targets must be other techniques of the same catalog. */
+async function setLinks(db: Pick<Db, "select" | "insert" | "delete">, academyId: string | null, fromId: string, leadsTo: string[]) {
   const targets = [...new Set(leadsTo)].filter((id) => id !== fromId);
   const found = targets.length
-    ? await db.select({ id: s.techniques.id }).from(s.techniques).where(and(inArray(s.techniques.id, targets), eq(s.techniques.academyId, academyId)))
+    ? await db.select({ id: s.techniques.id }).from(s.techniques).where(and(inArray(s.techniques.id, targets), sameCatalog(academyId)))
     : [];
   if (found.length !== targets.length) fail(400, "techniqueLinkInvalid");
   await db.delete(s.techniqueLinks).where(eq(s.techniqueLinks.fromId, fromId));
   if (targets.length) await db.insert(s.techniqueLinks).values(targets.map((toId) => ({ fromId, toId })));
 }
 
-/** Staff add techniques to their academy; admins to any approved one (from the admin panel). */
-techniquesRoutes.post("/academies/:id/techniques", async (c) => {
-  const a = await findAcademy(c, c.req.param("id"));
-  if (a.status !== "approved") fail(404, "academyNotFound");
-  if (!canManageTechnique(await membership(c.get("db"), a.id, viewer(c)), c.get("isAdmin"))) fail(403, "academyCoachesOnly");
+async function create(c: Context<AppEnv>, academyId: string | null) {
   const { leadsTo, ...input } = await body(c, techniqueInput);
   try {
     const row = await c.get("db").transaction(async (tx) => {
-      const [created] = await tx.insert(s.techniques).values({ ...input, academyId: a.id, authorId: viewer(c) }).returning({ id: s.techniques.id });
-      await setLinks(tx, a.id, created.id, leadsTo);
+      const [created] = await tx.insert(s.techniques).values({ ...input, academyId, authorId: viewer(c) }).returning({ id: s.techniques.id });
+      await setLinks(tx, academyId, created.id, leadsTo);
       return created;
     });
     return c.json(row, 201);
@@ -178,6 +227,21 @@ techniquesRoutes.post("/academies/:id/techniques", async (c) => {
     if (isUniqueViolation(e)) fail(409, "techniqueExists");
     throw e;
   }
+}
+
+/** Staff add techniques to their academy; admins to any approved one (from the admin panel). */
+techniquesRoutes.post("/academies/:id/techniques", async (c) => {
+  const a = await findAcademy(c, c.req.param("id"));
+  if (a.status !== "approved") fail(404, "academyNotFound");
+  if (!(await canManage(c, a.id))) fail(403, "academyCoachesOnly");
+  return create(c, a.id);
+});
+
+/** The Rolar catalog: admins only. */
+techniquesRoutes.post("/techniques", async (c) => {
+  viewer(c);
+  if (!c.get("isAdmin")) fail(403, "adminsOnly");
+  return create(c, null);
 });
 
 techniquesRoutes.put("/techniques/:id", async (c) => {
@@ -186,7 +250,7 @@ techniquesRoutes.put("/techniques/:id", async (c) => {
   try {
     await c.get("db").transaction(async (tx) => {
       await tx.update(s.techniques).set({ ...input, updatedAt: new Date() }).where(eq(s.techniques.id, tq.id));
-      await setLinks(tx, tq.academy.id, tq.id, leadsTo);
+      await setLinks(tx, tq.academy?.id ?? null, tq.id, leadsTo);
     });
   } catch (e) {
     if (isUniqueViolation(e)) fail(409, "techniqueExists");

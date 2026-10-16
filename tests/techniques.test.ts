@@ -44,7 +44,7 @@ describe("technique catalog", () => {
     expect((await api.call("POST", base, { cookie: owner.cookie, json: tech("armlock") })).status).toBe(409);
 
     // An outsider finds it by an alias, and reads it without being able to edit.
-    const found = await api.call("GET", "/techniques?q=chave", { cookie: outsider.cookie });
+    const found = await api.call("GET", `/techniques?q=chave&academy=${academyId}`, { cookie: outsider.cookie });
     expect(found.data.map((r: { name: string }) => r.name)).toEqual(["Armlock"]);
     const detail = await api.call("GET", `/techniques/${created.data.id}`, { cookie: outsider.cookie });
     expect(detail.data).toMatchObject({ name: "Armlock", position: "closed_guard", canEdit: false, academy: { id: academyId } });
@@ -125,7 +125,7 @@ describe("technique catalog", () => {
     expect((await api.call("GET", `/techniques/${sweep.data.id}`, { cookie: student.cookie })).data.known).toBe(true);
     expect((await api.call("GET", `/techniques/${sweep.data.id}`, { cookie: coach.cookie })).data.known).toBe(false);
     const listed = async (u: { cookie: string }) =>
-      ((await api.call("GET", "/techniques?q=Raspagem de gancho", { cookie: u.cookie })).data as { known: boolean }[])[0].known;
+      ((await api.call("GET", `/techniques?q=Raspagem de gancho&academy=${academyId}`, { cookie: u.cookie })).data as { known: boolean }[])[0].known;
     expect(await listed(student)).toBe(true);
     expect(await listed(coach)).toBe(false);
 
@@ -136,5 +136,49 @@ describe("technique catalog", () => {
     await api.call("DELETE", `/techniques/${foreign.data.id}/known`, { cookie: student.cookie });
     expect((await mine(student)).nodes.map((n) => n.id)).not.toContain(foreign.data.id);
     expect((await api.call("PUT", "/techniques/nao-existe/known", { cookie: student.cookie })).status).toBe(404);
+  });
+
+  it("ships the Rolar catalog: bilingual, admin-written, academy versions first", async () => {
+    const admin = { cookie: await api.signIn("admin@example.com") };
+    const loner = await api.user("sem_academia_tec");
+    const rolar = async (cookie: string, extra = "", lang = "pt") =>
+      (await api.call("GET", `/techniques?scope=rolar${extra}`, { cookie, lang })).data as { id: string; name: string; academy: unknown }[];
+
+    // The migration's base catalog, with links, in both languages.
+    const base = await rolar(loner.cookie);
+    expect(base.length).toBeGreaterThanOrEqual(30);
+    expect(base.every((k) => k.academy === null)).toBe(true);
+    expect((await rolar(loner.cookie, "&q=Rear naked")).map((k) => k.name)).toEqual(["Mata-leão"]);
+    expect((await rolar(loner.cookie, "&q=Mata-leão", "en")).map((k) => k.name)).toEqual(["Rear naked choke"]);
+    const map = (await api.call("GET", "/techniques/graph?scope=rolar", { cookie: loner.cookie })).data;
+    expect(map.links.length).toBeGreaterThan(30);
+
+    // Only admins write it; English fields are optional.
+    expect((await api.call("POST", "/techniques", { cookie: owner.cookie, json: tech("Rolar X") })).status).toBe(403);
+    const made = await api.call("POST", "/techniques", { cookie: admin.cookie, json: tech("Gogoplata", { nameEn: "Gogoplata", descriptionEn: "Shin across the throat." }) });
+    expect(made.status).toBe(201);
+    expect((await api.call("POST", "/techniques", { cookie: admin.cookie, json: tech("gogoplata") })).status).toBe(409);
+    const en = await api.call("GET", `/techniques/${made.data.id}`, { cookie: loner.cookie, lang: "en" });
+    expect(en.data).toMatchObject({ academy: null, description: "Shin across the throat.", canEdit: false });
+    expect(en.data.source).toBeUndefined();
+    expect((await api.call("GET", `/techniques/${made.data.id}`, { cookie: admin.cookie })).data.source).toMatchObject({ nameEn: "Gogoplata" });
+    expect((await api.call("PUT", `/techniques/${made.data.id}`, { cookie: owner.cookie, json: tech("Gogoplata") })).status).toBe(403);
+    // Links stay inside one catalog.
+    const academyTech = (await api.call("GET", `/techniques?academy=${academyId}`, { cookie: owner.cookie })).data[0];
+    expect((await api.call("PUT", `/techniques/${made.data.id}`, { cookie: admin.cookie, json: tech("Gogoplata", { leadsTo: [academyTech.id] }) })).status).toBe(400);
+
+    // "Mine" lists the viewer's academies only; someone without an academy has none there.
+    expect((await api.call("GET", "/techniques?scope=mine", { cookie: loner.cookie })).data).toHaveLength(0);
+    const mine = (await api.call("GET", "/techniques?scope=mine", { cookie: student.cookie })).data as { academy: { id: string } }[];
+    expect(mine.length).toBeGreaterThan(0);
+    expect(mine.every((k) => k.academy.id === academyId)).toBe(true);
+
+    // Logged techniques: without an academy they come from Rolar; the student's academy version wins.
+    await api.call("POST", "/sessions", { cookie: loner.cookie, json: sessionBody({ techniques: ["rear naked choke", "Upa"] }) });
+    const lonerMap = (await api.call("GET", "/techniques/known", { cookie: loner.cookie })).data.nodes.map((n: { id: string }) => n.id).sort();
+    expect(lonerMap).toEqual(["rolar-mount-escape", "rolar-rear-naked-choke"]);
+    const studentMap = (await api.call("GET", "/techniques/known", { cookie: student.cookie })).data.nodes.map((n: { id: string }) => n.id);
+    expect(studentMap).not.toContain("rolar-closed-guard"); // the academy's "Guarda fechada" covers it
+    expect(studentMap).not.toContain("rolar-ezekiel");
   });
 });

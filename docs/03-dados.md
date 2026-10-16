@@ -24,10 +24,11 @@ sessions        id · user_id · academy_id? · started_at · duration_min
 
 rolls (fase 2)  session_id · partner_user_id? · partner_name? · partner_belt
                 outcome (sub_win|sub_loss|points|draw|flow) · technique_id?
-techniques      id · academy_id · author_id? · name (único por academia, sem caixa) · aliases text[]
+techniques      id · academy_id? · author_id? · name (único por academia, sem caixa) · name_en? · aliases text[]
+                (sem academia = catálogo do Rolar, bilíngue; base inicial na migração 0012)
 (catálogo)      category (takedown|guard|pass|sweep|control|submission|escape)
                 position? (standing|closed_guard|open_guard|half_guard|side_control|mount|
-                knee_on_belly|back|turtle|leg_entanglement) · description (só texto)
+                knee_on_belly|back|turtle|leg_entanglement) · description · description_en? (só texto)
 technique_links from_id · to_id   ("leva a", só dentro da mesma academia; vira o mapa de técnicas)
 known_techniques user_id · technique_id   ("eu sei esta técnica", marcado pelo próprio atleta)
 session_techniques (f2)  session_id · technique_id
@@ -57,14 +58,17 @@ feature_flags   key · enabled_for (all | lista de user_id)
   - só `owner|coach` ativo aprova ou muda o papel de alguém.
 - **Graduação**: só `coach|owner` ativo da academia preenche `confirmed_by`.
 - **Técnicas** (`canManageTechnique`):
-  - qualquer usuário logado lê as técnicas e o mapa de academias aprovadas;
+  - qualquer usuário logado lê as técnicas do Rolar e as de academias aprovadas, e os mapas;
+  - o catálogo do Rolar (sem academia) só o admin escreve, em português e inglês; a API responde no
+    idioma do pedido;
   - só `owner|coach` ativo da academia cria, edita ou apaga, e as ligações só apontam para técnicas
     da mesma academia;
   - admin cria, edita e apaga técnicas de qualquer academia aprovada (painel admin → Técnicas,
     escolhendo a academia).
 - **Meu mapa de técnicas** (`/techniques/known`): só o próprio atleta vê. Entram as técnicas que ele
-  marcou como sabidas e as das academias em que é membro ativo cujo nome ou outro nome ele anotou
-  num treino (sem diferenciar maiúsculas).
+  marcou como sabidas e as que ele anotou num treino (nome, nome em inglês ou outro nome, sem
+  diferenciar maiúsculas): das academias em que é membro ativo, ou do Rolar quando nenhuma dessas
+  academias tem uma técnica com aquele nome (a versão da academia vence).
 - **Menores (13–17)**:
   - perfil e treinos privados por padrão;
   - fora da busca e de "sugestões de quem seguir";

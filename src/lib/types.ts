@@ -38,7 +38,8 @@ export type TechniqueRef = { id: string; name: string; category: TechniqueCatego
 export type Technique = TechniqueRef & {
   aliases: string[];
   position: TechniquePosition | null;
-  academy: AcademyRef;
+  /** Null for the Rolar catalog (the app's own techniques). */
+  academy: AcademyRef | null;
   /** The viewer marked it as known. */
   known: boolean;
 };
@@ -49,6 +50,8 @@ export type TechniqueDetail = Technique & {
   leadsTo: TechniqueRef[];
   comesFrom: TechniqueRef[];
   canEdit: boolean;
+  /** The stored texts in both languages; only for those who can edit. */
+  source?: { name: string; nameEn: string | null; description: string; descriptionEn: string | null };
 };
 export type TechniqueGraph = { nodes: (TechniqueRef & { position: TechniquePosition | null })[]; links: { from: string; to: string }[] };
 

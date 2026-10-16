@@ -378,25 +378,35 @@ export const announcements = pgTable(
   (t) => [index("announcements_academy_idx").on(t.academyId, t.createdAt)],
 );
 
-/** Text-only technique catalog: written by an academy's staff, readable by everyone signed in. */
+/**
+ * Text-only technique catalog, readable by everyone signed in. With an academy: written by its staff,
+ * in their language. Without one: the Rolar catalog, written by admins in Portuguese and English
+ * (`name_en`, `description_en`; the API answers in the request's language).
+ */
 export const techniques = pgTable(
   "techniques",
   {
     id: id(),
-    academyId: text("academy_id").notNull().references(() => academies.id, { onDelete: "cascade" }),
+    academyId: text("academy_id").references(() => academies.id, { onDelete: "cascade" }),
     authorId: text("author_id").references(() => user.id, { onDelete: "set null" }),
     name: text("name").notNull(),
+    nameEn: text("name_en"),
     aliases: text("aliases").array().notNull().default(sql`'{}'::text[]`),
     category: techniqueCategoryEnum("category").notNull(),
     position: techniquePositionEnum("position"),
     description: text("description").notNull().default(""),
+    descriptionEn: text("description_en"),
     createdAt: createdAt(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [uniqueIndex("techniques_academy_name_idx").on(t.academyId, sql`lower(${t.name})`)],
+  (t) => [
+    uniqueIndex("techniques_academy_name_idx").on(t.academyId, sql`lower(${t.name})`),
+    // Postgres treats NULL academies as distinct, so the Rolar catalog needs its own index.
+    uniqueIndex("techniques_rolar_name_idx").on(sql`lower(${t.name})`).where(sql`${t.academyId} is null`),
+  ],
 );
 
-/** "Leads to" edges between two techniques of the same academy. */
+/** "Leads to" edges between two techniques of the same catalog (one academy's, or Rolar's). */
 export const techniqueLinks = pgTable(
   "technique_links",
   {

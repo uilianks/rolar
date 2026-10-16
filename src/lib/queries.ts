@@ -29,13 +29,19 @@ import type {
   TechniqueGraph,
 } from "./types";
 
-export function useTechniques(filters: { q?: string; category?: string; academy?: string }, enabled = true) {
+export function useTechniques(filters: { q?: string; category?: string; academy?: string; scope?: "mine" | "rolar" }, enabled = true) {
   const qs = new URLSearchParams(Object.entries(filters).filter((e): e is [string, string] => !!e[1])).toString();
   return useQuery({ queryKey: ["techniques", filters], queryFn: () => api<Technique[]>(`/techniques${qs ? `?${qs}` : ""}`), enabled });
 }
 
 export function useTechnique(id: string | undefined) {
   return useQuery({ queryKey: ["technique", id], queryFn: () => api<TechniqueDetail>(`/techniques/${id}`), enabled: !!id });
+}
+
+/** Approved academies the viewer is an active member of (any role). */
+export function useMyAcademies() {
+  const me = useMe().data;
+  return (me?.memberships ?? []).filter((m) => m.status === "active" && m.academy.status === "approved").map((m) => m.academy);
 }
 
 /** Approved academies where the viewer is active staff: where they can add techniques. */
@@ -60,8 +66,10 @@ export function useKnownTechniques() {
   return useQuery({ queryKey: ["techniques", "known"], queryFn: () => api<TechniqueGraph>("/techniques/known") });
 }
 
+/** An academy's map, or the Rolar catalog's (`"rolar"`). */
 export function useTechniqueGraph(academyId: string | undefined) {
-  return useQuery({ queryKey: ["techniques", "graph", academyId], queryFn: () => api<TechniqueGraph>(`/techniques/graph?academy=${academyId}`), enabled: !!academyId });
+  const qs = academyId === "rolar" ? "scope=rolar" : `academy=${academyId}`;
+  return useQuery({ queryKey: ["techniques", "graph", academyId], queryFn: () => api<TechniqueGraph>(`/techniques/graph?${qs}`), enabled: !!academyId });
 }
 
 export const TZ = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";

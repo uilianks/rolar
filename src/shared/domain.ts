@@ -226,7 +226,10 @@ export const techniqueInput = z.object({
   category: z.enum(TECHNIQUE_CATEGORIES),
   position: z.enum(TECHNIQUE_POSITIONS).nullable().default(null),
   description: z.string().trim().max(10_000).default(""),
-  /** Ids of the same academy's techniques this one leads to (a chain, drawn as the technique graph). */
+  /** English versions, for the Rolar catalog (bilingual); academies write in their own language. */
+  nameEn: z.string().trim().max(80).nullable().default(null).transform((s) => s || null),
+  descriptionEn: z.string().trim().max(10_000).nullable().default(null).transform((s) => s || null),
+  /** Ids of the same catalog's techniques this one leads to (a chain, drawn as the technique graph). */
   leadsTo: z.array(z.string().min(1).max(64)).max(20).default([]),
 });
 

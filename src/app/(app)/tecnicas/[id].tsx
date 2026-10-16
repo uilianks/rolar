@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { router, useLocalSearchParams } from "expo-router";
+import { type Href, router, useLocalSearchParams } from "expo-router";
 import ArrowLeft from "lucide-react-native/icons/arrow-left";
 import Check from "lucide-react-native/icons/check";
 import Network from "lucide-react-native/icons/network";
@@ -14,7 +14,7 @@ import { useTechnique, useToggleKnown } from "@/lib/queries";
 import type { TechniqueRef } from "@/lib/types";
 import { Badge, Button, Card, Col, ErrorText, Loading, Row, Txt } from "@/ui/kit";
 import { Header, Screen } from "@/ui/shell";
-import { CategoryDot, TechniqueChip } from "@/ui/techniques";
+import { CategoryDot, editTechniqueHref, newTechniqueHref, TechniqueChip, techniqueMapHref } from "@/ui/techniques";
 import { space } from "@/ui/theme";
 
 function Links({ title, items }: { title: string; items: TechniqueRef[] }) {
@@ -45,7 +45,7 @@ export default function TechniqueScreen() {
     try {
       await api(`/techniques/${k.id}`, { method: "DELETE" });
       await qc.invalidateQueries({ queryKey: ["techniques"] });
-      router.replace(`/tecnicas?academia=${k.academy.id}`);
+      router.replace(k.academy ? `/tecnicas?academia=${k.academy.id}` : "/tecnicas?aba=rolar");
     } catch (e) {
       setError(e);
     }
@@ -59,8 +59,8 @@ export default function TechniqueScreen() {
         right={
           k?.canEdit ? (
             <Row gap={4}>
-              <Button kind="ghost" icon={Pencil} accessibilityLabel={t.techniques.edit} onPress={() => router.push(`/academia/${k.academy.id}/tecnica?techniqueId=${k.id}`)} />
-              <Button size="sm" kind="primary" icon={Plus} accessibilityLabel={t.techniques.new} onPress={() => router.push(`/academia/${k.academy.id}/tecnica`)} />
+              <Button kind="ghost" icon={Pencil} accessibilityLabel={t.techniques.edit} onPress={() => router.push(editTechniqueHref(k.academy?.id ?? null, k.id) as Href)} />
+              <Button size="sm" kind="primary" icon={Plus} accessibilityLabel={t.techniques.new} onPress={() => router.push(newTechniqueHref(k.academy?.id ?? null) as Href)} />
             </Row>
           ) : undefined
         }
@@ -80,8 +80,8 @@ export default function TechniqueScreen() {
                 {k.position ? <Badge>{t.techniquePosition[k.position]}</Badge> : null}
               </Row>
               {k.aliases.length ? <Txt v="small" muted>{k.aliases.join(" · ")}</Txt> : null}
-              <Txt v="small" muted onPress={() => router.push(`/academia/${k.academy.id}`)}>
-                {k.academy.name}{k.author ? ` · ${t.techniques.by(k.author.name)}` : ""}
+              <Txt v="small" muted onPress={k.academy ? () => router.push(`/academia/${k.academy!.id}`) : undefined}>
+                {k.academy ? `${k.academy.name}${k.author ? ` · ${t.techniques.by(k.author.name)}` : ""}` : t.techniques.rolarTechnique}
               </Txt>
               <Button
                 kind={k.known ? "primary" : "default"}
@@ -105,7 +105,7 @@ export default function TechniqueScreen() {
               </Card>
             ) : null}
             <Row wrap gap={space.sm}>
-              <Button icon={Network} title={t.techniques.mapTitle} onPress={() => router.push(`/academia/${k.academy.id}/mapa?focus=${k.id}`)} />
+              <Button icon={Network} title={t.techniques.mapTitle} onPress={() => router.push(techniqueMapHref(k.academy?.id ?? null, k.id) as Href)} />
               {k.canEdit ? <Button kind="danger" title={t.techniques.remove} onPress={remove} /> : null}
             </Row>
           </>
