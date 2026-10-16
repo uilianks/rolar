@@ -59,7 +59,7 @@ export function SessionRow({ s }: { s: Pick<SessionCard, "id" | "kind" | "title"
   const t = useT();
   return (
     <ListRow onPress={() => router.push(`/treino/${s.id}`)}>
-      <View style={{ width: 70 }}>
+      <View style={{ width: 92 }}>
         <Badge>{t.sessionKind[s.kind]}</Badge>
       </View>
       <View style={{ flex: 1 }}>

@@ -83,10 +83,10 @@ export default function Fees() {
               {t.fees.intro}
             </Txt>
             <Row wrap gap={space.md}>
-              <View style={{ flexGrow: 1, flexBasis: 140 }}><Kpi label={t.billingStatus.paid} value={String(count("paid"))} /></View>
-              <View style={{ flexGrow: 1, flexBasis: 140 }}><Kpi label={t.billingStatus.due} value={String(count("due"))} sub={t.academyCards.dueDay(b.billingDueDay)} /></View>
-              <View style={{ flexGrow: 1, flexBasis: 140 }}><Kpi label={t.billingStatus.late} value={String(count("late"))} subTone={count("late") ? "down" : undefined} sub={count("late") ? t.fees.needsAttention : undefined} /></View>
-              <View style={{ flexGrow: 1, flexBasis: 140 }}><Kpi label={t.billingStatus.no_plan} value={String(count("no_plan"))} /></View>
+              <Kpi label={t.billingStatus.paid} value={String(count("paid"))} />
+              <Kpi label={t.billingStatus.due} value={String(count("due"))} sub={t.academyCards.dueDay(b.billingDueDay)} />
+              <Kpi label={t.billingStatus.late} value={String(count("late"))} subTone={count("late") ? "down" : undefined} sub={count("late") ? t.fees.needsAttention : undefined} />
+              <Kpi label={t.billingStatus.no_plan} value={String(count("no_plan"))} />
             </Row>
 
             <Segmented

@@ -14,12 +14,12 @@ import { space, useTheme } from "@/ui/theme";
 
 // Screenshots taken at 390x844 (scripts in video/), resized to 360px wide.
 const SCREENS = [
-  { key: "feed", src: require("../../assets/images/previews/feed.webp") },
   { key: "log", src: require("../../assets/images/previews/registrar.webp") },
   { key: "progress", src: require("../../assets/images/previews/progresso.webp") },
   { key: "academy", src: require("../../assets/images/previews/al-academia.webp") },
   { key: "teacher", src: require("../../assets/images/previews/prof-chamada.webp") },
   { key: "timer", src: require("../../assets/images/previews/timer.webp") },
+  { key: "feed", src: require("../../assets/images/previews/feed.webp") },
 ] as const;
 
 const EVERY_MS = 4000;

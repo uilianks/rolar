@@ -18,11 +18,9 @@ type View2D = { k: number; x: number; y: number };
 
 const MIN_K = 0.2;
 const MAX_K = 4;
-/** Below this zoom only hubs (HUB links or more), and the selection with its neighbours, keep their names. */
-const LABEL_K = 0.9;
-const HUB = 4;
-/** Maps this small show every name at any zoom. */
-const FEW = 20;
+/** Name size on screen, in pixels, and a rough average glyph width for it (used to keep names apart). */
+const LABEL_PX = 12;
+const GLYPH_PX = 6.6;
 /** SVG text does not inherit the app font; on the web the default would be a serif. */
 const FONT = Platform.OS === "web" ? "system-ui, -apple-system, Segoe UI, Roboto, sans-serif" : undefined;
 /** A press that moves less than this (in screen pixels) is a tap. */
@@ -127,7 +125,8 @@ export function TechniqueGraphView({
     const xs = g.nodes.map((n) => n.x);
     const ys = g.nodes.map((n) => n.y);
     const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
-    const k = clamp(Math.min(w / (x1 - x0 + 120), h / (y1 - y0 + 160)), MIN_K, 1.6);
+    // Side margins leave room for the names, which hang out of the dots' bounds.
+    const k = clamp(Math.min(w / (x1 - x0 + 220), h / (y1 - y0 + 160)), MIN_K, 1.6);
     apply({ k, x: w / 2 - ((x0 + x1) / 2) * k, y: h / 2 - ((y0 + y1) / 2) * k });
   }
 
@@ -236,6 +235,28 @@ export function TechniqueGraphView({
     return set;
   }, [g, selected]);
   const lit = (id: string) => !selected || id === selected || neighbours.has(id);
+  // Names that fit: placed by importance (the selection, its neighbours, then the most linked) and
+  // skipped when they would cover a dot or a name already shown, so they never pile up; zooming in
+  // reveals more. A name sits below its own dot, so that dot never blocks it.
+  const labeled = new Set<string>();
+  const boxes: [number, number, number, number][] = g.nodes.map((n, i) => {
+    const p = pos[i] ?? n;
+    const [x, y, r] = [p.x * view.k + view.x, p.y * view.k + view.y, n.r * view.k];
+    return [x - r, y - r, x + r, y + r];
+  });
+  const rank = (n: GraphNode) => (n.id === selected ? 1e6 : neighbours.has(n.id) ? 1e3 : 0) + n.degree;
+  for (const i of g.nodes.map((_, i) => i).sort((a, b) => rank(g.nodes[b]) - rank(g.nodes[a]))) {
+    const n = g.nodes[i];
+    if (selected && !lit(n.id)) continue;
+    const p = pos[i] ?? n;
+    const cx = p.x * view.k + view.x;
+    const top = (p.y + n.r) * view.k + view.y + 2;
+    const half = (n.name.length * GLYPH_PX) / 2 + 2;
+    const box: [number, number, number, number] = [cx - half, top, cx + half, top + LABEL_PX + 3];
+    if (boxes.some((b) => box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1])) continue;
+    boxes.push(box);
+    labeled.add(n.id);
+  }
   const node = selected ? g.byId.get(selected) : undefined;
   const links = node ? g.links.filter((l) => l.from.id === node.id || l.to.id === node.id).length : 0;
 
@@ -292,8 +313,8 @@ export function TechniqueGraphView({
                 return (
                 <G key={n.id} opacity={lit(n.id) ? 1 : 0.2}>
                   <Circle cx={x} cy={y} r={n.r} fill={TECHNIQUE_COLORS[n.category]} stroke={n.id === selected ? c.fg : c.bg} strokeWidth={n.id === selected ? 3 : 1.5} />
-                  {view.k >= LABEL_K || (selected ? lit(n.id) : g.nodes.length <= FEW || n.degree >= HUB) ? (
-                    <SvgText x={x} y={y + n.r + 13 / view.k} fontSize={12 / view.k} fontFamily={FONT} fontWeight={n.id === selected ? "700" : "500"} fill={c.fg} textAnchor="middle">
+                  {labeled.has(n.id) ? (
+                    <SvgText x={x} y={y + n.r + 13 / view.k} fontSize={LABEL_PX / view.k} fontFamily={FONT} fontWeight={n.id === selected ? "700" : "500"} fill={c.fg} textAnchor="middle">
                       {n.name}
                     </SvgText>
                   ) : null}

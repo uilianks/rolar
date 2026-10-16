@@ -169,7 +169,7 @@ export function Badge({ children, tone = "default" }: { children: ReactNode; ton
         alignSelf: "flex-start",
       }}
     >
-      <Text style={{ fontSize: 11, fontWeight: "600", color: fg }}>{children}</Text>
+      <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: "600", color: fg }}>{children}</Text>
     </View>
   );
 }
@@ -434,7 +434,8 @@ export function Progress({ value, color, height = 8 }: { value: number; color?: 
 export function Kpi({ label, value, sub, icon: Icon, subTone }: { label: string; value: string; sub?: string; icon?: LucideIcon; subTone?: "up" | "down" }) {
   const { c } = useTheme();
   return (
-    <Card style={{ flexGrow: 1, flexBasis: 140 }}>
+    // Stretch: KPIs side by side keep one height even when only some have a `sub` line.
+    <Card style={{ flexGrow: 1, flexBasis: 140, alignSelf: "stretch" }}>
       <Row gap={6}>
         {Icon ? <Icon size={14} color={c.mutedFg} /> : null}
         <Txt v="small" muted>{label}</Txt>
@@ -463,25 +464,30 @@ export function Heatmap({ days, weeks = 26 }: { days: Record<string, number>; we
     }),
   );
   const scroller = useRef<ScrollView>(null);
+  // Cells grow to fill the card's width (up to a limit); below the minimum, the weeks scroll.
+  const [width, setWidth] = useState(0);
+  const gap = 3;
+  const size = width ? Math.min(20, Math.max(8, Math.floor((width - gap * (weeks - 1)) / weeks))) : 11;
   return (
     <ScrollView
       ref={scroller}
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ gap: 3 }}
+      onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
+      contentContainerStyle={{ gap, flexGrow: 1, justifyContent: "space-between" }}
       // Newest weeks are on the right; start there on narrow screens.
       onContentSizeChange={() => scroller.current?.scrollToEnd({ animated: false })}
     >
       {cols.map((col, i) => (
-        <View key={i} style={{ gap: 3 }}>
+        <View key={i} style={{ gap }}>
           {col.map((cell) => (
             <View
               key={cell.key}
               accessibilityLabel={t.kit.heatCell(cell.key, cell.n)}
               style={{
-                width: 11,
-                height: 11,
-                borderRadius: 3,
+                width: size,
+                height: size,
+                borderRadius: Math.round(size / 4),
                 backgroundColor: cell.future ? "transparent" : c.heat[Math.min(4, cell.n === 0 ? 0 : cell.n + 1)],
               }}
             />

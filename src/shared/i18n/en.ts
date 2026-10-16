@@ -806,7 +806,7 @@ export const en: Messages = {
   admin: {
     academies: "Academies",
     techniques: "Techniques",
-    techniquesText: "Add techniques to an academy's catalog",
+    techniquesText: "Add techniques to the Rolar catalog or an academy's",
     verifyTitle: "Academy verification",
     verifyText: "Check the official channels before approving. Pending academies are not shown to anyone.",
     pendingTab: "Pending",

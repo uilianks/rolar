@@ -142,9 +142,7 @@ export default function AdminReports() {
       />
       <Screen onRefresh={() => list.refetch()} refreshing={list.isRefetching}>
         <Txt muted>{t.admin.reportsIntro}</Txt>
-        <View style={{ maxWidth: 320 }}>
-          <Tabs value={status} onChange={setStatus} options={[{ value: "open", label: t.admin.openTab }, { value: "resolved", label: t.admin.resolvedTab }]} />
-        </View>
+        <Tabs value={status} onChange={setStatus} options={[{ value: "open", label: t.admin.openTab }, { value: "resolved", label: t.admin.resolvedTab }]} />
         {list.isPending ? <Loading /> : null}
         <ErrorText error={list.error} />
         {list.data?.map((g) => <ReportCase key={`${g.targetType}/${g.targetId}/${g.resolvedAt ?? ""}`} g={g} />)}

@@ -804,7 +804,7 @@ export const pt = {
   admin: {
     academies: "Academias",
     techniques: "Técnicas",
-    techniquesText: "Cadastrar técnicas no catálogo de uma academia",
+    techniquesText: "Cadastrar técnicas no catálogo do Rolar ou de uma academia",
     verifyTitle: "Verificação de academias",
     verifyText: "Confira os canais oficiais antes de aprovar. Academias pendentes não aparecem para ninguém.",
     pendingTab: "Pendentes",
