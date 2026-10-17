@@ -435,6 +435,18 @@ export const knownTechniques = pgTable(
   (t) => [primaryKey({ columns: [t.userId, t.techniqueId] })],
 );
 
+/** A user's private notes on a technique (one row per user and technique). */
+export const techniqueNotes = pgTable(
+  "technique_notes",
+  {
+    userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+    techniqueId: text("technique_id").notNull().references(() => techniques.id, { onDelete: "cascade" }),
+    body: text("body").notNull().default(""),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.techniqueId] })],
+);
+
 export const membershipPlans = pgTable(
   "membership_plans",
   {

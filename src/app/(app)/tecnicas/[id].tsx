@@ -14,6 +14,7 @@ import { useTechnique, useToggleKnown } from "@/lib/queries";
 import type { TechniqueRef } from "@/lib/types";
 import { Badge, Button, Card, Col, ErrorText, Loading, Row, Txt } from "@/ui/kit";
 import { Header, Screen } from "@/ui/shell";
+import { TechniqueNotesCard } from "@/ui/technique-notes";
 import { CategoryDot, editTechniqueHref, newTechniqueHref, TechniqueChip, techniqueMapHref } from "@/ui/techniques";
 import { space } from "@/ui/theme";
 
@@ -98,6 +99,7 @@ export default function TechniqueScreen() {
               <Txt v="small" bold>{t.techniques.description}</Txt>
               <Txt muted={!k.description}>{k.description || t.techniques.noDescription}</Txt>
             </Card>
+            <TechniqueNotesCard key={k.myNotes?.updatedAt ?? "none"} techniqueId={k.id} notes={k.myNotes} />
             {k.comesFrom.length || k.leadsTo.length ? (
               <Card style={{ gap: space.lg }}>
                 <Links title={t.techniques.comesFrom} items={k.comesFrom} />

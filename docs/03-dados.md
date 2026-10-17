@@ -33,6 +33,7 @@ techniques      id · academy_id? · author_id? · name (único por academia, se
                 knee_on_belly|back|turtle|leg_entanglement) · description · description_en? (só texto)
 technique_links from_id · to_id   ("leva a", só dentro da mesma academia; vira o mapa de técnicas)
 known_techniques user_id · technique_id   ("eu sei esta técnica", marcado pelo próprio atleta)
+technique_notes  user_id · technique_id · body   (notas privadas do atleta)
 session_techniques (f2)  session_id · technique_id
 session_media (fase 2)  session_id · object_key · width · height
 

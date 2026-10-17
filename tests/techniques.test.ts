@@ -182,3 +182,19 @@ describe("technique catalog", () => {
     expect(studentMap).not.toContain("rolar-ezekiel");
   });
 });
+
+describe("technique notes", () => {
+  it("are private to their author, exported, and removed when cleared", async () => {
+    const k = await api.call("POST", `/academies/${academyId}/techniques`, { cookie: coach.cookie, json: tech("Kimura da meia") });
+    const url = `/techniques/${k.data.id}/notes`;
+    const saved = await api.call("PUT", url, { cookie: student.cookie, json: { body: "Pegar o punho antes" } });
+    expect(saved.data.body).toBe("Pegar o punho antes");
+
+    expect((await api.call("GET", `/techniques/${k.data.id}`, { cookie: student.cookie })).data.myNotes.body).toBe("Pegar o punho antes");
+    expect((await api.call("GET", `/techniques/${k.data.id}`, { cookie: coach.cookie })).data.myNotes).toBeNull();
+    expect((await api.call("GET", "/me/export", { cookie: student.cookie })).data.techniqueNotes).toHaveLength(1);
+
+    await api.call("PUT", url, { cookie: student.cookie, json: { body: "  " } });
+    expect((await api.call("GET", `/techniques/${k.data.id}`, { cookie: student.cookie })).data.myNotes).toBeNull();
+  });
+});

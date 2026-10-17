@@ -203,6 +203,7 @@ me.get("/export", async (c) => {
     payments: await db.select().from(s.payments).where(eq(s.payments.userId, userId)),
     techniques: await db.select().from(s.techniques).where(eq(s.techniques.authorId, userId)),
     knownTechniques: await db.select().from(s.knownTechniques).where(eq(s.knownTechniques.userId, userId)),
+    techniqueNotes: await db.select().from(s.techniqueNotes).where(eq(s.techniqueNotes.userId, userId)),
     avatar: await readAvatar(db, userId).then((a) => (a ? { mime: a.mime, data: Buffer.from(a.bytes).toString("base64") } : null)),
   };
   c.header("Content-Disposition", 'attachment; filename="rolar-dados.json"');

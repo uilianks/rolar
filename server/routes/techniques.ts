@@ -2,7 +2,7 @@ import { and, asc, eq, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
 import { type Context, Hono } from "hono";
 import { z } from "zod";
 
-import { TECHNIQUE_CATEGORIES, TECHNIQUE_POSITIONS, techniqueInput } from "../../src/shared/domain";
+import { TECHNIQUE_CATEGORIES, TECHNIQUE_POSITIONS, techniqueInput, techniqueNotesInput } from "../../src/shared/domain";
 import * as s from "../db/schema";
 import type { Db } from "../db/client";
 import { type AppEnv, body, fail, isUniqueViolation, viewer } from "../http";
@@ -178,15 +178,36 @@ async function requireTechniqueManager(c: Context<AppEnv>, id: string) {
 
 techniquesRoutes.get("/techniques/:id", async (c) => {
   const { source, ...tq } = await findTechnique(c, c.req.param("id"));
-  const [canEdit, [known]] = await Promise.all([
+  const db = c.get("db");
+  const [canEdit, [known], [notes]] = await Promise.all([
     canManage(c, tq.academy?.id ?? null),
-    c
-      .get("db")
+    db
       .select({ id: s.knownTechniques.techniqueId })
       .from(s.knownTechniques)
       .where(and(eq(s.knownTechniques.userId, viewer(c)), eq(s.knownTechniques.techniqueId, tq.id))),
+    db
+      .select({ body: s.techniqueNotes.body, updatedAt: s.techniqueNotes.updatedAt })
+      .from(s.techniqueNotes)
+      .where(and(eq(s.techniqueNotes.userId, viewer(c)), eq(s.techniqueNotes.techniqueId, tq.id))),
   ]);
-  return c.json({ ...tq, canEdit, known: !!known, source: canEdit ? source : undefined });
+  return c.json({ ...tq, canEdit, known: !!known, myNotes: notes ?? null, source: canEdit ? source : undefined });
+});
+
+/** Saves the viewer's notes on a technique they can see; empty notes remove the row. */
+techniquesRoutes.put("/techniques/:id/notes", async (c) => {
+  const tq = await findTechnique(c, c.req.param("id"));
+  const { body: text } = await body(c, techniqueNotesInput);
+  const db = c.get("db");
+  if (!text) {
+    await db.delete(s.techniqueNotes).where(and(eq(s.techniqueNotes.userId, viewer(c)), eq(s.techniqueNotes.techniqueId, tq.id)));
+    return c.json(null);
+  }
+  const [row] = await db
+    .insert(s.techniqueNotes)
+    .values({ userId: viewer(c), techniqueId: tq.id, body: text })
+    .onConflictDoUpdate({ target: [s.techniqueNotes.userId, s.techniqueNotes.techniqueId], set: { body: text, updatedAt: new Date() } })
+    .returning({ body: s.techniqueNotes.body, updatedAt: s.techniqueNotes.updatedAt });
+  return c.json(row);
 });
 
 techniquesRoutes.put("/techniques/:id/known", async (c) => {

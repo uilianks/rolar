@@ -256,6 +256,9 @@ export const techniqueInput = z.object({
   leadsTo: z.array(z.string().min(1).max(64)).max(20).default([]),
 });
 
+/** A user's own notes on a catalog technique, private to them. */
+export const techniqueNotesInput = z.object({ body: z.string().trim().max(5000) });
+
 // ---------- Board ----------
 
 export const announcementInput = z.object({

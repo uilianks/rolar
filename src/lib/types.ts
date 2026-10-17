@@ -51,9 +51,12 @@ export type TechniqueDetail = Technique & {
   leadsTo: TechniqueRef[];
   comesFrom: TechniqueRef[];
   canEdit: boolean;
+  /** The viewer's private notes, or null when they wrote none. */
+  myNotes: TechniqueNotes | null;
   /** The stored texts in both languages; only for those who can edit. */
   source?: { name: string; nameEn: string | null; description: string; descriptionEn: string | null };
 };
+export type TechniqueNotes = { body: string; updatedAt: string };
 export type TechniqueGraph = { nodes: (TechniqueRef & { position: TechniquePosition | null })[]; links: { from: string; to: string }[] };
 
 export type Me = {

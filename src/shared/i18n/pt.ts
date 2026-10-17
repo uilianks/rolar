@@ -317,6 +317,13 @@ export const pt = {
   },
 
 
+  techniqueNotes: {
+    title: "Minhas notas",
+    edit: "Editar minhas notas",
+    placeholder: "Detalhes para lembrar, erros que você comete, o que treinar…",
+    empty: "Só você vê. Anote os detalhes desta técnica.",
+  },
+
   techniques: {
     title: "Técnicas",
     map: "Mapa",

@@ -319,6 +319,13 @@ export const en: Messages = {
   },
 
 
+  techniqueNotes: {
+    title: "My notes",
+    edit: "Edit my notes",
+    placeholder: "Details to remember, mistakes you make, what to drill…",
+    empty: "Only you see this. Write down the details of this technique.",
+  },
+
   techniques: {
     title: "Techniques",
     map: "Map",
