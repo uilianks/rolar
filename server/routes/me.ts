@@ -9,7 +9,7 @@ import * as s from "../db/schema";
 import { type AppEnv, body, fail, isUniqueViolation, viewer } from "../http";
 import { readAvatar, removeAvatar, saveAvatar } from "../avatars";
 import { canHaveAvatar, effectiveVisibility } from "../policies";
-import { computeStats, isValidTimeZone } from "../stats";
+import { computeStats, isValidTimeZone, localDate, monthlyTrend, weekOf, weekReport } from "../stats";
 
 export const me = new Hono<AppEnv>();
 
@@ -129,21 +129,65 @@ me.post("/sessions/visibility", async (c) => {
   return c.json({ updated: result.length });
 });
 
+/** The columns the statistics read, for the user's sessions since `from` (all of them when null). */
+function statRows(db: Db, userId: string, from: Date | null) {
+  return db
+    .select({
+      startedAt: s.sessions.startedAt,
+      durationMin: s.sessions.durationMin,
+      rounds: s.sessions.rounds,
+      rpe: s.sessions.rpe,
+      kind: s.sessions.kind,
+      submissions: s.sessions.submissions,
+      taps: s.sessions.taps,
+      techniques: s.sessions.techniques,
+    })
+    .from(s.sessions)
+    .where(and(eq(s.sessions.userId, userId), from ? gte(s.sessions.startedAt, from) : undefined));
+}
+
+function timeZone(c: { req: { query: (k: string) => string | undefined } }) {
+  const tz = c.req.query("tz") ?? "UTC";
+  if (!isValidTimeZone(tz)) fail(400, "invalidTimeZone");
+  return tz;
+}
+
+/** Weekly report: `week` is any date of the week (YYYY-MM-DD); the current week by default. */
+me.get("/week", async (c) => {
+  const userId = viewer(c);
+  const db = c.get("db");
+  const tz = timeZone(c);
+  const now = new Date();
+  const asked = c.req.query("week");
+  if (asked !== undefined && (!/^\d{4}-\d{2}-\d{2}$/.test(asked) || Number.isNaN(Date.parse(`${asked}T00:00:00Z`)))) fail(400, "invalidWeek");
+  const current = weekOf(localDate(now, tz));
+  // Future weeks have nothing to report: clamp them to the current one.
+  const week = asked && weekOf(asked) < current ? weekOf(asked) : current;
+  const [profile] = await db.select({ weeklyGoal: s.profiles.weeklyGoal }).from(s.profiles).where(eq(s.profiles.userId, userId));
+  // The streak looks back as far as it goes, so this reads all sessions (a few columns each).
+  const rows = await statRows(db, userId, null);
+  return c.json(weekReport(rows, { tz, now, week, weeklyGoal: profile?.weeklyGoal ?? 0 }));
+});
+
+/** Month by month over the last 12 months: sessions, minutes, submissions and taps. */
+me.get("/trends", async (c) => {
+  const tz = timeZone(c);
+  const now = new Date();
+  const rows = await statRows(c.get("db"), viewer(c), new Date(now.getTime() - 400 * 86_400_000));
+  return c.json({ months: monthlyTrend(rows, { tz, now, months: 12 }) });
+});
+
 me.get("/stats", async (c) => {
   const userId = viewer(c);
   const db = c.get("db");
-  const tz = c.req.query("tz") ?? "UTC";
-  if (!isValidTimeZone(tz)) fail(400, "invalidTimeZone");
+  const tz = timeZone(c);
   const range = c.req.query("range") ?? "year";
   const now = new Date();
   // Weekly views need ~8 weeks; the heatmap needs 26; "year"/"month" totals need their own window.
   const from =
     range === "all" ? null : new Date(now.getTime() - (range === "month" ? 31 : 366) * 86_400_000);
   const [profile] = await db.select({ weeklyGoal: s.profiles.weeklyGoal }).from(s.profiles).where(eq(s.profiles.userId, userId));
-  const rows = await db
-    .select({ startedAt: s.sessions.startedAt, durationMin: s.sessions.durationMin, rounds: s.sessions.rounds, rpe: s.sessions.rpe, kind: s.sessions.kind, submissions: s.sessions.submissions, taps: s.sessions.taps })
-    .from(s.sessions)
-    .where(and(eq(s.sessions.userId, userId), from ? gte(s.sessions.startedAt, new Date(Math.min(from.getTime(), now.getTime() - 190 * 86_400_000))) : undefined));
+  const rows = await statRows(db, userId, from ? new Date(Math.min(from.getTime(), now.getTime() - 190 * 86_400_000)) : null);
   const inRange = from ? rows.filter((r) => r.startedAt >= from) : rows;
   const all = computeStats(rows, { tz, now, weeklyGoal: profile?.weeklyGoal ?? 0 });
   const ranged = computeStats(inRange, { tz, now, weeklyGoal: profile?.weeklyGoal ?? 0 });

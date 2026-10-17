@@ -1,13 +1,16 @@
 import CalendarCheck from "lucide-react-native/icons/calendar-check";
+import ChevronRight from "lucide-react-native/icons/chevron-right";
 import Clock from "lucide-react-native/icons/clock";
 import Flame from "lucide-react-native/icons/flame";
 import Swords from "lucide-react-native/icons/swords";
 import { useState } from "react";
-import { View } from "react-native";
+import { router } from "expo-router";
+import { Pressable, View } from "react-native";
 
-import { duration, hours } from "@/lib/format";
+import { dateFmt, duration, hours } from "@/lib/format";
 import { useT } from "@/lib/i18n";
-import { useFeed, useMe, useStats } from "@/lib/queries";
+import { useFeed, useMe, useStats, useTrends, useWeek } from "@/lib/queries";
+import type { MonthTrend } from "@/lib/types";
 import type { FinishCount } from "@/shared/domain";
 import { Badge, Bars, Card, CardHead, Col, ErrorText, Heatmap, Kpi, ListRow, Loading, Progress, Row, Tabs, Txt } from "@/ui/kit";
 import { SessionRow } from "@/ui/session-card";
@@ -39,6 +42,7 @@ export default function ProgressScreen() {
       <Screen wide onRefresh={() => stats.refetch()} refreshing={stats.isRefetching}>
         {stats.isPending ? <Loading /> : null}
         <ErrorText error={stats.error} />
+        <WeekCard />
         {s ? (
           <>
             <Row wrap gap={space.md}>
@@ -135,6 +139,8 @@ export default function ProgressScreen() {
                 </View>
               )}
             </Card>
+
+            <TrendsCard />
           </>
         ) : null}
 
@@ -169,5 +175,97 @@ function FinishTop({ title, items, color }: { title: string; items: FinishCount[
         </Col>
       ))}
     </Col>
+  );
+}
+
+/** This week at a glance; opens the weekly report. */
+function WeekCard() {
+  const t = useT();
+  const { c } = useTheme();
+  const r = useWeek().data;
+  if (!r) return null;
+  const cur = r.current;
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel={t.week.open} onPress={() => router.push("/semana")}>
+      <Card>
+        <Row gap={12}>
+          <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: r.goalMet ? c.success : c.muted, alignItems: "center", justifyContent: "center" }}>
+            <CalendarCheck size={18} color={r.goalMet ? "#fff" : c.fg} />
+          </View>
+          <Col gap={2} style={{ flex: 1 }}>
+            <Txt bold>{t.week.title}</Txt>
+            <Txt v="small" muted>
+              {`${t.week.sessions(cur.sessions)} · ${duration(cur.minutes)}`}
+              {r.goal ? ` · ${r.goalMet ? t.week.goalMet(r.goal) : `${cur.sessions}/${r.goal}`}` : ""}
+            </Txt>
+          </Col>
+          <ChevronRight size={18} color={c.mutedFg} />
+        </Row>
+      </Card>
+    </Pressable>
+  );
+}
+
+const monthShort = (month: string) => dateFmt({ month: "narrow", timeZone: "UTC" }).format(new Date(`${month}-15T12:00:00Z`));
+
+/** Month-by-month sessions, and submissions against taps, over the last 12 months. */
+function TrendsCard() {
+  const t = useT();
+  const { c } = useTheme();
+  const months = useTrends().data?.months;
+  if (!months) return null;
+  const hasFinishes = months.some((m) => m.submissions || m.taps);
+  return (
+    <Card pad={false}>
+      <CardHead title={t.trends.title} right={<Txt v="small" muted>{t.trends.subtitle}</Txt>} />
+      <Row wrap gap={space.lg} style={{ padding: space.lg, alignItems: "flex-start" }}>
+        <Col gap={8} style={{ flexGrow: 1, flexBasis: 280 }}>
+          <Txt v="small" muted>{t.trends.sessions}</Txt>
+          <Bars highlightLast data={months.map((m) => ({ key: m.month, label: monthShort(m.month), value: m.sessions }))} />
+        </Col>
+        {hasFinishes ? (
+          <Col gap={8} style={{ flexGrow: 1, flexBasis: 280 }}>
+            <Row style={{ justifyContent: "space-between" }}>
+              <Txt v="small" muted>{t.trends.finishes}</Txt>
+              <Row gap={10}>
+                <Legend color={c.accent} label={t.trends.got} />
+                <Legend color={c.mutedFg} label={t.trends.tapped} />
+              </Row>
+            </Row>
+            <PairBars months={months} />
+          </Col>
+        ) : null}
+      </Row>
+    </Card>
+  );
+}
+
+function Legend({ color, label }: { color: string; label: string }) {
+  return (
+    <Row gap={4}>
+      <View style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: color }} />
+      <Txt v="tiny" muted>{label}</Txt>
+    </Row>
+  );
+}
+
+function PairBars({ months }: { months: MonthTrend[] }) {
+  const { c } = useTheme();
+  const max = Math.max(1, ...months.flatMap((m) => [m.submissions, m.taps]));
+  const bar = (value: number, color: string) => (
+    <View style={{ flex: 1, height: `${Math.max(2, (value / max) * 85)}%`, backgroundColor: color, borderTopLeftRadius: 3, borderTopRightRadius: 3 }} />
+  );
+  return (
+    <Row gap={6} style={{ height: 140, alignItems: "flex-end" }}>
+      {months.map((m) => (
+        <View key={m.month} style={{ flex: 1, alignItems: "center", gap: 6, height: "100%", justifyContent: "flex-end" }}>
+          <Row gap={1} style={{ width: "100%", maxWidth: 28, height: "100%", alignItems: "flex-end" }}>
+            {bar(m.submissions, c.accent)}
+            {bar(m.taps, c.mutedFg)}
+          </Row>
+          <Txt v="tiny" muted>{monthShort(m.month)}</Txt>
+        </View>
+      ))}
+    </Row>
   );
 }

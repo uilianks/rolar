@@ -27,6 +27,8 @@ import type {
   Technique,
   TechniqueDetail,
   TechniqueGraph,
+  MonthTrend,
+  WeekReport,
 } from "./types";
 
 export function useTechniques(filters: { q?: string; category?: string; academy?: string; scope?: "mine" | "rolar" }, enabled = true) {
@@ -106,6 +108,17 @@ export function useSession(id: string) {
 
 export function useStats(range: "month" | "year" | "all" = "year") {
   return useQuery({ queryKey: ["stats", range], queryFn: () => api<Stats>(`/me/stats?tz=${encodeURIComponent(TZ)}&range=${range}`) });
+}
+
+export function useWeek(week?: string) {
+  return useQuery({
+    queryKey: ["stats", "week", week ?? "current"],
+    queryFn: () => api<WeekReport>(`/me/week?tz=${encodeURIComponent(TZ)}${week ? `&week=${week}` : ""}`),
+  });
+}
+
+export function useTrends() {
+  return useQuery({ queryKey: ["stats", "trends"], queryFn: () => api<{ months: MonthTrend[] }>(`/me/trends?tz=${encodeURIComponent(TZ)}`) });
 }
 
 export function useProfile(username: string) {

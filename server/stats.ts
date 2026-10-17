@@ -10,6 +10,7 @@ export type StatRow = {
   kind: string;
   submissions?: FinishCount[];
   taps?: FinishCount[];
+  techniques?: string[];
 };
 
 export type FinishStats = { total: number; top: FinishCount[] };
@@ -107,12 +108,7 @@ export function computeStats(rows: StatRow[], opts: { tz: string; now: Date; wee
   }
   thisWeek.days.sort();
 
-  // Streak: consecutive weeks meeting the goal, counting back from last week; the current week
-  // extends the streak once it meets the goal but does not break it while still in progress.
-  let streakWeeks = (perWeek.get(currentWeek)?.sessions ?? 0) >= goal ? 1 : 0;
-  for (let week = addDays(currentWeek, -7); (perWeek.get(week)?.sessions ?? 0) >= goal; week = addDays(week, -7)) {
-    streakWeeks += 1;
-  }
+  const streakWeeks = streakAt((w) => perWeek.get(w)?.sessions ?? 0, currentWeek, goal);
 
   const weeklyLoad = Array.from({ length: 8 }, (_, i) => {
     const week = addDays(currentWeek, -7 * (7 - i));
@@ -136,4 +132,115 @@ export function computeStats(rows: StatRow[], opts: { tz: string; now: Date; wee
     submissions: tallyFinishes(rows.map((r) => r.submissions)),
     taps: tallyFinishes(rows.map((r) => r.taps)),
   };
+}
+
+/**
+ * Consecutive weeks meeting the goal, counting back from the week before `week`; `week` itself extends
+ * the streak once it meets the goal but does not break it (it may still be in progress).
+ */
+function streakAt(sessionsIn: (week: string) => number, week: string, goal: number) {
+  let streak = sessionsIn(week) >= goal ? 1 : 0;
+  for (let w = addDays(week, -7); sessionsIn(w) >= goal; w = addDays(w, -7)) streak += 1;
+  return streak;
+}
+
+export type WeekSummary = {
+  sessions: number;
+  minutes: number;
+  rounds: number;
+  submissions: FinishStats;
+  taps: FinishStats;
+};
+
+export type WeekReport = {
+  /** Monday of the week, YYYY-MM-DD. */
+  week: string;
+  current: WeekSummary & {
+    days: string[];
+    byKind: { kind: string; sessions: number }[];
+    topTechniques: { name: string; count: number }[];
+  };
+  previous: WeekSummary;
+  goal: number;
+  goalMet: boolean;
+  streakWeeks: number;
+  /** The week has not ended yet (numbers can still grow). */
+  inProgress: boolean;
+  /** Monday of the first week with a session, to stop the "previous week" arrow. */
+  firstWeek: string | null;
+};
+
+function summarize(rows: StatRow[]): WeekSummary {
+  return {
+    sessions: rows.length,
+    minutes: rows.reduce((a, r) => a + r.durationMin, 0),
+    rounds: rows.reduce((a, r) => a + r.rounds, 0),
+    submissions: tallyFinishes(rows.map((r) => r.submissions), 3),
+    taps: tallyFinishes(rows.map((r) => r.taps), 3),
+  };
+}
+
+/** The weekly report for the week starting on `week` (a Monday), compared with the week before. */
+export function weekReport(rows: StatRow[], opts: { tz: string; now: Date; week: string; weeklyGoal: number }): WeekReport {
+  const weekOfRow = (r: StatRow) => weekOf(localDate(r.startedAt, opts.tz));
+  const perWeek = new Map<string, number>();
+  let firstWeek: string | null = null;
+  for (const r of rows) {
+    const w = weekOfRow(r);
+    perWeek.set(w, (perWeek.get(w) ?? 0) + 1);
+    if (!firstWeek || w < firstWeek) firstWeek = w;
+  }
+  const inWeek = rows.filter((r) => weekOfRow(r) === opts.week);
+  const before = addDays(opts.week, -7);
+  const kinds = new Map<string, number>();
+  const techniques = new Map<string, { name: string; count: number }>();
+  const days = new Set<string>();
+  for (const r of inWeek) {
+    kinds.set(r.kind, (kinds.get(r.kind) ?? 0) + 1);
+    days.add(localDate(r.startedAt, opts.tz));
+    for (const name of r.techniques ?? []) {
+      const key = name.trim().toLowerCase();
+      const entry = techniques.get(key) ?? { name: name.trim(), count: 0 };
+      entry.count += 1;
+      techniques.set(key, entry);
+    }
+  }
+  const goal = opts.weeklyGoal;
+  return {
+    week: opts.week,
+    current: {
+      ...summarize(inWeek),
+      days: [...days].sort(),
+      byKind: [...kinds].map(([kind, sessions]) => ({ kind, sessions })).sort((a, b) => b.sessions - a.sessions),
+      topTechniques: [...techniques.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)).slice(0, 3),
+    },
+    previous: summarize(rows.filter((r) => weekOfRow(r) === before)),
+    goal,
+    goalMet: goal > 0 && inWeek.length >= goal,
+    streakWeeks: goal > 0 ? streakAt((w) => perWeek.get(w) ?? 0, opts.week, goal) : 0,
+    inProgress: opts.week === weekOf(localDate(opts.now, opts.tz)),
+    firstWeek,
+  };
+}
+
+export type MonthTrend = { month: string; sessions: number; minutes: number; submissions: number; taps: number };
+
+/** The last `months` calendar months (oldest first, current month last), in the user's time zone. */
+export function monthlyTrend(rows: StatRow[], opts: { tz: string; now: Date; months: number }): MonthTrend[] {
+  const current = localDate(opts.now, opts.tz).slice(0, 7);
+  const [y, m] = current.split("-").map(Number);
+  const months = Array.from({ length: opts.months }, (_, i) => {
+    const d = new Date(Date.UTC(y, m - 1 - (opts.months - 1 - i), 1));
+    return d.toISOString().slice(0, 7);
+  });
+  const byMonth = new Map(months.map((month) => [month, { month, sessions: 0, minutes: 0, submissions: 0, taps: 0 }]));
+  for (const r of rows) {
+    const entry = byMonth.get(localDate(r.startedAt, opts.tz).slice(0, 7));
+    if (!entry) continue;
+    entry.sessions += 1;
+    entry.minutes += r.durationMin;
+    entry.submissions += (r.submissions ?? []).reduce((a, f) => a + f.count, 0);
+    entry.taps += (r.taps ?? []).reduce((a, f) => a + f.count, 0);
+  }
+  return months.map((month) => byMonth.get(month)!);
 }

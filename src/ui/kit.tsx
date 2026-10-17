@@ -498,7 +498,8 @@ export function Heatmap({ days, weeks = 26 }: { days: Record<string, number>; we
   );
 }
 
-export function Bars({ data, highlightLast }: { data: { label: string; value: number }[]; highlightLast?: boolean }) {
+/** Bar chart; `key` defaults to the label (pass one when labels repeat, like month initials). */
+export function Bars({ data, highlightLast }: { data: { key?: string; label: string; value: number }[]; highlightLast?: boolean }) {
   const { c } = useTheme();
   const max = Math.max(1, ...data.map((d) => d.value));
   return (
@@ -506,7 +507,7 @@ export function Bars({ data, highlightLast }: { data: { label: string; value: nu
       {data.map((d, i) => {
         const hi = highlightLast && i === data.length - 1;
         return (
-          <View key={d.label} style={{ flex: 1, alignItems: "center", gap: 6, height: "100%", justifyContent: "flex-end" }}>
+          <View key={d.key ?? d.label} style={{ flex: 1, alignItems: "center", gap: 6, height: "100%", justifyContent: "flex-end" }}>
             <View
               style={{
                 width: "100%",

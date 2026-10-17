@@ -120,6 +120,23 @@ export type Stats = {
   range: string;
 };
 
+type FinishTally = { total: number; top: FinishCount[] };
+type WeekSummary = { sessions: number; minutes: number; rounds: number; submissions: FinishTally; taps: FinishTally };
+
+/** GET /me/week: one week (Monday `week`) against the week before. */
+export type WeekReport = {
+  week: string;
+  current: WeekSummary & { days: string[]; byKind: { kind: SessionKind; sessions: number }[]; topTechniques: { name: string; count: number }[] };
+  previous: WeekSummary;
+  goal: number;
+  goalMet: boolean;
+  streakWeeks: number;
+  inProgress: boolean;
+  firstWeek: string | null;
+};
+
+export type MonthTrend = { month: string; sessions: number; minutes: number; submissions: number; taps: number };
+
 export type Promotion = {
   id: string;
   belt: Belt;
