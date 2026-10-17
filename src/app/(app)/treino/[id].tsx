@@ -4,6 +4,7 @@ import ArrowLeft from "lucide-react-native/icons/arrow-left";
 import Flag from "lucide-react-native/icons/flag";
 import Pencil from "lucide-react-native/icons/pencil";
 import Send from "lucide-react-native/icons/send";
+import ImageIcon from "lucide-react-native/icons/image";
 import Share2 from "lucide-react-native/icons/share-2";
 import Trash2 from "lucide-react-native/icons/trash";
 import { useState } from "react";
@@ -13,6 +14,7 @@ import { api } from "@/lib/api";
 import { confirm } from "@/lib/confirm";
 import { ago, duration, whenLong } from "@/lib/format";
 import { useT } from "@/lib/i18n";
+import { storySupported } from "@/lib/story-image";
 import { useDeleteSession, useMe, useSession } from "@/lib/queries";
 import { Avatar, Badge, Belt, Button, Card, CardHead, Col, ErrorText, Input, Kpi, ListRow, Loading, Row, Txt } from "@/ui/kit";
 import { Chips, OssButton } from "@/ui/session-card";
@@ -127,6 +129,10 @@ export default function SessionScreen() {
                 sub={s.rpe ? t.sessionDetail.load(s.durationMin * s.rpe) : undefined}
               />
             </Row>
+
+            {mine && storySupported ? (
+              <Button icon={ImageIcon} title={t.story.create} onPress={() => router.push({ pathname: "/imagem", params: { treino: s.id } })} />
+            ) : null}
 
             {s.techniques.length ? (
               <Card pad={false}>

@@ -5,6 +5,7 @@ import ChevronLeft from "lucide-react-native/icons/chevron-left";
 import ChevronRight from "lucide-react-native/icons/chevron-right";
 import Clock from "lucide-react-native/icons/clock";
 import Flame from "lucide-react-native/icons/flame";
+import ImageIcon from "lucide-react-native/icons/image";
 import Share2 from "lucide-react-native/icons/share-2";
 import Swords from "lucide-react-native/icons/swords";
 import { useState } from "react";
@@ -13,6 +14,7 @@ import { Platform, Share, View } from "react-native";
 import { dateFmt, duration } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import { useWeek } from "@/lib/queries";
+import { storySupported } from "@/lib/story-image";
 import type { WeekReport } from "@/lib/types";
 import { Button, Card, CardHead, Col, ErrorText, Kpi, Loading, Progress, Row, Txt } from "@/ui/kit";
 import { FinishChips } from "@/ui/finish-list";
@@ -66,7 +68,16 @@ export default function WeekScreen() {
       <Header
         title={t.week.title}
         left={<Button kind="ghost" icon={ArrowLeft} accessibilityLabel={t.common.back} onPress={() => (router.canGoBack() ? router.back() : router.replace("/progresso"))} />}
-        right={r?.current.sessions ? <Button kind="ghost" icon={Share2} accessibilityLabel={t.week.share} onPress={() => share(r)} /> : undefined}
+        right={
+          r?.current.sessions ? (
+            <Row gap={4}>
+              {storySupported ? (
+                <Button kind="ghost" icon={ImageIcon} accessibilityLabel={t.story.create} onPress={() => router.push({ pathname: "/imagem", params: { semana: r.week } })} />
+              ) : null}
+              <Button kind="ghost" icon={Share2} accessibilityLabel={t.week.share} onPress={() => share(r)} />
+            </Row>
+          ) : undefined
+        }
       />
       <Screen onRefresh={() => query.refetch()} refreshing={query.isRefetching}>
         {query.isPending ? <Loading /> : null}
