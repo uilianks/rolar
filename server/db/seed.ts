@@ -79,6 +79,10 @@ const TECHNIQUES = [
   "Berimbolo", "Heel hook", "Single leg", "Double leg", "Guilhotina", "Omoplata", "Raspagem tesoura",
   "Saída de montada", "Knee slice", "De la Riva", "Estrangulamento cruzado", "Ezequiel",
 ];
+/** A few finishes with counts, distinct names (a roll day: 0–3 of them). */
+const finishes = () =>
+  [...new Set(Array.from({ length: between(0, 3) }, () => pick(FINISHES)))].map((name) => ({ name, count: between(1, 2) }));
+const FINISHES = ["Armlock", "Triângulo", "Kimura", "Mata-leão", "Guilhotina", "Omoplata", "Estrangulamento cruzado", "Ezequiel", "Americana", "Chave de pé"];
 const NOTES = [
   "Muito cansado no último round, preciso de cardio.",
   "Finalmente encaixei o triângulo no rola.",
@@ -236,6 +240,7 @@ async function main() {
           title: pick(TITLES[kind]),
           notes: pick(NOTES),
           techniques: Array.from({ length: between(0, 3) }, () => pick(TECHNIQUES)).filter((t, i, a) => a.indexOf(t) === i),
+          ...(kind === "drill" || kind === "teaching" ? {} : { submissions: finishes(), taps: finishes() }),
           visibility,
           source: rand() < 0.3 ? "timer" : "manual",
         });
