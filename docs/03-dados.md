@@ -12,6 +12,7 @@ profiles        user_id · username · name · avatar_url · birth_year
                 belt (12 faixas kids IBJJF + white|blue|purple|brown|black) · stripes 0–6
                 home_academy_id · started_at · weekly_goal · default_visibility
                 searchable · show_in_ranking      (menor = derivado de birth_year; sem peso)
+                seen_achievements text[]?  (conquistas já parabenizadas; null = ainda não verificado)
 
 academies       id · name · slug · city · country · lat/lng (opcional) · created_by
 academy_members academy_id · user_id · role (owner|coach|student) · status (pending|active) · joined_at

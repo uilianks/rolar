@@ -61,7 +61,12 @@ export function useToggleKnown() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, known }: { id: string; known: boolean }) => api(`/techniques/${id}/known`, { method: known ? "PUT" : "DELETE" }),
-    onSuccess: (_r, { id }) => Promise.all([qc.invalidateQueries({ queryKey: ["techniques"] }), qc.invalidateQueries({ queryKey: ["technique", id] })]),
+    onSuccess: (_r, { id }) =>
+      Promise.all([
+        qc.invalidateQueries({ queryKey: ["techniques"] }),
+        qc.invalidateQueries({ queryKey: ["technique", id] }),
+        qc.invalidateQueries({ queryKey: ["stats", "achievements"] }),
+      ]),
   });
 }
 
@@ -119,8 +124,8 @@ export function useWeek(week?: string) {
   });
 }
 
-export function useAchievements() {
-  return useQuery({ queryKey: ["stats", "achievements"], queryFn: () => api<Achievement[]>(`/me/achievements?tz=${encodeURIComponent(TZ)}`) });
+export function useAchievements(enabled = true) {
+  return useQuery({ queryKey: ["stats", "achievements"], queryFn: () => api<Achievement[]>(`/me/achievements?tz=${encodeURIComponent(TZ)}`), enabled });
 }
 
 export function useChallenges() {

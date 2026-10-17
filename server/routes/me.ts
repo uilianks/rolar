@@ -9,7 +9,7 @@ import * as s from "../db/schema";
 import { type AppEnv, body, fail, isUniqueViolation, viewer } from "../http";
 import { readAvatar, removeAvatar, saveAvatar } from "../avatars";
 import { canHaveAvatar, effectiveVisibility } from "../policies";
-import { achievements, challengeStreak, weeklyChallenges } from "../achievements";
+import { ACHIEVEMENTS, achievements, challengeStreak, weeklyChallenges } from "../achievements";
 import { computeStats, isValidTimeZone, localDate, monthlyTrend, weekOf, weekReport } from "../stats";
 
 export const me = new Hono<AppEnv>();
@@ -170,17 +170,40 @@ me.get("/week", async (c) => {
   return c.json(weekReport(rows, { tz, now, week, weeklyGoal: profile?.weeklyGoal ?? 0 }));
 });
 
-/** Every achievement with its progress, and when it was reached. */
+/**
+ * Every achievement with its progress and when it was reached; `isNew` marks the ones reached but not
+ * congratulated yet. The first time, everything already reached counts as seen (no pop-up flood).
+ */
 me.get("/achievements", async (c) => {
   const userId = viewer(c);
   const db = c.get("db");
   const tz = timeZone(c);
   const [[profile], rows, known] = await Promise.all([
-    db.select({ weeklyGoal: s.profiles.weeklyGoal }).from(s.profiles).where(eq(s.profiles.userId, userId)),
+    db.select({ weeklyGoal: s.profiles.weeklyGoal, seen: s.profiles.seenAchievements }).from(s.profiles).where(eq(s.profiles.userId, userId)),
     statRows(db, userId, null),
     db.select({ at: s.knownTechniques.createdAt }).from(s.knownTechniques).where(eq(s.knownTechniques.userId, userId)),
   ]);
-  return c.json(achievements(rows, { tz, weeklyGoal: profile?.weeklyGoal ?? 0, knownDates: known.map((k) => k.at) }));
+  const list = achievements(rows, { tz, weeklyGoal: profile?.weeklyGoal ?? 0, knownDates: known.map((k) => k.at) });
+  let seen = profile?.seen;
+  if (profile && !seen) {
+    seen = list.filter((a) => a.achievedAt).map((a) => a.id);
+    await db.update(s.profiles).set({ seenAchievements: seen }).where(eq(s.profiles.userId, userId));
+  }
+  return c.json(list.map((a) => ({ ...a, isNew: !!a.achievedAt && !!seen && !seen.includes(a.id) })));
+});
+
+/** The pop-up was shown: these achievements are not new any more. */
+me.post("/achievements/seen", async (c) => {
+  const { ids } = await body(c, z.object({ ids: z.array(z.string().max(40)).max(ACHIEVEMENTS.length) }));
+  const valid = ids.filter((id) => ACHIEVEMENTS.some((a) => a.id === id));
+  const db = c.get("db");
+  const userId = viewer(c);
+  if (valid.length) {
+    const [p] = await db.select({ seen: s.profiles.seenAchievements }).from(s.profiles).where(eq(s.profiles.userId, userId));
+    const seen = [...new Set([...(p?.seen ?? []), ...valid])];
+    await db.update(s.profiles).set({ seenAchievements: seen }).where(eq(s.profiles.userId, userId));
+  }
+  return c.body(null, 204);
 });
 
 /** This week's three challenges and the streak of weeks with all of them done. */

@@ -83,4 +83,18 @@ describe("achievement and challenge routes", () => {
     expect(ch.data.challenges[0]).toMatchObject({ id: "sessions", target: 1, done: true });
     expect((await api.call("GET", "/me/achievements")).status).toBe(401);
   });
+
+  it("flag new achievements once, counting the ones reached before the first check as seen", async () => {
+    const u = await api.user("parabens");
+    await api.call("POST", "/sessions", { cookie: u.cookie, json: sessionBody() });
+    const get = async () => (await api.call("GET", "/me/achievements?tz=Europe/Lisbon", { cookie: u.cookie })).data as { id: string; isNew: boolean }[];
+    // First look: the first session was already there, so it is not new.
+    expect((await get()).filter((a) => a.isNew)).toEqual([]);
+
+    await api.call("POST", "/sessions", { cookie: u.cookie, json: sessionBody({ submissions: [{ name: "Armlock", count: 1 }] }) });
+    expect((await get()).filter((a) => a.isNew).map((a) => a.id)).toEqual(["submissions_1"]);
+
+    expect((await api.call("POST", "/me/achievements/seen", { cookie: u.cookie, json: { ids: ["submissions_1", "bogus"] } })).status).toBe(204);
+    expect((await get()).filter((a) => a.isNew)).toEqual([]);
+  });
 });

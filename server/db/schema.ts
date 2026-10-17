@@ -134,6 +134,8 @@ export const profiles = pgTable(
     showInRanking: boolean("show_in_ranking").notNull().default(true),
     /** Versioned path of the profile photo (`/api/avatars/:userId?v=…`), or null for initials. */
     avatarUrl: text("avatar_url"),
+    /** Achievement ids already congratulated (the pop-up shows each once); null until first checked. */
+    seenAchievements: text("seen_achievements").array(),
     createdAt: createdAt(),
   },
   (t) => [uniqueIndex("profiles_username_idx").on(t.username)],

@@ -532,6 +532,10 @@ export const en: Messages = {
 
   achievements: {
     title: "Achievements",
+    congrats: "Congratulations!",
+    unlocked: "You unlocked a new achievement.",
+    more: (n: number) => (n === 1 ? "And 1 more next" : `And ${n} more next`),
+    oss: "Oss!",
     count: (got: number, total: number) => `${got} of ${total}`,
     recent: "Recent achievements",
     seeAll: "See all",

@@ -141,6 +141,8 @@ export type Achievement = {
   target: number;
   progress: number;
   achievedAt: string | null;
+  /** Reached but not congratulated yet (the pop-up shows it once). */
+  isNew: boolean;
 };
 
 export type Challenge = {

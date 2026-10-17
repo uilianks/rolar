@@ -113,6 +113,13 @@
       "when": 1792202372079,
       "tag": "0015_technique_notes",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792203982763,
+      "tag": "0016_seen_achievements",
+      "breakpoints": true
     }
   ]
 }

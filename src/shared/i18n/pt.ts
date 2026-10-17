@@ -531,6 +531,10 @@ export const pt = {
 
   achievements: {
     title: "Conquistas",
+    congrats: "Parabéns!",
+    unlocked: "Você desbloqueou uma conquista nova.",
+    more: (n: number) => (n === 1 ? "E mais 1 em seguida" : `E mais ${n} em seguida`),
+    oss: "Oss!",
     count: (got: number, total: number) => `${got} de ${total}`,
     recent: "Conquistas recentes",
     seeAll: "Ver todas",
