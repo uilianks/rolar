@@ -135,6 +135,22 @@ export type WeekReport = {
   firstWeek: string | null;
 };
 
+export type Achievement = {
+  id: string;
+  group: "sessions" | "hours" | "streak" | "submissions" | "variety" | "techniques";
+  target: number;
+  progress: number;
+  achievedAt: string | null;
+};
+
+export type Challenge = {
+  id: "sessions" | "minutes" | "newKind" | "submission" | "newTechnique";
+  target: number;
+  progress: number;
+  done: boolean;
+  kind?: SessionKind;
+};
+
 export type MonthTrend = { month: string; sessions: number; minutes: number; submissions: number; taps: number };
 
 export type Promotion = {

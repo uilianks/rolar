@@ -13,6 +13,7 @@ import { useFeed, useMe, useStats, useTrends, useWeek } from "@/lib/queries";
 import type { MonthTrend } from "@/lib/types";
 import type { FinishCount } from "@/shared/domain";
 import { Badge, Bars, Card, CardHead, Col, ErrorText, Heatmap, Kpi, ListRow, Loading, Progress, Row, Tabs, Txt } from "@/ui/kit";
+import { ChallengesCard } from "@/ui/achievements";
 import { SessionRow } from "@/ui/session-card";
 import { Header, Screen } from "@/ui/shell";
 import { space, useTheme } from "@/ui/theme";
@@ -43,6 +44,7 @@ export default function ProgressScreen() {
         {stats.isPending ? <Loading /> : null}
         <ErrorText error={stats.error} />
         <WeekCard />
+        <ChallengesCard />
         {s ? (
           <>
             <Row wrap gap={space.md}>

@@ -529,6 +529,50 @@ export const pt = {
     save: "Salvar treino",
   },
 
+  achievements: {
+    title: "Conquistas",
+    count: (got: number, total: number) => `${got} de ${total}`,
+    recent: "Conquistas recentes",
+    seeAll: "Ver todas",
+    on: (date: string) => `Conseguida em ${date}`,
+    none: "Treine e registre para desbloquear a primeira.",
+    groups: {
+      sessions: "Treinos",
+      hours: "Horas no tatame",
+      streak: "Constância",
+      submissions: "Finalizações",
+      variety: "Variedade",
+      techniques: "Técnicas",
+    },
+    name: (id: string, target: number): string => {
+      if (id.startsWith("sessions_")) return target === 1 ? "Primeiro treino" : `${target} treinos`;
+      if (id.startsWith("hours_")) return `${target} horas no tatame`;
+      if (id.startsWith("streak_")) return `${target} semanas seguidas na meta`;
+      if (id === "submissions_distinct_5") return "5 finalizações diferentes";
+      if (id.startsWith("submissions_")) return target === 1 ? "Primeira finalização" : `${target} finalizações`;
+      if (id.startsWith("known_")) return `${target} técnicas sabidas`;
+      return { gi_nogi_week: "Gi e no-gi na mesma semana", open_mat: "Primeiro open mat", competition: "Primeira competição" }[id] ?? id;
+    },
+    hint: (id: string): string =>
+      ({
+        streak: "Cumpra a sua meta semanal várias semanas sem falhar.",
+        submissions_distinct_5: "Registre finalizações de 5 tipos diferentes.",
+        known: "Marque técnicas como sabidas no catálogo.",
+      })[id.startsWith("streak_") ? "streak" : id.startsWith("known_") ? "known" : id] ?? "",
+  },
+
+  challenges: {
+    title: "Desafios da semana",
+    streak: (n: number) => (n === 1 ? "1 semana com todos cumpridos" : `${n} semanas seguidas com todos cumpridos`),
+    sessions: (n: number) => (n === 1 ? "Faça 1 treino" : `Faça ${n} treinos`),
+    minutes: (time: string) => `Fique ${time} no tatame`,
+    newKind: (kind: string) => `Faça um treino de ${kind}`,
+    submission: "Registre uma finalização",
+    newTechnique: "Treine uma técnica que nunca registrou",
+    done: "Cumprido",
+    hint: "Novos desafios toda segunda, a partir do seu ritmo das últimas semanas.",
+  },
+
   week: {
     title: "Sua semana",
     sessions: (n: number) => (n === 1 ? "1 treino" : `${n} treinos`),

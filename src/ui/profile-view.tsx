@@ -18,6 +18,7 @@ import { beltOptions, type Belt as BeltName } from "@/shared/domain";
 import type { Messages } from "@/shared/i18n";
 
 import { DateField } from "./date-field";
+import { RecentAchievements } from "./achievements";
 import { Avatar, Belt, Button, Card, CardHead, Col, ErrorText, Heatmap, Kpi, Loading, Row, Segmented, Txt } from "./kit";
 import { SessionCardView } from "./session-card";
 import { BELT_COLORS, space, useTheme } from "./theme";
@@ -164,6 +165,8 @@ export function ProfileView({ username }: { username: string }) {
           </Card>
         </>
       ) : null}
+
+      {own ? <RecentAchievements /> : null}
 
       <Card pad={false}>
         <CardHead title={t.profile.promotions} right={own && !promoting ? <Button size="sm" icon={Plus} title={t.profile.add} onPress={() => setPromoting(true)} /> : null} />

@@ -27,6 +27,8 @@ import type {
   Technique,
   TechniqueDetail,
   TechniqueGraph,
+  Achievement,
+  Challenge,
   MonthTrend,
   WeekReport,
 } from "./types";
@@ -114,6 +116,17 @@ export function useWeek(week?: string) {
   return useQuery({
     queryKey: ["stats", "week", week ?? "current"],
     queryFn: () => api<WeekReport>(`/me/week?tz=${encodeURIComponent(TZ)}${week ? `&week=${week}` : ""}`),
+  });
+}
+
+export function useAchievements() {
+  return useQuery({ queryKey: ["stats", "achievements"], queryFn: () => api<Achievement[]>(`/me/achievements?tz=${encodeURIComponent(TZ)}`) });
+}
+
+export function useChallenges() {
+  return useQuery({
+    queryKey: ["stats", "challenges"],
+    queryFn: () => api<{ week: string; challenges: Challenge[]; streakWeeks: number }>(`/me/challenges?tz=${encodeURIComponent(TZ)}`),
   });
 }
 

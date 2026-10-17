@@ -105,7 +105,7 @@ src/app/            telas (Expo Router)
   onboarding.tsx      4 passos: nome/idade, faixa, academia, privacidade/meta
   termos.tsx, privacidade.tsx   textos legais públicos (pt e en)
   (app)/              moldura com sidebar (≥ 900 px) ou dock
-    index, registrar, timer, progresso, semana, treino/[id], perfil, u/[username], buscar,
+    index, registrar, timer, progresso, semana, conquistas, treino/[id], perfil, u/[username], buscar,
     notificacoes, config, apoie, ler-qr, checkin
     academia/         index, buscar, nova, [id]/{index, calendario, chamada, horarios,
                       mensalidades, qr, evento/{novo,[eventId]}}
@@ -123,6 +123,7 @@ server/             API Hono
                       billing, admin
   avatars.ts          fotos de perfil (Vercel Blob, ou tabela em dev)
   stats.ts            estatísticas no fuso do usuário (semana começa na segunda)
+  achievements.ts     conquistas e desafios semanais, calculados dos treinos (nada guardado)
   vercel.ts           entrada da Vercel Function
   db/                 schema Drizzle, migrações, cliente Neon|PGlite, seed
 scripts/            vercel-output.mjs (deploy pela Build Output API), smoke-api.mjs

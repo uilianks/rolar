@@ -530,6 +530,50 @@ export const en: Messages = {
     save: "Save session",
   },
 
+  achievements: {
+    title: "Achievements",
+    count: (got: number, total: number) => `${got} of ${total}`,
+    recent: "Recent achievements",
+    seeAll: "See all",
+    on: (date: string) => `Earned on ${date}`,
+    none: "Train and log sessions to unlock the first one.",
+    groups: {
+      sessions: "Sessions",
+      hours: "Hours on the mat",
+      streak: "Consistency",
+      submissions: "Submissions",
+      variety: "Variety",
+      techniques: "Techniques",
+    },
+    name: (id: string, target: number): string => {
+      if (id.startsWith("sessions_")) return target === 1 ? "First session" : `${target} sessions`;
+      if (id.startsWith("hours_")) return `${target} hours on the mat`;
+      if (id.startsWith("streak_")) return `${target} weeks in a row on goal`;
+      if (id === "submissions_distinct_5") return "5 different submissions";
+      if (id.startsWith("submissions_")) return target === 1 ? "First submission" : `${target} submissions`;
+      if (id.startsWith("known_")) return `${target} known techniques`;
+      return { gi_nogi_week: "Gi and no-gi in the same week", open_mat: "First open mat", competition: "First competition" }[id] ?? id;
+    },
+    hint: (id: string): string =>
+      ({
+        streak: "Reach your weekly goal several weeks without missing one.",
+        submissions_distinct_5: "Log submissions of 5 different kinds.",
+        known: "Mark techniques as known in the catalog.",
+      })[id.startsWith("streak_") ? "streak" : id.startsWith("known_") ? "known" : id] ?? "",
+  },
+
+  challenges: {
+    title: "This week's challenges",
+    streak: (n: number) => (n === 1 ? "1 week with all of them done" : `${n} weeks in a row with all of them done`),
+    sessions: (n: number) => (n === 1 ? "Train once" : `Train ${n} times`),
+    minutes: (time: string) => `Spend ${time} on the mat`,
+    newKind: (kind: string) => `Do a ${kind} session`,
+    submission: "Log a submission",
+    newTechnique: "Train a technique you never logged",
+    done: "Done",
+    hint: "New challenges every Monday, based on your pace over the last weeks.",
+  },
+
   week: {
     title: "Your week",
     sessions: (n: number) => (n === 1 ? "1 session" : `${n} sessions`),

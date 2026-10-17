@@ -9,6 +9,7 @@ import * as s from "../db/schema";
 import { type AppEnv, body, fail, isUniqueViolation, viewer } from "../http";
 import { readAvatar, removeAvatar, saveAvatar } from "../avatars";
 import { canHaveAvatar, effectiveVisibility } from "../policies";
+import { achievements, challengeStreak, weeklyChallenges } from "../achievements";
 import { computeStats, isValidTimeZone, localDate, monthlyTrend, weekOf, weekReport } from "../stats";
 
 export const me = new Hono<AppEnv>();
@@ -167,6 +168,31 @@ me.get("/week", async (c) => {
   // The streak looks back as far as it goes, so this reads all sessions (a few columns each).
   const rows = await statRows(db, userId, null);
   return c.json(weekReport(rows, { tz, now, week, weeklyGoal: profile?.weeklyGoal ?? 0 }));
+});
+
+/** Every achievement with its progress, and when it was reached. */
+me.get("/achievements", async (c) => {
+  const userId = viewer(c);
+  const db = c.get("db");
+  const tz = timeZone(c);
+  const [[profile], rows, known] = await Promise.all([
+    db.select({ weeklyGoal: s.profiles.weeklyGoal }).from(s.profiles).where(eq(s.profiles.userId, userId)),
+    statRows(db, userId, null),
+    db.select({ at: s.knownTechniques.createdAt }).from(s.knownTechniques).where(eq(s.knownTechniques.userId, userId)),
+  ]);
+  return c.json(achievements(rows, { tz, weeklyGoal: profile?.weeklyGoal ?? 0, knownDates: known.map((k) => k.at) }));
+});
+
+/** This week's three challenges and the streak of weeks with all of them done. */
+me.get("/challenges", async (c) => {
+  const tz = timeZone(c);
+  const rows = await statRows(c.get("db"), viewer(c), null);
+  const week = weekOf(localDate(new Date(), tz));
+  const firstWeek = rows.reduce<string | null>((first, r) => {
+    const w = weekOf(localDate(r.startedAt, tz));
+    return !first || w < first ? w : first;
+  }, null);
+  return c.json({ week, challenges: weeklyChallenges(rows, { tz, week }), streakWeeks: challengeStreak(rows, { tz, week, firstWeek }) });
 });
 
 /** Month by month over the last 12 months: sessions, minutes, submissions and taps. */
