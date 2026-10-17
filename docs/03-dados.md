@@ -22,6 +22,7 @@ sessions        id · user_id · academy_id? · started_at · duration_min
                 review_pending (criado pelo check-in, ainda sem resposta a "Como foi o treino?")
 
                 techniques text[]  (lista livre; o catálogo abaixo é da fase 2)
+                submissions jsonb, taps jsonb  ([{name, count}]: finalizações que pegou / em que bateu)
 
 rolls (fase 2)  session_id · partner_user_id? · partner_name? · partner_belt
                 outcome (sub_win|sub_loss|points|draw|flow) · technique_id?

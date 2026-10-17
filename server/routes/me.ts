@@ -141,13 +141,13 @@ me.get("/stats", async (c) => {
     range === "all" ? null : new Date(now.getTime() - (range === "month" ? 31 : 366) * 86_400_000);
   const [profile] = await db.select({ weeklyGoal: s.profiles.weeklyGoal }).from(s.profiles).where(eq(s.profiles.userId, userId));
   const rows = await db
-    .select({ startedAt: s.sessions.startedAt, durationMin: s.sessions.durationMin, rounds: s.sessions.rounds, rpe: s.sessions.rpe, kind: s.sessions.kind })
+    .select({ startedAt: s.sessions.startedAt, durationMin: s.sessions.durationMin, rounds: s.sessions.rounds, rpe: s.sessions.rpe, kind: s.sessions.kind, submissions: s.sessions.submissions, taps: s.sessions.taps })
     .from(s.sessions)
     .where(and(eq(s.sessions.userId, userId), from ? gte(s.sessions.startedAt, new Date(Math.min(from.getTime(), now.getTime() - 190 * 86_400_000))) : undefined));
   const inRange = from ? rows.filter((r) => r.startedAt >= from) : rows;
   const all = computeStats(rows, { tz, now, weeklyGoal: profile?.weeklyGoal ?? 0 });
   const ranged = computeStats(inRange, { tz, now, weeklyGoal: profile?.weeklyGoal ?? 0 });
-  return c.json({ ...all, totals: ranged.totals, byKind: ranged.byKind, range });
+  return c.json({ ...all, totals: ranged.totals, byKind: ranged.byKind, submissions: ranged.submissions, taps: ranged.taps, range });
 });
 
 me.get("/notifications", async (c) => {

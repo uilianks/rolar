@@ -523,6 +523,22 @@ export const en: Messages = {
     save: "Save session",
   },
 
+  finishes: {
+    title: "Submissions",
+    submissions: "Submissions you got",
+    submissionsHint: "Who you caught stays with you; only the move is counted.",
+    taps: "Times you tapped",
+    tapsHint: "Tapping is part of it: seeing where you get caught shows what to study.",
+    placeholder: "E.g. rear naked choke",
+    less: (name: string) => `One less: ${name}`,
+    more: (name: string) => `One more: ${name}`,
+    remove: (name: string) => `Remove ${name}`,
+    top: "Your go-to submissions",
+    topTaps: "Where you tap the most",
+    ratio: (got: number, tapped: number) => `${got} caught · ${tapped} tapped`,
+    none: "Log submissions and taps in your sessions to see them here.",
+  },
+
   sessionDetail: {
     deleteCommentTitle: "Delete comment?",
     cannotUndo: "This cannot be undone.",
@@ -1022,6 +1038,7 @@ export const en: Messages = {
   },
 
   validation: {
+    duplicateFinish: "That finish is already on the list",
     techniqueName: "Give the technique a name (2 to 80 characters)",
     username: "3–30 characters: letters, numbers, _ or .",
     minAge: `You must be ${MIN_AGE} or older`,

@@ -83,6 +83,15 @@ export const avatarInput = z.object({
 
 export const profilePatch = profileInput.omit({ birthYear: true }).partial();
 
+/** A finish in a session's log: its name and how many times it happened (got it, or got caught: a tap). */
+export const finishCount = z.object({ name: z.string().trim().min(1).max(60), count: z.number().int().min(1).max(50) });
+export type FinishCount = z.infer<typeof finishCount>;
+const finishList = z
+  .array(finishCount)
+  .max(20)
+  .refine((l) => new Set(l.map((f) => f.name.toLowerCase())).size === l.length, v("duplicateFinish"))
+  .default([]);
+
 export const sessionInput = z.object({
   kind: z.enum(SESSION_KINDS),
   startedAt: z.iso.datetime({ offset: true }),
@@ -92,6 +101,8 @@ export const sessionInput = z.object({
   title: z.string().trim().max(120).optional(),
   notes: z.string().trim().max(5000).optional(),
   techniques: z.array(z.string().trim().min(1).max(60)).max(20).default([]),
+  submissions: finishList,
+  taps: finishList,
   academyId: z.string().nullable().optional(),
   visibility: z.enum(VISIBILITIES).optional(),
   source: z.enum(["manual", "timer"]).default("manual"),
@@ -101,7 +112,12 @@ export type SessionInput = z.infer<typeof sessionInput>;
 /** Editing a session: only the fields sent change (no defaults filling in rounds or techniques). */
 export const sessionPatch = sessionInput
   .omit({ source: true })
-  .extend({ rounds: sessionInput.shape.rounds.unwrap(), techniques: sessionInput.shape.techniques.unwrap() })
+  .extend({
+    rounds: sessionInput.shape.rounds.unwrap(),
+    techniques: sessionInput.shape.techniques.unwrap(),
+    submissions: finishList.unwrap(),
+    taps: finishList.unwrap(),
+  })
   .partial();
 export type SessionPatch = z.infer<typeof sessionPatch>;
 

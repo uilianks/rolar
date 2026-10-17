@@ -4,6 +4,7 @@ import {
   boolean,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   primaryKey,
@@ -24,6 +25,7 @@ import {
   TECHNIQUE_CATEGORIES,
   TECHNIQUE_POSITIONS,
   VISIBILITIES,
+  type FinishCount,
 } from "../../src/shared/domain";
 
 const id = () => text("id").primaryKey().$defaultFn(() => crypto.randomUUID());
@@ -209,6 +211,9 @@ export const sessions = pgTable(
     title: text("title"),
     notes: text("notes"),
     techniques: text("techniques").array().notNull().default(sql`'{}'::text[]`),
+    /** Finishes the user got, and the ones that caught them (taps), with how many times each. */
+    submissions: jsonb("submissions").$type<FinishCount[]>().notNull().default([]),
+    taps: jsonb("taps").$type<FinishCount[]>().notNull().default([]),
     visibility: visibilityEnum("visibility").notNull(),
     source: text("source").notNull().default("manual"),
     /** Created by a check-in and not yet filled in or skipped: the app asks about it after the class. */

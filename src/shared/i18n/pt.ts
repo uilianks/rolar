@@ -522,6 +522,22 @@ export const pt = {
     save: "Salvar treino",
   },
 
+  finishes: {
+    title: "Finalizações",
+    submissions: "Finalizações que você pegou",
+    submissionsHint: "Em quem e quantas vezes fica só com você; aqui conta o golpe.",
+    taps: "Vezes que você bateu",
+    tapsHint: "Bater faz parte: ver onde você é pego mostra o que estudar.",
+    placeholder: "Ex.: mata-leão",
+    less: (name: string) => `Menos uma: ${name}`,
+    more: (name: string) => `Mais uma: ${name}`,
+    remove: (name: string) => `Tirar ${name}`,
+    top: "As que você mais pega",
+    topTaps: "Onde você mais bate",
+    ratio: (got: number, tapped: number) => `${got} pegas · ${tapped} batidas`,
+    none: "Registre finalizações e batidas nos treinos para ver aqui.",
+  },
+
   sessionDetail: {
     deleteCommentTitle: "Apagar comentário?",
     cannotUndo: "Essa ação não pode ser desfeita.",
@@ -1023,6 +1039,7 @@ export const pt = {
 
   /** Messages of the shared zod schemas (src/shared/domain.ts); the schemas hold the keys. */
   validation: {
+    duplicateFinish: "Essa finalização já está na lista",
     techniqueName: "Dê um nome à técnica (2 a 80 caracteres)",
     username: "3–30 caracteres: letras, números, _ ou .",
     minAge: `É preciso ter ${MIN_AGE} anos ou mais`,

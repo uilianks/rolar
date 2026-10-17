@@ -19,6 +19,8 @@ export function sessionCards(db: Db, viewerId: string) {
       title: sessions.title,
       notes: sessions.notes,
       techniques: sessions.techniques,
+      submissions: sessions.submissions,
+      taps: sessions.taps,
       visibility: sessions.visibility,
       source: sessions.source,
       reviewPending: sessions.reviewPending,

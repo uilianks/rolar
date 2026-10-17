@@ -14,10 +14,11 @@ import { ymd } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import { TZ, useCreateSession, useMe, useSession, useUpdateSession } from "@/lib/queries";
 import type { ClassWithOccurrence, SessionCard } from "@/lib/types";
-import { SESSION_KINDS, sessionInput, type SessionKind, type Visibility } from "@/shared/domain";
+import { SESSION_KINDS, sessionInput, type SessionKind, type Visibility, type FinishCount } from "@/shared/domain";
 import { validationMessage } from "@/shared/i18n";
 import { DateField } from "@/ui/date-field";
 import { Button, Card, Col, ErrorText, Input, Loading, Row, Segmented, Stepper, Txt } from "@/ui/kit";
+import { FinishListField } from "@/ui/finish-list";
 import { Header, Screen } from "@/ui/shell";
 import { space, useTheme } from "@/ui/theme";
 
@@ -70,6 +71,8 @@ function RegisterForm({ params, fromClass, existing }: { params: Params; fromCla
   const [notes, setNotes] = useState(existing?.notes ?? topicNote);
   const [techniques, setTechniques] = useState<string[]>(existing?.techniques ?? []);
   const [technique, setTechnique] = useState("");
+  const [submissions, setSubmissions] = useState<FinishCount[]>(existing?.submissions ?? []);
+  const [taps, setTaps] = useState<FinishCount[]>(existing?.taps ?? []);
   // A check-in session is private until filled in; filling it in publishes it like any other session.
   const [visibility, setVisibility] = useState<Visibility>(existing && !existing.reviewPending ? existing.visibility : defaultVisibility);
   const [error, setError] = useState<string | null>(null);
@@ -93,6 +96,8 @@ function RegisterForm({ params, fromClass, existing }: { params: Params; fromCla
       title: title || undefined,
       notes: notes || undefined,
       techniques,
+      submissions,
+      taps,
       academyId,
       visibility,
       source: params.source === "timer" ? "timer" : "manual",
@@ -198,6 +203,9 @@ function RegisterForm({ params, fromClass, existing }: { params: Params; fromCla
             <Button title={t.log.add} onPress={addTechnique} disabled={!technique.trim()} />
           </Row>
         </Col>
+
+        <FinishListField label={t.finishes.submissions} hint={t.finishes.submissionsHint} value={submissions} onChange={setSubmissions} />
+        <FinishListField label={t.finishes.taps} hint={t.finishes.tapsHint} value={taps} onChange={setTaps} />
 
         <Input label={t.log.notes} value={notes} onChangeText={setNotes} placeholder={t.log.notesPlaceholder} multiline maxLength={5000} />
 

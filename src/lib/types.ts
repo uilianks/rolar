@@ -4,6 +4,7 @@ import type {
   AcademyStatus,
   Belt,
   BillingStatus,
+  FinishCount,
   EventKind,
   PaymentMethod,
   ReportAction,
@@ -81,6 +82,8 @@ export type SessionCard = {
   title: string | null;
   notes: string | null;
   techniques: string[];
+  submissions: FinishCount[];
+  taps: FinishCount[];
   visibility: Visibility;
   source: string;
   /** Created by a check-in and not yet filled in or skipped. */
@@ -109,6 +112,8 @@ export type Stats = {
   weeklyLoad: { week: string; load: number }[];
   loadBand: "low" | "ideal" | "high" | "none";
   days: Record<string, number>;
+  submissions: { total: number; top: FinishCount[] };
+  taps: { total: number; top: FinishCount[] };
   range: string;
 };
 

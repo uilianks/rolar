@@ -1,6 +1,18 @@
 // Training statistics computed from a user's sessions in their own time zone (weeks start on Monday).
 
-export type StatRow = { startedAt: Date; durationMin: number; rounds: number; rpe: number | null; kind: string };
+import type { FinishCount } from "../src/shared/domain";
+
+export type StatRow = {
+  startedAt: Date;
+  durationMin: number;
+  rounds: number;
+  rpe: number | null;
+  kind: string;
+  submissions?: FinishCount[];
+  taps?: FinishCount[];
+};
+
+export type FinishStats = { total: number; top: FinishCount[] };
 
 export type LoadBand = "low" | "ideal" | "high" | "none";
 
@@ -12,7 +24,26 @@ export type Stats = {
   weeklyLoad: { week: string; load: number }[];
   loadBand: LoadBand;
   days: Record<string, number>;
+  submissions: FinishStats;
+  taps: FinishStats;
 };
+
+/** Adds up finishes across sessions; names match ignoring case, keeping the first spelling seen. */
+export function tallyFinishes(lists: (FinishCount[] | undefined)[], limit = 5): FinishStats {
+  const byKey = new Map<string, FinishCount>();
+  let total = 0;
+  for (const list of lists) {
+    for (const f of list ?? []) {
+      const key = f.name.trim().toLowerCase();
+      const entry = byKey.get(key) ?? { name: f.name.trim(), count: 0 };
+      entry.count += f.count;
+      byKey.set(key, entry);
+      total += f.count;
+    }
+  }
+  const top = [...byKey.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)).slice(0, limit);
+  return { total, top };
+}
 
 export function localDate(d: Date, tz: string) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
@@ -102,5 +133,7 @@ export function computeStats(rows: StatRow[], opts: { tz: string; now: Date; wee
     weeklyLoad,
     loadBand,
     days,
+    submissions: tallyFinishes(rows.map((r) => r.submissions)),
+    taps: tallyFinishes(rows.map((r) => r.taps)),
   };
 }

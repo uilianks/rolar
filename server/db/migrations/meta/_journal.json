@@ -99,6 +99,13 @@
       "when": 1792186459130,
       "tag": "0013_checkin_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792201989593,
+      "tag": "0014_session_finishes",
+      "breakpoints": true
     }
   ]
 }

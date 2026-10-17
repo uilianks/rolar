@@ -16,6 +16,7 @@ import { useT } from "@/lib/i18n";
 import { useDeleteSession, useMe, useSession } from "@/lib/queries";
 import { Avatar, Badge, Belt, Button, Card, CardHead, Col, ErrorText, Input, Kpi, ListRow, Loading, Row, Txt } from "@/ui/kit";
 import { Chips, OssButton } from "@/ui/session-card";
+import { FinishChips } from "@/ui/finish-list";
 import { Header, Screen } from "@/ui/shell";
 import { space, useTheme } from "@/ui/theme";
 
@@ -133,6 +134,26 @@ export default function SessionScreen() {
                 <View style={{ padding: space.lg }}>
                   <Chips items={s.techniques} />
                 </View>
+              </Card>
+            ) : null}
+
+            {s.submissions.length || s.taps.length ? (
+              <Card pad={false}>
+                <CardHead title={t.finishes.title} />
+                <Col style={{ padding: space.lg }}>
+                  {s.submissions.length ? (
+                    <Col gap={6}>
+                      <Txt v="small" muted>{t.finishes.submissions}</Txt>
+                      <FinishChips items={s.submissions} tone="got" />
+                    </Col>
+                  ) : null}
+                  {s.taps.length ? (
+                    <Col gap={6}>
+                      <Txt v="small" muted>{t.finishes.taps}</Txt>
+                      <FinishChips items={s.taps} tone="tapped" />
+                    </Col>
+                  ) : null}
+                </Col>
               </Card>
             ) : null}
 

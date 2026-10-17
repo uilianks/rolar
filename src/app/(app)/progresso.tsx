@@ -8,6 +8,7 @@ import { View } from "react-native";
 import { duration, hours } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import { useFeed, useMe, useStats } from "@/lib/queries";
+import type { FinishCount } from "@/shared/domain";
 import { Badge, Bars, Card, CardHead, Col, ErrorText, Heatmap, Kpi, ListRow, Loading, Progress, Row, Tabs, Txt } from "@/ui/kit";
 import { SessionRow } from "@/ui/session-card";
 import { Header, Screen } from "@/ui/shell";
@@ -120,6 +121,20 @@ export default function ProgressScreen() {
                 </Col>
               </Card>
             </Row>
+
+            <Card pad={false}>
+              <CardHead title={t.finishes.title} right={<Txt v="small" muted>{t.finishes.ratio(s.submissions.total, s.taps.total)}</Txt>} />
+              {s.submissions.total || s.taps.total ? (
+                <Row wrap gap={space.lg} style={{ padding: space.lg, alignItems: "flex-start" }}>
+                  <FinishTop title={t.finishes.top} items={s.submissions.top} color={c.accent} />
+                  <FinishTop title={t.finishes.topTaps} items={s.taps.top} color={c.mutedFg} />
+                </Row>
+              ) : (
+                <View style={{ padding: space.lg }}>
+                  <Txt v="small" muted>{t.finishes.none}</Txt>
+                </View>
+              )}
+            </Card>
           </>
         ) : null}
 
@@ -136,5 +151,23 @@ export default function ProgressScreen() {
         </Card>
       </Screen>
     </>
+  );
+}
+
+function FinishTop({ title, items, color }: { title: string; items: FinishCount[]; color: string }) {
+  const max = items[0]?.count ?? 1;
+  return (
+    <Col gap={8} style={{ flexGrow: 1, flexBasis: 240 }}>
+      <Txt v="small" muted>{title}</Txt>
+      {items.map((f) => (
+        <Col key={f.name} gap={4}>
+          <Row style={{ justifyContent: "space-between" }}>
+            <Txt>{f.name}</Txt>
+            <Txt bold>{f.count}</Txt>
+          </Row>
+          <Progress value={f.count / max} color={color} height={6} />
+        </Col>
+      ))}
+    </Col>
   );
 }
